@@ -179,7 +179,11 @@ def elim_redundant_branches(f):
 
   return elim(f)
 
-
+'''
+note: eg, instruction _mm256_adds_epu16 for unsigned saturated 
+calculation, we need concat before doing calculation in z3. this function
+help us shrink bits in concat.
+'''
 def reduce_bitwidth(f):
   '''
   for a formula that looks like `f = op concat(0, a), concat(0, b)`
@@ -494,6 +498,10 @@ class Translator:
       partial_size = 0
       offset = 0
       x_offset = 0
+      
+      # note, consider x.size() != elem_size, so we need concat more than one `x` into one elements 
+      # or split `x` into multiple elements, to get `elems`
+
       for x in reversed(f.children()):
         while offset < x_offset + x.size():
           begin = offset - x_offset
@@ -685,7 +693,7 @@ class Translator:
   def translate_uninterpreted(self, f):
     args = f.children()
     if len(args) == 0:
-      # live-in
+      # live-in, note, what is this ?
       return self.extraction_history.record(z3.Extract(f.size()-1, 0, f))
 
     func = f.decl().name()
@@ -700,9 +708,12 @@ class Translator:
     _, op, _ = func.split('_')
 
     if op == 'literal':
-      assert z3.is_bv_val(arg)
+      [arg] = args
+      assert z3.is_bv_value(arg), "literal should be bitvec constant"
+      assert arg.size() == 32 or arg.size() == 64, f"note, scalar float size = {arg.size()}"
+      fsort = z3.Float32() if arg.size() == 32 else z3.Float64()
       # jesus
-      literal_val = float(eval(str(z3.simplify(z3.fpBVToFP(arg)))))
+      literal_val = float(eval(str(z3.simplify(z3.fpBVToFP(arg, fsort)))))
       return FPConstant(literal_val, arg.size())
 
     assert z3.is_bool(f) or f.size() in [32, 64]

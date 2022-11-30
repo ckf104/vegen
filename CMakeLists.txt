@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.4)
 project(GSLP)
 
+set(CMAKE_PREFIX_PATH /home/ckf/tmp/llvm-12.0.0-x86/lib/cmake)
+
 string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 include(sanitizers.cmake)

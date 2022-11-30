@@ -9,3 +9,4 @@ with open('InstWrappers.x86.c', 'w') as f:
 #define __int64_t __int64
 #define __int64 long long''')
   codegen.emit_wrappers(x86_insts, f)
+

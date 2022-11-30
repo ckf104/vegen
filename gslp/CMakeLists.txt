@@ -41,6 +41,7 @@ endif(APPLE)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 
+#[[
 if(BUILD_TYPE STREQUAL "RELEASE")
   set_source_files_properties(
     ${LIB_PACKING_SRC} PROPERTIES COMPILE_FLAGS ${CMAKE_CXX_FLAGS_RELEASE})
@@ -48,6 +49,7 @@ if(BUILD_TYPE STREQUAL "RELEASE")
     target-sema/x86.cpp target-sema/arm.cpp
     PROPERTIES COMPILE_FLAGS "-O0")
 endif()
+]]
 
 add_library(GSLP MODULE GSLP.cpp TestConsecutiveCheck.cpp)
 llvm_map_components_to_libnames(LLVM_LIBRARIES support core transformutils irreader analysis scalaropts)
@@ -65,6 +67,7 @@ add_custom_command(OUTPUT ${X86_WRAPPERS}
   VERBATIM
 )
 
+#[[
 set(ARM_WRAPPERS "${CMAKE_BINARY_DIR}/arm.bc")
 set(ARM_FLAGS -Xclang -target-feature -Xclang +neon -Xclang -target-feature -Xclang +dotprod) 
 add_custom_command(OUTPUT ${ARM_WRAPPERS}
@@ -72,8 +75,9 @@ add_custom_command(OUTPUT ${ARM_WRAPPERS}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/arm.c
   VERBATIM
 )
+]]
 
-add_custom_target(intrinsic_defs ALL DEPENDS ${X86_WRAPPERS} ${ARM_WRAPPERS})
+add_custom_target(intrinsic_defs ALL DEPENDS ${X86_WRAPPERS} #[[ ${ARM_WRAPPERS}]])
 
 if(APPLE)
   set_target_properties(GSLP PROPERTIES

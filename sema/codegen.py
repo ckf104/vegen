@@ -5,6 +5,7 @@ from lift_sema import Translator, reduce_bitwidth, elim_dead_branches, elim_redu
 import gen_rules
 from tqdm import tqdm
 import ir
+import traceback
 
 def preprocess(y):
   return reduce_bitwidth(elim_redundant_branches(elim_dead_branches(y)))
@@ -22,8 +23,9 @@ def emit_instruction_bindings(insts : List[desc.Instruction], binding_vector_nam
         continue
       if not typecheck(dag):
         continue
-    except:
-      print('failed to lift', inst.name)
+    except Exception as e:
+      print('failed to lift', inst.name, repr(e))
+      traceback.print_exc()
       continue
 
     try:
