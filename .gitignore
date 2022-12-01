@@ -1,0 +1,7 @@
+.vscode/
+build/
+__pycache__/
+InstSema.x86.cpp
+InstWrappers.x86.c
+sema/x86/parser.out
+sema/x86/parsetab.py

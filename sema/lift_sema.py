@@ -257,23 +257,20 @@ def typecheck(dag):
   * bitwidths are scalar bitwidth (e.g., 64)
   '''
   for value in dag.values():
-    assert type(value) in ir_types
+    assert type(value) in ir_types    # FIXME, ir_types
     if isinstance(value, Instruction):
       if value.op in binary_ops:
         args = [dag[arg] for arg in value.args]
-        ok = (all(x.bitwidth == args[0].bitwidth for x in args) and
-            args[0].bitwidth == value.bitwidth)
+        assert all(x.bitwidth == args[0].bitwidth for x in args) and \
+            args[0].bitwidth == value.bitwidth
       elif value.op in cmp_ops:
         a, b = [dag[arg] for arg in value.args]
-        ok = (a.bitwidth == b.bitwidth and value.bitwidth == 1)
+        assert a.bitwidth == b.bitwidth and value.bitwidth == 1
       elif value.op == 'Select':
         k, a, b = [dag[arg] for arg in value.args]
-        ok = (k.bitwidth == 1 and a.bitwidth == b.bitwidth == value.bitwidth)
+        assert k.bitwidth == 1 and a.bitwidth == b.bitwidth == value.bitwidth
       else:
         assert value.op in ['ZExt', 'SExt', 'Trunc']
-        ok = True
-      if not ok:
-        return False
   return True
 
 def reduction(op, ident):
@@ -680,7 +677,7 @@ class Translator:
     is_int = typename.startswith('i')
     bitwidth = f.size()
 
-    if is_int:
+    if is_int: # is_int is always true? abs(float) can be quickly done by _mm256_andnot_ps.
       y = z3.If(x < 0, -x , x)
     else:
       flt, _ = fp_sema.binary_float_cmp('lt', use_uninterpreted=True)
@@ -693,7 +690,7 @@ class Translator:
   def translate_uninterpreted(self, f):
     args = f.children()
     if len(args) == 0:
-      # live-in, note, what is this ?
+      # live-in, note, simple uninterpreted variable
       return self.extraction_history.record(z3.Extract(f.size()-1, 0, f))
 
     func = f.decl().name()

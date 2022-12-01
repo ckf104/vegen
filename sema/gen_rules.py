@@ -17,6 +17,7 @@ def match_select_on_cmp(node_id, dag):
 
   cond, true_val, false_val = select.args
   cond = dag[cond]
+  # Unknown: it's possible cond just a uninterpreted constant(width == 1), caused by canonicalizing
   if not isinstance(cond, Instruction) or cond.op not in cmp_ops:
     return None
 
@@ -129,7 +130,7 @@ class BoundOperation:
       }});
     return Matched;
     '''
-    self.liveins = liveins
+    self.liveins = liveins  # note, record a out-lane bind which input-lanes 
     self.bound_liveins = bound_liveins
     self.livein2vars = livein2vars
     self.bitwidth = root_bitwidth
@@ -157,6 +158,9 @@ class BoundOperation:
 
   def get_matching_code(self):
     return self.matching_code
+  
+  def __repr__(self) -> str:
+    return self.matching_code
 
 class RuleCollection:
   '''
@@ -175,6 +179,9 @@ class RuleCollection:
 
   def is_muxed(self):
     return len(self.rules) > 1
+  
+  def __repr__(self) -> str:
+    return str([i.matching_code for i in self.rules])
 
 class RuleBundle:
   '''
@@ -245,9 +252,9 @@ def codegen(bundles, inst_features, costs, binding_vector_name='Insts'):
   '''
   bundles : mapping inst -> bundles
   '''
-  operation_names = {}
-  operation_defs = {}
-  inst_defs = {}
+  operation_names = {} # matching code(in operation) -> op name(Operation%d)
+  operation_defs = {} # matching code -> complete matching code in x86.cpp
+  inst_defs = {}      # inst name -> code of defining InstBinding
   for inst, bundle in bundles.items():
     features = inst_features[inst]
     feature_list = ', '.join(f'"{f}"' for f in features)

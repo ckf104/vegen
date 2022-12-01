@@ -12,6 +12,7 @@ def preprocess(y):
 
 def emit_instruction_bindings(insts : List[desc.Instruction], binding_vector_name, outf):
   bundles = {}
+  tmp_counter = 500
 
   pbar = tqdm(insts)
   for inst in pbar:
@@ -21,8 +22,12 @@ def emit_instruction_bindings(insts : List[desc.Instruction], binding_vector_nam
       out_ids, dag = translator.translate_formula(preprocess(inst.sema.output), inst.element_size)
       if not any(isinstance(v, ir.Instruction) for v in dag.values()):
         continue
+      '''
       if not typecheck(dag):
         continue
+      '''
+      typecheck(dag)
+
     except Exception as e:
       print('failed to lift', inst.name, repr(e))
       traceback.print_exc()
@@ -43,6 +48,9 @@ def emit_instruction_bindings(insts : List[desc.Instruction], binding_vector_nam
       continue
 
     bundles[inst.name] = rb
+    tmp_counter -= 1
+    if tmp_counter <= 0:
+      break
   
   features = {inst.name: inst.features for inst in insts}
   costs = {inst.name: inst.cost for inst in insts}
