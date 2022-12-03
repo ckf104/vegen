@@ -408,8 +408,17 @@ int main() {
       return False, False
 
     num_outputs_per_intrinsic = len(out_types)
+    try:
+      # stdout = subprocess.check_output(['sde64', '--', exe.name]) # try
+      stdout = subprocess.check_output([exe.name])
+    except subprocess.CalledProcessError as e:
+      print(repr(e))
+      raise subprocess.CalledProcessError 
+    except Exception as e:
+      print(repr(e))
+      raise e
 
-    stdout = subprocess.check_output(['sde64', '--', exe.name])
+
     lines = stdout.decode('utf-8').strip().split('\n')
     assert(len(lines) == num_tests * num_outputs_per_intrinsic)
 
