@@ -1,4 +1,5 @@
 .vscode/
+*.swp
 build/
 __pycache__/
 InstSema.x86.cpp

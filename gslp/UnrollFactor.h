@@ -4,6 +4,7 @@
 #include "LoopUnrolling.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 
 namespace llvm {
 class Instruction;
@@ -17,8 +18,7 @@ class DominatorTree;
 class TargetTransformInfo;
 class LazyValueInfo;
 class BlockFrequencyInfo;
-template <typename T> class EquivalenceClasses;
-} // namespace llvm
+}  // namespace llvm
 
 class InstBinding;
 
@@ -58,10 +58,9 @@ void unrollLoops(
 
 class OperandPack;
 class Packer;
-std::vector<const OperandPack *>
-getSeeds(Packer &,
-         llvm::DenseMap<llvm::Loop *, UnrolledLoopTy> &DupToOrigLoopMap,
-         llvm::DenseMap<llvm::Instruction *, UnrolledInstruction>
-             &UnrolledIterations);
+std::vector<const OperandPack *> getSeeds(
+    Packer &, llvm::DenseMap<llvm::Loop *, UnrolledLoopTy> &DupToOrigLoopMap,
+    llvm::DenseMap<llvm::Instruction *, UnrolledInstruction>
+        &UnrolledIterations);
 
-#endif // UNROLL_FACTOR_H
+#endif  // UNROLL_FACTOR_H

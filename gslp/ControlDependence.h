@@ -6,6 +6,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Casting.h"
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+
 #include <map>
 
 namespace llvm {
