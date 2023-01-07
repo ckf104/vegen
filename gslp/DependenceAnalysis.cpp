@@ -118,7 +118,7 @@ static bool isAliased(Instruction *I1, Instruction *I2, AliasAnalysis &AA,
   if (Loc1.Ptr && Loc2.Ptr && isSimple(I1) && isSimple(I2)) {
     // Do the alias check.
     auto Result = AA.alias(Loc1, Loc2);
-    if (Result != MayAlias)
+    if (Result != AliasResult::MayAlias)
       return Result;
   }
 
@@ -180,7 +180,9 @@ static bool isAliased(Instruction *I1, Instruction *I2, AliasAnalysis &AA,
   auto AS = Ty->getAddressSpace();
   auto &DL = F->getParent()->getDataLayout();
   unsigned IndexWidth = DL.getIndexSizeInBits(AS);
-  APInt Size(IndexWidth, DL.getTypeStoreSize(Ty->getElementType()));
+
+  auto LdStType = Gt ? getLoadStoreType(I2) : getLoadStoreType(I1);
+  APInt Size(IndexWidth, DL.getTypeStoreSize(LdStType));
   return SE.isKnownPositive(
       SE.getMinusSCEV(SE.getAddExpr(Ptr1SCEV, SE.getConstant(Size)), Ptr2SCEV));
 

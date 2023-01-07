@@ -6,16 +6,42 @@
 using namespace llvm;
 using namespace PatternMatch;
 
+static float getCastInstrCostFromTTI(
+    const TargetTransformInfo *TTI, unsigned opcode, Type *Dst, Type *Src,
+    TTI::CastContextHint CCH,
+    TTI::TargetCostKind CostKind = TTI::TCK_SizeAndLatency,
+    const Instruction *I = nullptr) {
+  auto cost =
+      TTI->getCastInstrCost(opcode, Dst, Src, CCH, CostKind, I).getValue();
+  assert(cost && "Cast cost is not valid");
+  return (float)cost.value();
+}
+
+static float getArithInstrCostFromTTI(const TargetTransformInfo *TTI,
+                                      unsigned opcode, Type *Ty) {
+  auto cost = TTI->getArithmeticInstrCost(opcode, Ty).getValue();
+  assert(cost && "Arith cost is not valid!");
+  return (float)cost.value();
+}
+
+static float getIntrinsicInstrCostFromTTI(const TargetTransformInfo *TTI,
+                                          const IntrinsicCostAttributes &ICA,
+                                          TTI::TargetCostKind CostKind) {
+  auto cost = TTI->getIntrinsicInstrCost(ICA, CostKind).getValue();
+  assert(cost && "Intrinsic cost in not valid");
+  return (float)cost.value();
+}
+
 static bool isFloat(Instruction::BinaryOps Opcode) {
   switch (Opcode) {
-  case Instruction::FAdd:
-  case Instruction::FSub:
-  case Instruction::FMul:
-  case Instruction::FDiv:
-  case Instruction::FRem:
-    return true;
-  default:
-    return false;
+    case Instruction::FAdd:
+    case Instruction::FSub:
+    case Instruction::FMul:
+    case Instruction::FDiv:
+    case Instruction::FRem:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -33,8 +59,7 @@ bool BinaryIROperation::match(Value *V, SmallVectorImpl<Match> &Matches) const {
 
 bool UnaryIROperation::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   auto *I = dyn_cast<Instruction>(V);
-  if (!I || I->getOpcode() != Opcode || !hasBitWidth(V, Bitwidth))
-    return false;
+  if (!I || I->getOpcode() != Opcode || !hasBitWidth(V, Bitwidth)) return false;
   Matches.push_back({false, {I->getOperand(0)}, V});
   return true;
 }
@@ -55,7 +80,8 @@ float IRVectorBinding::getCost(TargetTransformInfo *TTI,
   }
   unsigned NumElems = getLaneOps().size();
   auto *VecTy = FixedVectorType::get(ScalarTy, NumElems);
-  return TTI->getArithmeticInstrCost(Opcode, VecTy);
+
+  return getArithInstrCostFromTTI(TTI, Opcode, VecTy);
 }
 
 float UnaryIRVectorBinding::getCost(TargetTransformInfo *TTI,
@@ -67,7 +93,7 @@ float UnaryIRVectorBinding::getCost(TargetTransformInfo *TTI,
   if (Opcode == Instruction::FNeg) {
     auto *Ty = ElemWidth == 32 ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx);
     auto *VecTy = FixedVectorType::get(Ty, NumElems);
-    return TTI->getArithmeticInstrCost(Opcode, VecTy);
+    return getArithInstrCostFromTTI(TTI, Opcode, VecTy);
   }
 
   return 1.0;
@@ -83,10 +109,10 @@ float UnaryIRVectorBinding::getCost(TargetTransformInfo *TTI,
     llvm_unreachable("unsupport unary opcode");
   }
 
-  return TTI->getCastInstrCost(Opcode, FixedVectorType::get(InTy, NumElems),
-                               FixedVectorType::get(OutTy, NumElems),
-                               TTI::CastContextHint::None,
-                               TTI::TCK_RecipThroughput);
+  return getCastInstrCostFromTTI(
+      TTI, Opcode, FixedVectorType::get(InTy, NumElems),
+      FixedVectorType::get(OutTy, NumElems), TTI::CastContextHint::None,
+      TTI::TCK_RecipThroughput);
 }
 
 IRVectorBinding IRVectorBinding::Create(const BinaryIROperation *Op,
@@ -145,8 +171,7 @@ Value *IRVectorBinding::emit(ArrayRef<Value *> Operands,
 }
 
 static Value *tryCast(IRBuilderBase &Builder, Value *V, Type *Ty) {
-  if (V->getType() == Ty)
-    return V;
+  if (V->getType() == Ty) return V;
   return Builder.CreateBitCast(V, Ty);
 }
 
@@ -156,20 +181,19 @@ Value *UnaryIRVectorBinding::emit(ArrayRef<Value *> Operands,
   unsigned ElemWidth = Op->getBitwidth();
   unsigned VecLen = getLaneOps().size();
   auto &Ctx = Builder.getContext();
-  auto *FloatTy =
-    FixedVectorType::get(
+  auto *FloatTy = FixedVectorType::get(
       ElemWidth == 32 ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VecLen);
   auto *IntTy = FixedVectorType::get(Type::getIntNTy(Ctx, ElemWidth), VecLen);
   auto *V = Operands.front();
   switch (Op->getOpcode()) {
-  case Instruction::SIToFP:
-    return Builder.CreateSIToFP(tryCast(Builder, V, IntTy), FloatTy);
-  case Instruction::FPToSI:
-    return Builder.CreateFPToSI(tryCast(Builder, V, FloatTy), IntTy);
-  case Instruction::FNeg:
-    return Builder.CreateFNeg(tryCast(Builder, V, FloatTy));
-  default:
-    llvm_unreachable("unsupport unary opcode");
+    case Instruction::SIToFP:
+      return Builder.CreateSIToFP(tryCast(Builder, V, IntTy), FloatTy);
+    case Instruction::FPToSI:
+      return Builder.CreateFPToSI(tryCast(Builder, V, FloatTy), IntTy);
+    case Instruction::FNeg:
+      return Builder.CreateFNeg(tryCast(Builder, V, FloatTy));
+    default:
+      llvm_unreachable("unsupport unary opcode");
   }
 }
 
@@ -214,8 +238,7 @@ IRInstTable::IRInstTable() {
   std::vector<unsigned> ScalarBitwidths = {1, 8, 16, 32, 64};
   for (auto Opcode : VectorizableOpcodes)
     for (unsigned SB : ScalarBitwidths) {
-      if (isFloat(Opcode) && SB != 32 && SB != 64)
-        continue;
+      if (isFloat(Opcode) && SB != 32 && SB != 64) continue;
       VectorizableOps.emplace_back(Opcode, SB);
     }
 
@@ -234,7 +257,7 @@ IRInstTable::IRInstTable() {
     IntToFloatOps.emplace_back(SB, false);
   }
 
-  for (unsigned VL : {2,4,8,16}) {
+  for (unsigned VL : {2, 4, 8, 16}) {
     for (auto &Op : FloatToIntOps)
       VectorFloatToInts.push_back(VectorFloatToInt::Create(&Op, VL));
     for (auto &Op : IntToFloatOps)
@@ -244,28 +267,24 @@ IRInstTable::IRInstTable() {
   // enumerate vector insts
   std::vector<unsigned> VectorBitwidths = {64, 128, 256, 512};
   for (auto &Op : VectorizableOps) {
-    if (Op.getBitwidth() == 1)
-      continue;
+    if (Op.getBitwidth() == 1) continue;
     for (unsigned VB : VectorBitwidths) {
       // Skip singleton pack
-      if (VB / Op.getBitwidth() == 1)
-        continue;
+      if (VB / Op.getBitwidth() == 1) continue;
       VectorInsts.push_back(IRVectorBinding::Create(&Op, VB));
     }
   }
   for (auto &Op : UnaryOps) {
     for (unsigned VB : VectorBitwidths) {
       // Skip singleton pack
-      if (VB / Op.getBitwidth() == 1)
-        continue;
+      if (VB / Op.getBitwidth() == 1) continue;
       UnaryVectorInsts.push_back(UnaryIRVectorBinding::Create(&Op, VB));
     }
   }
 
   // Special case for boolean ops
   for (auto &Op : VectorizableOps) {
-    if (Op.getBitwidth() != 1)
-      continue;
+    if (Op.getBitwidth() != 1) continue;
     for (unsigned VL : {2, 4, 8, 16})
       VectorInsts.push_back(IRVectorBinding::Create(&Op, VL));
   }
@@ -280,8 +299,7 @@ IRInstTable::IRInstTable() {
       }
     }
 
-  for (unsigned BitWidth : ScalarBitwidths)
-    SelectOps.emplace_back(BitWidth);
+  for (unsigned BitWidth : ScalarBitwidths) SelectOps.emplace_back(BitWidth);
 
   Intrinsic::ID FPUnaryIntrins[] = {
       Intrinsic::sin,  Intrinsic::cos,  Intrinsic::exp,
@@ -292,10 +310,12 @@ IRInstTable::IRInstTable() {
     UnaryMathOps.emplace_back(ID, 32, true);
     UnaryMathOps.emplace_back(ID, 64, true);
   }
-  Intrinsic::ID IntUnaryIntrins[] = { Intrinsic::abs, };
+  Intrinsic::ID IntUnaryIntrins[] = {
+      Intrinsic::abs,
+  };
   for (unsigned BitWidth : ScalarBitwidths)
     for (auto ID : IntUnaryIntrins)
-        UnaryMathOps.emplace_back(ID, BitWidth, false);
+      UnaryMathOps.emplace_back(ID, BitWidth, false);
 
   BinaryMathOps.emplace_back(Intrinsic::pow, true);
   BinaryMathOps.emplace_back(Intrinsic::pow, false);
@@ -318,7 +338,6 @@ bool Truncate::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   Value *X;
   if (PatternMatch::match(V, m_Trunc(m_Value(X))) && hasBitWidth(X, InWidth) &&
       hasBitWidth(V, OutWidth)) {
-
     Matches.push_back({false, {X}, V});
     return true;
   }
@@ -360,16 +379,16 @@ float VectorTruncate::getCost(TargetTransformInfo *TTI,
   auto *InTy = FixedVectorType::get(Type::getIntNTy(Ctx, TruncOp->InWidth), VL);
   auto *OutTy =
       FixedVectorType::get(Type::getIntNTy(Ctx, TruncOp->OutWidth), VL);
-  return TTI->getCastInstrCost(Instruction::CastOps::Trunc, OutTy, InTy,
-                               TTI::CastContextHint::None,
-                               TTI::TCK_RecipThroughput);
+  return getCastInstrCostFromTTI(TTI, Instruction::CastOps::Trunc, OutTy, InTy,
+                                 TTI::CastContextHint::None,
+                                 TTI::TCK_RecipThroughput);
 }
 
 /////
 bool FloatToInt::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   Value *X;
-  if (PatternMatch::match(V, m_FPToSI(m_Value(X))) && hasBitWidth(X, IsFloat ? 32 : 64) &&
-      hasBitWidth(V, OutWidth)) {
+  if (PatternMatch::match(V, m_FPToSI(m_Value(X))) &&
+      hasBitWidth(X, IsFloat ? 32 : 64) && hasBitWidth(V, OutWidth)) {
     Matches.push_back({false, {X}, V});
     return true;
   }
@@ -387,7 +406,7 @@ bool IntToFloat::match(Value *V, SmallVectorImpl<Match> &Matches) const {
 }
 
 VectorFloatToInt VectorFloatToInt::Create(const FloatToInt *Op,
-                                      unsigned VecLen) {
+                                          unsigned VecLen) {
   unsigned InWidth = Op->IsFloat ? 32 : 64, OutWidth = Op->OutWidth;
   InstSignature Sig = {// bitwidths of the inputs
                        {InWidth * VecLen},
@@ -406,7 +425,7 @@ VectorFloatToInt VectorFloatToInt::Create(const FloatToInt *Op,
 }
 
 VectorIntToFloat VectorIntToFloat::Create(const IntToFloat *Op,
-                                      unsigned VecLen) {
+                                          unsigned VecLen) {
   unsigned InWidth = Op->InWidth, OutWidth = Op->IsFloat ? 32 : 64;
   InstSignature Sig = {// bitwidths of the inputs
                        {InWidth * VecLen},
@@ -425,54 +444,51 @@ VectorIntToFloat VectorIntToFloat::Create(const IntToFloat *Op,
 }
 
 Value *VectorFloatToInt::emit(ArrayRef<Value *> Operands,
-                            IntrinsicBuilder &Builder) const {
+                              IntrinsicBuilder &Builder) const {
   assert(Operands.size() == 1);
   auto &Ctx = Builder.getContext();
   unsigned VL = getLaneOps().size();
-  auto *OutTy =
-      FixedVectorType::get(Type::getIntNTy(Ctx, Op->OutWidth), VL);
+  auto *OutTy = FixedVectorType::get(Type::getIntNTy(Ctx, Op->OutWidth), VL);
   return Builder.CreateFPToSI(Operands.front(), OutTy);
 }
 
 Value *VectorIntToFloat::emit(ArrayRef<Value *> Operands,
-                            IntrinsicBuilder &Builder) const {
+                              IntrinsicBuilder &Builder) const {
   assert(Operands.size() == 1);
   auto &Ctx = Builder.getContext();
   unsigned VL = getLaneOps().size();
-  auto *OutTy =
-      FixedVectorType::get(Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
+  auto *OutTy = FixedVectorType::get(
+      Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
   return Builder.CreateSIToFP(Operands.front(), OutTy);
 }
 
 float VectorFloatToInt::getCost(TargetTransformInfo *TTI,
-                              LLVMContext &Ctx) const {
+                                LLVMContext &Ctx) const {
   unsigned VL = getLaneOps().size();
-  auto *InTy = FixedVectorType::get(Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
-  auto *OutTy =
-      FixedVectorType::get(Type::getIntNTy(Ctx, Op->OutWidth), VL);
-  return TTI->getCastInstrCost(Instruction::CastOps::FPToSI, OutTy, InTy,
-                               TTI::CastContextHint::None,
-                               TTI::TCK_RecipThroughput);
+  auto *InTy = FixedVectorType::get(
+      Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
+  auto *OutTy = FixedVectorType::get(Type::getIntNTy(Ctx, Op->OutWidth), VL);
+  return getCastInstrCostFromTTI(TTI, Instruction::CastOps::FPToSI, OutTy, InTy,
+                                 TTI::CastContextHint::None,
+                                 TTI::TCK_RecipThroughput);
 }
 
 float VectorIntToFloat::getCost(TargetTransformInfo *TTI,
-                              LLVMContext &Ctx) const {
+                                LLVMContext &Ctx) const {
   unsigned VL = getLaneOps().size();
-  auto *InTy =
-      FixedVectorType::get(Type::getIntNTy(Ctx, Op->InWidth), VL);
-  auto *OutTy = FixedVectorType::get(Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
-  return TTI->getCastInstrCost(Instruction::CastOps::SIToFP, OutTy, InTy,
-                               TTI::CastContextHint::None,
-                               TTI::TCK_RecipThroughput);
+  auto *InTy = FixedVectorType::get(Type::getIntNTy(Ctx, Op->InWidth), VL);
+  auto *OutTy = FixedVectorType::get(
+      Op->IsFloat ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx), VL);
+  return getCastInstrCostFromTTI(TTI, Instruction::CastOps::SIToFP, OutTy, InTy,
+                                 TTI::CastContextHint::None,
+                                 TTI::TCK_RecipThroughput);
 }
 
 bool Extension::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   Value *X;
-  bool Matched = 
-    (Signed && PatternMatch::match(V, m_SExt(m_Value(X)))) ||
-    (!Signed && PatternMatch::match(V, m_ZExt(m_Value(X))));
-  if (Matched && hasBitWidth(X, InWidth) &&
-      hasBitWidth(V, OutWidth)) {
+  bool Matched = (Signed && PatternMatch::match(V, m_SExt(m_Value(X)))) ||
+                 (!Signed && PatternMatch::match(V, m_ZExt(m_Value(X))));
+  if (Matched && hasBitWidth(X, InWidth) && hasBitWidth(V, OutWidth)) {
     Matches.push_back({false, {X}, V});
     return true;
   }
@@ -480,7 +496,7 @@ bool Extension::match(Value *V, SmallVectorImpl<Match> &Matches) const {
 }
 
 VectorExtension VectorExtension::Create(const Extension *ExtOp,
-                                      unsigned VecLen) {
+                                        unsigned VecLen) {
   unsigned InWidth = ExtOp->InWidth, OutWidth = ExtOp->OutWidth;
   InstSignature Sig = {// bitwidths of the inputs
                        {InWidth * VecLen},
@@ -494,32 +510,32 @@ VectorExtension VectorExtension::Create(const Extension *ExtOp,
     unsigned Lo = i * InWidth, Hi = Lo + InWidth;
     LaneOps.push_back(BoundOperation(ExtOp, {{0, Lo, Hi}}));
   }
-  std::string Name = formatv("{0}ext-i{1}-to-i{2}", ExtOp->Signed ? 's' : 'z', InWidth, OutWidth).str();
+  std::string Name = formatv("{0}ext-i{1}-to-i{2}", ExtOp->Signed ? 's' : 'z',
+                             InWidth, OutWidth)
+                         .str();
   return VectorExtension(ExtOp, Name, Sig, LaneOps);
 }
 
 Value *VectorExtension::emit(ArrayRef<Value *> Operands,
-                            IntrinsicBuilder &Builder) const {
+                             IntrinsicBuilder &Builder) const {
   assert(Operands.size() == 1);
   auto &Ctx = Builder.getContext();
   unsigned VL = getLaneOps().size();
-  auto *OutTy =
-      FixedVectorType::get(Type::getIntNTy(Ctx, ExtOp->OutWidth), VL);
-  if (ExtOp->Signed)
-    return Builder.CreateSExt(Operands.front(), OutTy);
+  auto *OutTy = FixedVectorType::get(Type::getIntNTy(Ctx, ExtOp->OutWidth), VL);
+  if (ExtOp->Signed) return Builder.CreateSExt(Operands.front(), OutTy);
   return Builder.CreateZExt(Operands.front(), OutTy);
 }
 
 float VectorExtension::getCost(TargetTransformInfo *TTI,
-                              LLVMContext &Ctx) const {
+                               LLVMContext &Ctx) const {
   unsigned VL = getLaneOps().size();
   auto *InTy = FixedVectorType::get(Type::getIntNTy(Ctx, ExtOp->InWidth), VL);
-  auto *OutTy =
-      FixedVectorType::get(Type::getIntNTy(Ctx, ExtOp->OutWidth), VL);
-  auto Op = ExtOp->Signed ? Instruction::CastOps::SExt : Instruction::CastOps::ZExt;
-  return TTI->getCastInstrCost(Op, OutTy, InTy,
-                               TTI::CastContextHint::None,
-                               TTI::TCK_RecipThroughput);
+  auto *OutTy = FixedVectorType::get(Type::getIntNTy(Ctx, ExtOp->OutWidth), VL);
+  auto Op =
+      ExtOp->Signed ? Instruction::CastOps::SExt : Instruction::CastOps::ZExt;
+  return getCastInstrCostFromTTI(TTI, Op, OutTy, InTy,
+                                 TTI::CastContextHint::None,
+                                 TTI::TCK_RecipThroughput);
 }
 
 bool Select::match(Value *V, SmallVectorImpl<Match> &Matches) const {
@@ -558,22 +574,20 @@ Value *VectorSelect::emit(ArrayRef<Value *> Operands,
                           IntrinsicBuilder &Builder) const {
   assert(Operands.size() == 3);
   auto *Cond = Operands[0], *X = Operands[1], *Y = Operands[2];
-  if (Y->getType() != X->getType())
-    Y = Builder.CreateBitCast(Y, X->getType());
+  if (Y->getType() != X->getType()) Y = Builder.CreateBitCast(Y, X->getType());
   return Builder.CreateSelect(Cond, X, Y);
 }
 
 float VectorSelect::getCost(TargetTransformInfo *TTI, LLVMContext &Ctx) const {
   unsigned VL = getLaneOps().size();
   auto *VecTy = FixedVectorType::get(Type::getIntNTy(Ctx, SelOp->BitWidth), VL);
-  return TTI->getArithmeticInstrCost(Instruction::Select, VecTy);
+  return getArithInstrCostFromTTI(TTI, Instruction::Select, VecTy);
 }
 
 bool UnaryMath::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   // Match for the right floating type
   auto &Ctx = V->getContext();
-  if (!hasBitWidth(V, BitWidth))
-    return false;
+  if (!hasBitWidth(V, BitWidth)) return false;
 
   // Match the intrinsic call
   auto *Call = dyn_cast<CallInst>(V);
@@ -601,9 +615,8 @@ VectorUnaryMath VectorUnaryMath::Create(const UnaryMath *Op, unsigned VecLen) {
     LaneOps.push_back(BoundOperation(Op, {{0, Lo, Hi}}));
   }
 
-  std::string Name = formatv("{0}-x-{1}", "builtin-math",
-                             BitWidth, VecLen)
-                         .str();
+  std::string Name =
+      formatv("{0}-x-{1}", "builtin-math", BitWidth, VecLen).str();
   return VectorUnaryMath(Op, Name, Sig, LaneOps);
 }
 
@@ -625,7 +638,8 @@ Value *VectorUnaryMath::emit(ArrayRef<Value *> Operands,
       Intrinsic::getDeclaration(M, Op->ID, {FixedVectorType::get(Ty, VecLen)});
   assert(Operands.size() == 1);
   if (Op->ID == Intrinsic::abs)
-    return Builder.CreateCall(F, {Operands.front(), Builder.getTrue()/*is int min poison*/});
+    return Builder.CreateCall(
+        F, {Operands.front(), Builder.getTrue() /*is int min poison*/});
   return Builder.CreateCall(F, {Operands.front()});
 }
 
@@ -634,7 +648,7 @@ float VectorUnaryMath::getCost(TargetTransformInfo *TTI,
   auto *Ty = getType(Ctx, Op->BitWidth, Op->IsFloat);
   unsigned VecLen = getLaneOps().size();
   auto *VecTy = FixedVectorType::get(Ty, VecLen);
-  return TTI->getIntrinsicInstrCost(
+  return getIntrinsicInstrCostFromTTI(TTI,
       IntrinsicCostAttributes(Op->ID, VecTy, {VecTy}),
       TTI::TCK_RecipThroughput);
 }
@@ -642,11 +656,9 @@ float VectorUnaryMath::getCost(TargetTransformInfo *TTI,
 bool BinaryMath::match(Value *V, SmallVectorImpl<Match> &Matches) const {
   // Match for the right floating type
   auto &Ctx = V->getContext();
-  if (IsDouble && V->getType() != Type::getDoubleTy(Ctx))
-    return false;
+  if (IsDouble && V->getType() != Type::getDoubleTy(Ctx)) return false;
   bool IsFloat = !IsDouble;
-  if (IsFloat && V->getType() != Type::getFloatTy(Ctx))
-    return false;
+  if (IsFloat && V->getType() != Type::getFloatTy(Ctx)) return false;
 
   // Match the intrinsic call
   auto *Call = dyn_cast<CallInst>(V);
@@ -700,7 +712,7 @@ float VectorBinaryMath::getCost(TargetTransformInfo *TTI,
   auto *Ty = Op->IsDouble ? Type::getDoubleTy(Ctx) : Type::getFloatTy(Ctx);
   unsigned VecLen = getLaneOps().size();
   auto *VecTy = FixedVectorType::get(Ty, VecLen);
-  return TTI->getIntrinsicInstrCost(
+  return getIntrinsicInstrCostFromTTI(TTI,
       IntrinsicCostAttributes(Op->ID, VecTy, {VecTy, VecTy}),
       TTI::TCK_RecipThroughput);
 }

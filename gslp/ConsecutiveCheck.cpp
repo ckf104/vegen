@@ -212,13 +212,17 @@ bool isConsecutive(Instruction *A, Instruction *B, const DataLayout &DL,
 
   if (PtrA->getType() != PtrB->getType())
     return false;
+  
+  // ckf: additonal type check for opaque pointer
+  if(getLoadStoreType(A) != getLoadStoreType(B))
+    return false;
 
   // Make sure that A and B are different pointers.
   if (PtrA == PtrB)
     return false;
 
   unsigned IdxWidth = DL.getIndexSizeInBits(ASA);
-  Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
+  Type *Ty = getLoadStoreType(A);
 
   APInt OffsetA(IdxWidth, 0), OffsetB(IdxWidth, 0);
   PtrA = PtrA->stripAndAccumulateInBoundsConstantOffsets(DL, OffsetA);
@@ -278,7 +282,7 @@ findConsecutiveAccesses(ScalarEvolution &SE, const DataLayout &DL, LoopInfo &LI,
 
   // Figure out size of the accesses here
   Value *Ptr = getLoadStorePointerOperand(Accesses.front());
-  Type *Ty = cast<PointerType>(Ptr->getType())->getElementType();
+  Type *Ty = getLoadStoreType(Accesses.front());
   int64_t Size = DL.getTypeStoreSize(Ty);
 
   std::vector<std::pair<Instruction *, Instruction *>> ConsecutiveAccesses;
