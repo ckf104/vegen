@@ -2,10 +2,10 @@
 executable=$(basename $0)
 if [ "$executable" == "vegen-clang" ]
 then
-  clang=clang
+  clang=@LLVM_TOOLS_BINARY_DIR@/clang
 elif [ "$executable" == "vegen-clang++" ]
 then
-  clang=clang++
+  clang=@LLVM_TOOLS_BINARY_DIR@/clang++
 else
   echo "Error invoking vegen-clang"
   exit 1

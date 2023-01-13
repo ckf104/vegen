@@ -62,7 +62,7 @@ set_target_properties(GSLP PROPERTIES COMPILE_FLAGS "-fno-rtti")
 set(X86_WRAPPERS "${CMAKE_BINARY_DIR}/x86.bc")
 set(X86_FLAGS -mssse3 -msse -mavx512bw -msse3 -msse4.1 -msse4.2 -mfma -msse2 -mavx2 -mavx512vnni -mavx512vl -mavx512dq -mgfni -mavx512vbmi2 -mavx512vbmi -mavx512cd -mavx -mavx512f -mbmi2)
 add_custom_command(OUTPUT ${X86_WRAPPERS}
-  COMMAND clang -D__MM_MALLOC_H -target x86_64-unknown-none-gnu -O3 -emit-llvm ${X86_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/x86.c -c -Wno-argument-outside-range -o ${X86_WRAPPERS}
+  COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang -D__MM_MALLOC_H -target x86_64-unknown-none-gnu -O3 -emit-llvm ${X86_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/x86.c -c -Wno-argument-outside-range -o ${X86_WRAPPERS}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/x86.c
   VERBATIM
 )
