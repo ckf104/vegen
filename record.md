@@ -133,24 +133,3 @@ tmp1 == tmp3;
 * translate z3 expression into llvm ast (`translator` defined in `lift_sema.py` do core work). 
 * <u>canonicalize each llvm ast( defined in `canonicalize.py`)</u>
 * translate each llvm ast into llvm pattern match code. `Operation` is a scalar function, describing how some scalar inputs are mapped to a output. `BoundOperation`  binds `Operation` and `InputSlice`(defining mapping between `Operation` inputs and verctor input lanes). `InstBinding` has a `BoundOperation` vector, a element for each output lanes. So `InstBinding` has complete semantic description for a SIMD instruction
-
-
-
-two differences:
-
-* x86.c change 
-
-```bash
-@@ -47,7 +47,8 @@ __m256d intrinsic_wrapper__mm256_cvtepi32_pd_0(__m128i a) {
-   return _mm256_cvtepi32_pd(a);
- }
- __m256i intrinsic_wrapper__mm_broadcastsi128_si256_0(__m128i a) {
--  return _mm_broadcastsi128_si256(a);
-+       return _mm256_broadcastsi128_si256(a);
-+  //return _mm_broadcastsi128_si256(a);
- }
- __m256d intrinsic_wrapper__mm256_hsub_pd_0(__m256d a, __m256d b) {
-   return _mm256_hsub_pd(a, b);
-```
-
-* x86.cpp compile parameters
