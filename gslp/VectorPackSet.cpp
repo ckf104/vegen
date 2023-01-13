@@ -654,7 +654,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
     return BB;
   };
 
-  SmallVector<std::pair<PHINode *, OperandPack>> MusToPatch;
+  SmallVector<std::pair<PHINode *, OperandPack>, 1> MusToPatch;
   SmallVector<std::pair<PHINode *, Value *>> ScalarMusToPatch;
   auto &VLI = Pkr.getVLoopInfo();
 

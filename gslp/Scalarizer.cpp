@@ -43,6 +43,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include <cassert>
 #include <cstdint>
 #include <iterator>
@@ -61,9 +62,13 @@ static cl::opt<bool> ScalarizeVariableInsertExtract(
 // This is disabled by default because having separate loads and stores
 // makes it more likely that the -combiner-alias-analysis limits will be
 // reached.
-static cl::opt<bool>
-    ScalarizeLoadStore("vegen-scalarize-load-store", cl::init(false), cl::Hidden,
-                       cl::desc("Allow the scalarizer pass to scalarize loads and store"));
+static cl::opt<bool> ScalarizeLoadStore(
+    "vegen-scalarize-load-store", cl::init(false), cl::Hidden,
+    cl::desc("Allow the scalarizer pass to scalarize loads and store"));
+
+// ckf: enable of scalarize, worse result for dot-product
+static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
+                                     cl::Hidden);
 
 namespace llvm {
 void initializeScalarizerPass(PassRegistry &);
@@ -73,10 +78,8 @@ namespace {
 
 BasicBlock::iterator skipPastPhiNodesAndDbg(BasicBlock::iterator Itr) {
   BasicBlock *BB = Itr->getParent();
-  if (isa<PHINode>(Itr))
-    Itr = BB->getFirstInsertionPt();
-  if (Itr != BB->end())
-    Itr = skipDebugIntrinsics(Itr);
+  if (isa<PHINode>(Itr)) Itr = BB->getFirstInsertionPt();
+  if (Itr != BB->end()) Itr = skipDebugIntrinsics(Itr);
   return Itr;
 }
 
@@ -95,14 +98,14 @@ using GatherList = SmallVector<std::pair<Instruction *, ValueVector *>, 16>;
 // Provides a very limited vector-like interface for lazily accessing one
 // component of a scattered vector or vector pointer.
 class Scatterer {
-public:
+ public:
   Scatterer() = default;
 
   // Scatter V into Size components.  If new instructions are needed,
   // insert them before BBI in BB.  If Cache is nonnull, use it to cache
   // the results.
   Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
-            ValueVector *cachePtr = nullptr);
+            Type *ptreeTy = nullptr, ValueVector *cachePtr = nullptr);
 
   // Return component I, creating a new Value for it if necessary.
   Value *operator[](unsigned I);
@@ -110,12 +113,12 @@ public:
   // Return the number of components.
   unsigned size() const { return Size; }
 
-private:
+ private:
   BasicBlock *BB;
   BasicBlock::iterator BBI;
   Value *V;
   ValueVector *CachePtr;
-  PointerType *PtrTy;
+  Type *PtreeTy = nullptr;
   ValueVector Tmp;
   unsigned Size;
 };
@@ -194,10 +197,9 @@ struct VectorLayout {
 };
 
 class ScalarizerVisitor : public InstVisitor<ScalarizerVisitor, bool> {
-public:
+ public:
   ScalarizerVisitor(unsigned ParallelLoopAccessMDKind, DominatorTree *DT)
-    : ParallelLoopAccessMDKind(ParallelLoopAccessMDKind), DT(DT) {
-  }
+      : ParallelLoopAccessMDKind(ParallelLoopAccessMDKind), DT(DT) {}
 
   bool visit(Function &F);
 
@@ -220,8 +222,8 @@ public:
   bool visitStoreInst(StoreInst &SI);
   bool visitCallInst(CallInst &ICI);
 
-private:
-  Scatterer scatter(Instruction *Point, Value *V);
+ private:
+  Scatterer scatter(Instruction *Point, Value *V, Type *ptreeTy = nullptr);
   void gather(Instruction *Op, const ValueVector &CV);
   bool canTransferMetadata(unsigned Kind);
   void transferMetadataAndIRFlags(Instruction *Op, const ValueVector &CV);
@@ -229,8 +231,10 @@ private:
                                          const DataLayout &DL);
   bool finish();
 
-  template<typename T> bool splitUnary(Instruction &, const T &);
-  template<typename T> bool splitBinary(Instruction &, const T &);
+  template <typename T>
+  bool splitUnary(Instruction &, const T &);
+  template <typename T>
+  bool splitBinary(Instruction &, const T &);
 
   bool splitCall(CallInst &CI);
 
@@ -245,7 +249,7 @@ private:
 };
 
 class Scalarizer : public FunctionPass {
-public:
+ public:
   static char ID;
 
   Scalarizer() : FunctionPass(ID) {
@@ -254,28 +258,30 @@ public:
 
   bool runOnFunction(Function &F) override;
 
-  void getAnalysisUsage(AnalysisUsage& AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
   }
 };
 
-} // end anonymous namespace
+}  // end anonymous namespace
 
 char Scalarizer::ID = 0;
-INITIALIZE_PASS_BEGIN(Scalarizer, "scalarizer",
-                      "Scalarize vector operations", false, false)
+INITIALIZE_PASS_BEGIN(Scalarizer, "scalarizer", "Scalarize vector operations",
+                      false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(Scalarizer, "scalarizer",
-                    "Scalarize vector operations", false, false)
+INITIALIZE_PASS_END(Scalarizer, "scalarizer", "Scalarize vector operations",
+                    false, false)
 
 Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
-                     ValueVector *cachePtr)
-  : BB(bb), BBI(bbi), V(v), CachePtr(cachePtr) {
+                     Type *ptreeTy, ValueVector *cachePtr)
+    : BB(bb), BBI(bbi), V(v), CachePtr(cachePtr) {
   Type *Ty = V->getType();
-  PtrTy = dyn_cast<PointerType>(Ty);
-  if (PtrTy)
-    Ty = PtrTy->getElementType();
+  auto PtrTy = dyn_cast<PointerType>(Ty);
+  if (PtrTy) {
+    PtreeTy = Ty = ptreeTy;
+    assert(PtreeTy && "need ptree type");
+  }
   Size = cast<FixedVectorType>(Ty)->getNumElements();
   if (!CachePtr)
     Tmp.resize(Size, nullptr);
@@ -289,13 +295,13 @@ Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
 Value *Scatterer::operator[](unsigned I) {
   ValueVector &CV = (CachePtr ? *CachePtr : Tmp);
   // Try to reuse a previous value.
-  if (CV[I])
-    return CV[I];
+  if (CV[I]) return CV[I];
   IRBuilder<> Builder(BB, BBI);
-  if (PtrTy) {
-    Type *ElTy = cast<VectorType>(PtrTy->getElementType())->getElementType();
+  if (PtreeTy) {
+    Type *ElTy = cast<VectorType>(PtreeTy)->getElementType();
     if (!CV[0]) {
-      Type *NewPtrTy = PointerType::get(ElTy, PtrTy->getAddressSpace());
+      Type *NewPtrTy = PointerType::get(
+          ElTy, dyn_cast<PointerType>(V->getType())->getAddressSpace());
       CV[0] = Builder.CreateBitCast(V, NewPtrTy, V->getName() + ".i0");
     }
     if (I != 0)
@@ -307,11 +313,9 @@ Value *Scatterer::operator[](unsigned I) {
     // for all uncached indices.
     while (true) {
       InsertElementInst *Insert = dyn_cast<InsertElementInst>(V);
-      if (!Insert)
-        break;
+      if (!Insert) break;
       ConstantInt *Idx = dyn_cast<ConstantInt>(Insert->getOperand(2));
-      if (!Idx)
-        break;
+      if (!Idx) break;
       unsigned J = Idx->getZExtValue();
       V = Insert->getOperand(0);
       if (I == J) {
@@ -331,12 +335,14 @@ Value *Scatterer::operator[](unsigned I) {
 }
 
 bool Scalarizer::runOnFunction(Function &F) {
-  if (skipFunction(F))
+  if (!ScalarizeEnable) {
+    errs() << "disable scalarize in func " << F.getName() << "\n";
     return false;
+  }
+  if (skipFunction(F)) return false;
 
   auto IsInvoke = [](Instruction &I) { return isa<InvokeInst>(&I); };
-  if (any_of(instructions(F), IsInvoke))
-    return false;
+  if (any_of(instructions(F), IsInvoke)) return false;
 
   Module &M = *F.getParent();
   unsigned ParallelLoopAccessMDKind =
@@ -346,9 +352,7 @@ bool Scalarizer::runOnFunction(Function &F) {
   return Impl.visit(F);
 }
 
-FunctionPass *createVeGenScalarizerPass() {
-  return new Scalarizer();
-}
+FunctionPass *createVeGenScalarizerPass() { return new Scalarizer(); }
 
 bool ScalarizerVisitor::visit(Function &F) {
   assert(Gathered.empty() && Scattered.empty());
@@ -361,8 +365,7 @@ bool ScalarizerVisitor::visit(Function &F) {
       Instruction *I = &*II;
       bool Done = InstVisitor::visit(I);
       ++II;
-      if (Done && I->getType()->isVoidTy())
-        I->eraseFromParent();
+      if (Done && I->getType()->isVoidTy()) I->eraseFromParent();
     }
   }
   return finish();
@@ -370,13 +373,14 @@ bool ScalarizerVisitor::visit(Function &F) {
 
 // Return a scattered form of V that can be accessed by Point.  V must be a
 // vector or a pointer to a vector.
-Scatterer ScalarizerVisitor::scatter(Instruction *Point, Value *V) {
+Scatterer ScalarizerVisitor::scatter(Instruction *Point, Value *V,
+                                     Type *ptreeTy) {
   if (Argument *VArg = dyn_cast<Argument>(V)) {
     // Put the scattered form of arguments in the entry block,
     // so that it can be used everywhere.
     Function *F = VArg->getParent();
     BasicBlock *BB = &F->getEntryBlock();
-    return Scatterer(BB, BB->begin(), V, &Scattered[V]);
+    return Scatterer(BB, BB->begin(), V, ptreeTy, &Scattered[V]);
   }
   if (Instruction *VOp = dyn_cast<Instruction>(V)) {
     // When scalarizing PHI nodes we might try to examine/rewrite InsertElement
@@ -387,17 +391,17 @@ Scatterer ScalarizerVisitor::scatter(Instruction *Point, Value *V) {
     // need to analyse them further.
     if (!DT->isReachableFromEntry(VOp->getParent()))
       return Scatterer(Point->getParent(), Point->getIterator(),
-                       UndefValue::get(V->getType()));
+                       UndefValue::get(V->getType()), ptreeTy);
     // Put the scattered form of an instruction directly after the
     // instruction, skipping over PHI nodes and debug intrinsics.
     BasicBlock *BB = VOp->getParent();
     return Scatterer(
         BB, skipPastPhiNodesAndDbg(std::next(BasicBlock::iterator(VOp))), V,
-        &Scattered[V]);
+        ptreeTy, &Scattered[V]);
   }
   // In the fallback case, just put the scattered before Point and
   // keep the result local to Point.
-  return Scatterer(Point->getParent(), Point->getIterator(), V);
+  return Scatterer(Point->getParent(), Point->getIterator(), V, ptreeTy);
 }
 
 // Replace Op with the gathered form of the components in CV.  Defer the
@@ -413,12 +417,10 @@ void ScalarizerVisitor::gather(Instruction *Op, const ValueVector &CV) {
   if (!SV.empty()) {
     for (unsigned I = 0, E = SV.size(); I != E; ++I) {
       Value *V = SV[I];
-      if (V == nullptr || SV[I] == CV[I])
-        continue;
+      if (V == nullptr || SV[I] == CV[I]) continue;
 
       Instruction *Old = cast<Instruction>(V);
-      if (isa<Instruction>(CV[I]))
-        CV[I]->takeName(Old);
+      if (isa<Instruction>(CV[I])) CV[I]->takeName(Old);
       Old->replaceAllUsesWith(CV[I]);
       PotentiallyDeadInstrs.emplace_back(Old);
     }
@@ -430,14 +432,12 @@ void ScalarizerVisitor::gather(Instruction *Op, const ValueVector &CV) {
 // Return true if it is safe to transfer the given metadata tag from
 // vector to scalar instructions.
 bool ScalarizerVisitor::canTransferMetadata(unsigned Tag) {
-  return (Tag == LLVMContext::MD_tbaa
-          || Tag == LLVMContext::MD_fpmath
-          || Tag == LLVMContext::MD_tbaa_struct
-          || Tag == LLVMContext::MD_invariant_load
-          || Tag == LLVMContext::MD_alias_scope
-          || Tag == LLVMContext::MD_noalias
-          || Tag == ParallelLoopAccessMDKind
-          || Tag == LLVMContext::MD_access_group);
+  return (Tag == LLVMContext::MD_tbaa || Tag == LLVMContext::MD_fpmath ||
+          Tag == LLVMContext::MD_tbaa_struct ||
+          Tag == LLVMContext::MD_invariant_load ||
+          Tag == LLVMContext::MD_alias_scope ||
+          Tag == LLVMContext::MD_noalias || Tag == ParallelLoopAccessMDKind ||
+          Tag == LLVMContext::MD_access_group);
 }
 
 // Transfer metadata from Op to the instructions in CV if it is known
@@ -460,18 +460,15 @@ void ScalarizerVisitor::transferMetadataAndIRFlags(Instruction *Op,
 
 // Try to fill in Layout from Ty, returning true on success.  Alignment is
 // the alignment of the vector, or None if the ABI default should be used.
-Optional<VectorLayout>
-ScalarizerVisitor::getVectorLayout(Type *Ty, Align Alignment,
-                                   const DataLayout &DL) {
+Optional<VectorLayout> ScalarizerVisitor::getVectorLayout(
+    Type *Ty, Align Alignment, const DataLayout &DL) {
   VectorLayout Layout;
   // Make sure we're dealing with a vector.
   Layout.VecTy = dyn_cast<VectorType>(Ty);
-  if (!Layout.VecTy)
-    return None;
+  if (!Layout.VecTy) return None;
   // Check that we're dealing with full-byte elements.
   Layout.ElemTy = Layout.VecTy->getElementType();
-  if (!DL.typeSizeEqualsStoreSize(Layout.ElemTy))
-    return None;
+  if (!DL.typeSizeEqualsStoreSize(Layout.ElemTy)) return None;
   Layout.VecAlign = Alignment;
   Layout.ElemSize = DL.getTypeStoreSize(Layout.ElemTy);
   return Layout;
@@ -479,11 +476,10 @@ ScalarizerVisitor::getVectorLayout(Type *Ty, Align Alignment,
 
 // Scalarize one-operand instruction I, using Split(Builder, X, Name)
 // to create an instruction like I with operand X and name Name.
-template<typename Splitter>
+template <typename Splitter>
 bool ScalarizerVisitor::splitUnary(Instruction &I, const Splitter &Split) {
   VectorType *VT = dyn_cast<VectorType>(I.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&I);
@@ -499,11 +495,10 @@ bool ScalarizerVisitor::splitUnary(Instruction &I, const Splitter &Split) {
 
 // Scalarize two-operand instruction I, using Split(Builder, X, Y, Name)
 // to create an instruction like I with operands X and Y and name Name.
-template<typename Splitter>
+template <typename Splitter>
 bool ScalarizerVisitor::splitBinary(Instruction &I, const Splitter &Split) {
   VectorType *VT = dyn_cast<VectorType>(I.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&I);
@@ -527,9 +522,8 @@ static bool isTriviallyScalariable(Intrinsic::ID ID) {
 }
 
 // All of the current scalarizable intrinsics only have one mangled type.
-static Function *getScalarIntrinsicDeclaration(Module *M,
-                                               Intrinsic::ID ID,
-                                               ArrayRef<Type*> Tys) {
+static Function *getScalarIntrinsicDeclaration(Module *M, Intrinsic::ID ID,
+                                               ArrayRef<Type *> Tys) {
   return Intrinsic::getDeclaration(M, ID, Tys);
 }
 
@@ -537,12 +531,10 @@ static Function *getScalarIntrinsicDeclaration(Module *M,
 /// element if possible for the intrinsic.
 bool ScalarizerVisitor::splitCall(CallInst &CI) {
   VectorType *VT = dyn_cast<VectorType>(CI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   Function *F = CI.getCalledFunction();
-  if (!F)
-    return false;
+  if (!F) return false;
 
   Intrinsic::ID ID = F->getIntrinsicID();
   if (ID == Intrinsic::not_intrinsic || !isTriviallyScalariable(ID))
@@ -582,7 +574,7 @@ bool ScalarizerVisitor::splitCall(CallInst &CI) {
     ScalarCallOps.clear();
 
     for (unsigned J = 0; J != NumArgs; ++J) {
-      if (hasVectorInstrinsicScalarOpd(ID, J))
+      if (ScalarOperands[J])  // remove the use of hasVectorInstrinsicScalarOpd
         ScalarCallOps.push_back(ScalarOperands[J]);
       else
         ScalarCallOps.push_back(Scattered[J][Elem]);
@@ -598,8 +590,7 @@ bool ScalarizerVisitor::splitCall(CallInst &CI) {
 
 bool ScalarizerVisitor::visitSelectInst(SelectInst &SI) {
   VectorType *VT = dyn_cast<VectorType>(SI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&SI);
@@ -617,16 +608,16 @@ bool ScalarizerVisitor::visitSelectInst(SelectInst &SI) {
       Value *Op0 = VOp0[I];
       Value *Op1 = VOp1[I];
       Value *Op2 = VOp2[I];
-      Res[I] = Builder.CreateSelect(Op0, Op1, Op2,
-                                    SI.getName() + ".i" + Twine(I));
+      Res[I] =
+          Builder.CreateSelect(Op0, Op1, Op2, SI.getName() + ".i" + Twine(I));
     }
   } else {
     Value *Op0 = SI.getOperand(0);
     for (unsigned I = 0; I < NumElems; ++I) {
       Value *Op1 = VOp1[I];
       Value *Op2 = VOp2[I];
-      Res[I] = Builder.CreateSelect(Op0, Op1, Op2,
-                                    SI.getName() + ".i" + Twine(I));
+      Res[I] =
+          Builder.CreateSelect(Op0, Op1, Op2, SI.getName() + ".i" + Twine(I));
     }
   }
   gather(&SI, Res);
@@ -651,8 +642,7 @@ bool ScalarizerVisitor::visitBinaryOperator(BinaryOperator &BO) {
 
 bool ScalarizerVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
   VectorType *VT = dyn_cast<VectorType>(GEPI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   IRBuilder<> Builder(&GEPI);
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
@@ -683,8 +673,7 @@ bool ScalarizerVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
   for (unsigned I = 0; I < NumElems; ++I) {
     SmallVector<Value *, 8> Indices;
     Indices.resize(NumIndices);
-    for (unsigned J = 0; J < NumIndices; ++J)
-      Indices[J] = Ops[J][I];
+    for (unsigned J = 0; J < NumIndices; ++J) Indices[J] = Ops[J][I];
     Res[I] = Builder.CreateGEP(GEPI.getSourceElementType(), Base[I], Indices,
                                GEPI.getName() + ".i" + Twine(I));
     if (GEPI.isInBounds())
@@ -697,8 +686,7 @@ bool ScalarizerVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
 
 bool ScalarizerVisitor::visitCastInst(CastInst &CI) {
   VectorType *VT = dyn_cast<VectorType>(CI.getDestTy());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&CI);
@@ -716,8 +704,7 @@ bool ScalarizerVisitor::visitCastInst(CastInst &CI) {
 bool ScalarizerVisitor::visitBitCastInst(BitCastInst &BCI) {
   VectorType *DstVT = dyn_cast<VectorType>(BCI.getDestTy());
   VectorType *SrcVT = dyn_cast<VectorType>(BCI.getSrcTy());
-  if (!DstVT || !SrcVT)
-    return false;
+  if (!DstVT || !SrcVT) return false;
 
   unsigned DstNumElems = cast<FixedVectorType>(DstVT)->getNumElements();
   unsigned SrcNumElems = cast<FixedVectorType>(SrcVT)->getNumElements();
@@ -746,8 +733,7 @@ bool ScalarizerVisitor::visitBitCastInst(BitCastInst &BCI) {
         V = VI->getOperand(0);
       V = Builder.CreateBitCast(V, MidTy, V->getName() + ".cast");
       Scatterer Mid = scatter(&BCI, V);
-      for (unsigned MidI = 0; MidI < FanOut; ++MidI)
-        Res[ResI++] = Mid[MidI];
+      for (unsigned MidI = 0; MidI < FanOut; ++MidI) Res[ResI++] = Mid[MidI];
     }
   } else {
     // <N*M x t1> -> <M x t2>.  Convert each group of <N x t1> into a t2.
@@ -757,9 +743,9 @@ bool ScalarizerVisitor::visitBitCastInst(BitCastInst &BCI) {
     for (unsigned ResI = 0; ResI < DstNumElems; ++ResI) {
       Value *V = PoisonValue::get(MidTy);
       for (unsigned MidI = 0; MidI < FanIn; ++MidI)
-        V = Builder.CreateInsertElement(V, Op0[Op0I++], Builder.getInt32(MidI),
-                                        BCI.getName() + ".i" + Twine(ResI)
-                                        + ".upto" + Twine(MidI));
+        V = Builder.CreateInsertElement(
+            V, Op0[Op0I++], Builder.getInt32(MidI),
+            BCI.getName() + ".i" + Twine(ResI) + ".upto" + Twine(MidI));
       Res[ResI] = Builder.CreateBitCast(V, DstVT->getElementType(),
                                         BCI.getName() + ".i" + Twine(ResI));
     }
@@ -770,8 +756,7 @@ bool ScalarizerVisitor::visitBitCastInst(BitCastInst &BCI) {
 
 bool ScalarizerVisitor::visitInsertElementInst(InsertElementInst &IEI) {
   VectorType *VT = dyn_cast<VectorType>(IEI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&IEI);
@@ -786,8 +771,7 @@ bool ScalarizerVisitor::visitInsertElementInst(InsertElementInst &IEI) {
     for (unsigned I = 0; I < NumElems; ++I)
       Res[I] = CI->getValue().getZExtValue() == I ? NewElt : Op0[I];
   } else {
-    if (!ScalarizeVariableInsertExtract)
-      return false;
+    if (!ScalarizeVariableInsertExtract) return false;
 
     for (unsigned I = 0; I < NumElems; ++I) {
       Value *ShouldReplace =
@@ -805,8 +789,7 @@ bool ScalarizerVisitor::visitInsertElementInst(InsertElementInst &IEI) {
 
 bool ScalarizerVisitor::visitExtractElementInst(ExtractElementInst &EEI) {
   VectorType *VT = dyn_cast<VectorType>(EEI.getOperand(0)->getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumSrcElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&EEI);
@@ -819,8 +802,7 @@ bool ScalarizerVisitor::visitExtractElementInst(ExtractElementInst &EEI) {
     return true;
   }
 
-  if (!ScalarizeVariableInsertExtract)
-    return false;
+  if (!ScalarizeVariableInsertExtract) return false;
 
   Value *Res = UndefValue::get(VT->getElementType());
   for (unsigned I = 0; I < NumSrcElems; ++I) {
@@ -837,8 +819,7 @@ bool ScalarizerVisitor::visitExtractElementInst(ExtractElementInst &EEI) {
 
 bool ScalarizerVisitor::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   VectorType *VT = dyn_cast<VectorType>(SVI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   Scatterer Op0 = scatter(&SVI, SVI.getOperand(0));
@@ -861,8 +842,7 @@ bool ScalarizerVisitor::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
 bool ScalarizerVisitor::visitPHINode(PHINode &PHI) {
   VectorType *VT = dyn_cast<VectorType>(PHI.getType());
-  if (!VT)
-    return false;
+  if (!VT) return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
   IRBuilder<> Builder(&PHI);
@@ -885,19 +865,16 @@ bool ScalarizerVisitor::visitPHINode(PHINode &PHI) {
 }
 
 bool ScalarizerVisitor::visitLoadInst(LoadInst &LI) {
-  if (!ScalarizeLoadStore)
-    return false;
-  if (!LI.isSimple())
-    return false;
+  if (!ScalarizeLoadStore) return false;
+  if (!LI.isSimple()) return false;
 
   Optional<VectorLayout> Layout = getVectorLayout(
       LI.getType(), LI.getAlign(), LI.getModule()->getDataLayout());
-  if (!Layout)
-    return false;
+  if (!Layout) return false;
 
   unsigned NumElems = cast<FixedVectorType>(Layout->VecTy)->getNumElements();
   IRBuilder<> Builder(&LI);
-  Scatterer Ptr = scatter(&LI, LI.getPointerOperand());
+  Scatterer Ptr = scatter(&LI, LI.getPointerOperand(), getLoadStoreType(&LI));
   ValueVector Res;
   Res.resize(NumElems);
 
@@ -910,20 +887,17 @@ bool ScalarizerVisitor::visitLoadInst(LoadInst &LI) {
 }
 
 bool ScalarizerVisitor::visitStoreInst(StoreInst &SI) {
-  if (!ScalarizeLoadStore)
-    return false;
-  if (!SI.isSimple())
-    return false;
+  if (!ScalarizeLoadStore) return false;
+  if (!SI.isSimple()) return false;
 
   Value *FullValue = SI.getValueOperand();
   Optional<VectorLayout> Layout = getVectorLayout(
       FullValue->getType(), SI.getAlign(), SI.getModule()->getDataLayout());
-  if (!Layout)
-    return false;
+  if (!Layout) return false;
 
   unsigned NumElems = cast<FixedVectorType>(Layout->VecTy)->getNumElements();
   IRBuilder<> Builder(&SI);
-  Scatterer VPtr = scatter(&SI, SI.getPointerOperand());
+  Scatterer VPtr = scatter(&SI, SI.getPointerOperand(), getLoadStoreType(&SI));
   Scatterer VVal = scatter(&SI, FullValue);
 
   ValueVector Stores;
@@ -937,17 +911,14 @@ bool ScalarizerVisitor::visitStoreInst(StoreInst &SI) {
   return true;
 }
 
-bool ScalarizerVisitor::visitCallInst(CallInst &CI) {
-  return splitCall(CI);
-}
+bool ScalarizerVisitor::visitCallInst(CallInst &CI) { return splitCall(CI); }
 
 // Delete the instructions that we scalarized.  If a full vector result
 // is still needed, recreate it using InsertElements.
 bool ScalarizerVisitor::finish() {
   // The presence of data in Gathered or Scattered indicates changes
   // made to the Function.
-  if (Gathered.empty() && Scattered.empty())
-    return false;
+  if (Gathered.empty() && Scattered.empty()) return false;
   for (const auto &GMI : Gathered) {
     Instruction *Op = GMI.first;
     ValueVector &CV = *GMI.second;
@@ -968,8 +939,7 @@ bool ScalarizerVisitor::finish() {
       } else {
         assert(CV.size() == 1 && Op->getType() == CV[0]->getType());
         Res = CV[0];
-        if (Op == Res)
-          continue;
+        if (Op == Res) continue;
       }
       Op->replaceAllUsesWith(Res);
     }

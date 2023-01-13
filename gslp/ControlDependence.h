@@ -120,8 +120,8 @@ class ControlDependenceAnalysis {
 
   llvm::DenseMap<llvm::PHINode *, std::unique_ptr<GammaNode>> Gammas;
 
-  llvm::DenseMap<BinaryInstruction, llvm::Value *> CanonicalInsts;
-  llvm::DenseMap<llvm::Value *, llvm::Value *> CanonicalValues;
+  llvm::DenseMap<BinaryInstruction, llvm::Value *> CanonicalInsts;   // constructor init
+  llvm::DenseMap<llvm::Value *, llvm::Value *> CanonicalValues;      // constructor init
   llvm::Value *getCanonicalValue(llvm::Value *);
   const ControlCondition *getCanonicalCondition(const ControlCondition *);
 

@@ -109,7 +109,7 @@ void simplifyLoopAfterUnroll2(Loop *L, bool SimplifyIVs, LoopInfo *LI,
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
       Instruction *Inst = &*I++;
 
-      if (Value *V = SimplifyInstruction(Inst, {DL, nullptr, DT, AC}))
+      if (Value *V = simplifyInstruction(Inst, {DL, nullptr, DT, AC}))
         if (LI->replacementPreservesLCSSAForm(Inst, V))
           Inst->replaceAllUsesWith(V);
       if (isInstructionTriviallyDead(Inst))
@@ -135,7 +135,7 @@ static bool isEpilogProfitable(Loop *L) {
 }
 
 LoopUnrollResult
-UnrollLoopWithVMap(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
+UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
                    ScalarEvolution *SE, DominatorTree *DT, AssumptionCache *AC,
                    const TargetTransformInfo *TTI, bool PreserveLCSSA,
                    ValueMap<Value *, UnrolledValue> &UnrollToOrigMap,
@@ -182,7 +182,7 @@ UnrollLoopWithVMap(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
 
   bool Peeled = false;
   if (ULO.PeelCount) {
-    Peeled = peelLoop(L, ULO.PeelCount, LI, SE, DT, AC, PreserveLCSSA);
+    Peeled = peelLoop(L, ULO.PeelCount, LI, SE, *DT, AC, PreserveLCSSA);
 
     // Successful peeling may result in a change in the loop preheader/trip
     // counts. If we later unroll the loop, we want these to be updated.
@@ -440,7 +440,7 @@ UnrollLoopWithVMap(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
       for (Instruction &I : *NewBlock) {
         if (auto *II = dyn_cast<IntrinsicInst>(&I))
           if (II->getIntrinsicID() == Intrinsic::assume)
-            AC->registerAssumption(II);
+            AC->registerAssumption(cast<AssumeInst>(II));
       }
     }
 

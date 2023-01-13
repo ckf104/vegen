@@ -5,6 +5,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h" // isSafeToSpeculativelyExecute
 #include "llvm/IR/InstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 
 using namespace llvm;
 
@@ -22,7 +23,8 @@ void buildAccessDAG(ConsecutiveAccessDAG &DAG, ArrayRef<Instruction *> Accesses,
   for (auto *I : Accesses) {
     auto *Ptr = getLoadStorePointerOperand(I);
     assert(Ptr);
-    AccessesByTypes[{Ptr->getType(), LI->getLoopDepth(I->getParent())}]
+    // ckf: opaque pointer can't be used to compare, so use loadstore type
+    AccessesByTypes[{getLoadStoreType(I), LI->getLoopDepth(I->getParent())}]
         .push_back(I);
   }
 
@@ -562,7 +564,7 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
 
 float Packer::getScalarCost(Instruction *I) {
   if (auto *LI = dyn_cast<LoadInst>(I)) {
-    return TTI->getMemoryOpCost(Instruction::Load, LI->getType(),
+    return TTI>getMemoryOpCost(Instruction::Load, LI->getType(),
                                 LI->getAlign(), 0, TTI::TCK_RecipThroughput,
                                 LI);
   }

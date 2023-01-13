@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
+#include "llvm/ADT/PostOrderIterator.h"
 
 using namespace llvm;
 
@@ -53,7 +54,7 @@ public:
                    std::function<const TargetLibraryInfo &(Function &F)> GetTLI,
                    AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI)
       : GetTLI(GetTLI), PV(F),
-        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &LI, &PV), CG(M),
+        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV), CG(M),  // without loopinfo to build BasicAA
         GlobalsResult(GlobalsAAResult::analyzeModule(M, GetTLI, CG)),
         Result(GetTLI(F)) {
     Result.addAAResult(ScopedNoAliasResult);
@@ -121,7 +122,7 @@ void unrollLoops(
       UF = TripCount;
 
     auto *ExitingBlock = L->getExitingBlock();
-    UnrollLoopOptions ULO;
+    VegenUnrollLoopOptions ULO;
     ULO.TripCount = 0;
     ULO.Count = UF;
     ULO.Force = true;

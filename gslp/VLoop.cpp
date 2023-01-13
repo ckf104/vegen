@@ -79,7 +79,7 @@ VLoop::VLoop(LoopInfo &LI, Loop *L, VectorPackContext *VPCtx,
     auto *SubVL = new VLoop(LI, SubL, VPCtx, DA, CDA, VLI);
     SubLoops.emplace_back(SubVL);
     SubVL->Parent = this;
-    Depended |= SubVL->getDepended();
+    Depended |= SubVL->getDepended(); 
     Insts |= SubVL->Insts;
   }
 
