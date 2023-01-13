@@ -414,7 +414,7 @@ void ScalarizerVisitor::gather(Instruction *Op, const ValueVector &CV) {
   // If we already have a scattered form of Op (created from ExtractElements
   // of Op itself), replace them with the new form.
   ValueVector &SV = Scattered[Op];
-  if (!SV.empty()) {
+  if (!SV.empty()) {    // question: it's really possible ? PHI NODE ?
     for (unsigned I = 0, E = SV.size(); I != E; ++I) {
       Value *V = SV[I];
       if (V == nullptr || SV[I] == CV[I]) continue;
@@ -651,7 +651,7 @@ bool ScalarizerVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
   // The base pointer might be scalar even if it's a vector GEP. In those cases,
   // splat the pointer into a vector value, and scatter that vector.
   Value *Op0 = GEPI.getOperand(0);
-  if (!Op0->getType()->isVectorTy())
+  if (!Op0->getType()->isVectorTy())   // question: why not use Op0 repeatly ? 
     Op0 = Builder.CreateVectorSplat(NumElems, Op0);
   Scatterer Base = scatter(&GEPI, Op0);
 

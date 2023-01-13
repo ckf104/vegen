@@ -20,7 +20,7 @@ struct InstSignature {
 };
 
 struct InputSlice {
-  unsigned InputId;
+  unsigned InputId;   // vector input id
   unsigned Lo, Hi;
 
   unsigned size() const { return Hi - Lo; }
