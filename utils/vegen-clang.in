@@ -11,16 +11,17 @@ else
   exit 1
 fi
 
-loadlib = yes
+loadlib=yes
 for arg in $*
 do
-  if test arg = -fno-vectorize
-  then loadlib = no
+  if test $arg = -fno-vectorize -o $arg = -O0 -o $arg = -O1 -o $arg = -O2
+  then loadlib=no
   fi
 done
 
-if test loadlib = yes
-lib = -Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so
+if test $loadlib = yes
+then lib='-Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so'
+fi
 
 exec $clang $lib\
        -mllvm --wrappers-dir=@CMAKE_BINARY_DIR@\
