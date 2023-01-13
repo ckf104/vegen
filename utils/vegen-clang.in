@@ -11,7 +11,18 @@ else
   exit 1
 fi
 
-exec $clang -Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so\
+loadlib = yes
+for arg in $*
+do
+  if test arg = -fno-vectorize
+  then loadlib = no
+  fi
+done
+
+if test loadlib = yes
+lib = -Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so
+
+exec $clang $lib\
        -mllvm --wrappers-dir=@CMAKE_BINARY_DIR@\
        $@\
        -fno-slp-vectorize -fno-vectorize
