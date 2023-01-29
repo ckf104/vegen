@@ -1,0 +1,2074 @@
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 32 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 32 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 44 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 44 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 39 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            add
+    DebugLoc:        { File: stencil_serial.cpp, Line: 66, Column: 39 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 32 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            icmp
+    DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 32 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 64, Column: 28 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            icmp
+    DebugLoc:        { File: stencil_serial.cpp, Line: 64, Column: 28 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            icmp
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 32 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            sext
+    DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 32 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 64, Column: 28 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            sext
+    DebugLoc:        { File: stencil_serial.cpp, Line: 64, Column: 28 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'hoisting '
+  - Inst:            sext
+...
+--- !Missed
+Pass:            inline
+Name:            TooCostly
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - Callee:          _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+    DebugLoc:        { File: stencil_serial.cpp, Line: 59, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+    DebugLoc:        { File: stencil_serial.cpp, Line: 94, Column: 0 }
+  - String:          ' because too costly to inline '
+  - String:          '(cost='
+  - Cost:            '490'
+  - String:          ', threshold='
+  - Threshold:       '250'
+  - String:          ')'
+...
+--- !Missed
+Pass:            inline
+Name:            TooCostly
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - Callee:          _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+    DebugLoc:        { File: stencil_serial.cpp, Line: 59, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+    DebugLoc:        { File: stencil_serial.cpp, Line: 94, Column: 0 }
+  - String:          ' because too costly to inline '
+  - String:          '(cost='
+  - Cost:            '490'
+  - String:          ', threshold='
+  - Threshold:       '250'
+  - String:          ')'
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          loop not vectorized
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          loop not vectorized
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 96, Column: 21 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'hoisting '
+  - Inst:            icmp
+    DebugLoc:        { File: stencil_serial.cpp, Line: 96, Column: 21 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: stencil_serial.cpp, Line: 96, Column: 21 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'hoisting '
+  - Inst:            icmp
+    DebugLoc:        { File: stencil_serial.cpp, Line: 96, Column: 21 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 33 }
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 13 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          loop not vectorized
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 79, Column: 21 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 78, Column: 56 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 76, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 75, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 73, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 72, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 70, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 69, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 40 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 39 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 67, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 71, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: stencil_serial.cpp, Line: 74, Column: 29 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - NumReloads:      '2'
+  - String:          ' reloads '
+  - NumFoldedReloads: '2'
+  - String:          ' folded reloads '
+  - String:          generated in loop
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - NumReloads:      '2'
+  - String:          ' reloads '
+  - String:          generated in loop
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: stencil_serial.cpp, Line: 94, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - NumStackBytes:   '88'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '12'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '9'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 95, Column: 5 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 103, Column: 1 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '8'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '5'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '11'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '5'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '6'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '4'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '18'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '5'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '7'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '6'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 100, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 0, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 97, Column: 13 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: stencil_serial.cpp, Line: 94, Column: 0 }
+Function:        _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Args:
+  - NumInstructions: '245'
+  - String:          ' instructions in function'
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 13 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - NumReloads:      '5'
+  - String:          ' reloads '
+  - String:          generated in loop
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+DebugLoc:        { File: stencil_serial.cpp, Line: 65, Column: 13 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - NumSpills:       '13'
+  - String:          ' spills '
+  - NumReloads:      '22'
+  - String:          ' reloads '
+  - NumFoldedReloads: '2'
+  - String:          ' folded reloads '
+  - String:          generated in loop
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+DebugLoc:        { File: stencil_serial.cpp, Line: 63, Column: 5 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - NumSpills:       '34'
+  - String:          ' spills '
+  - NumFoldedSpills: '2'
+  - String:          ' folded spills '
+  - NumReloads:      '42'
+  - String:          ' reloads '
+  - NumFoldedReloads: '4'
+  - String:          ' folded reloads '
+  - String:          generated in loop
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: stencil_serial.cpp, Line: 59, Column: 0 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - NumStackBytes:   '232'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '13'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '109'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '37'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '34'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '37'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '20'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '1'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 68, Column: 58 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '39'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: stencil_serial.cpp, Line: 83, Column: 1 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '8'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: stencil_serial.cpp, Line: 59, Column: 0 }
+Function:        _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Args:
+  - NumInstructions: '298'
+  - String:          ' instructions in function'
+...

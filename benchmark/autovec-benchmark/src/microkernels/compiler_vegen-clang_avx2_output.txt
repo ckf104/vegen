@@ -1,0 +1,1208 @@
+---
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o ao_rtvec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z9ao_serialiiPf
+Optimizing _Z9ao_serialiiPf
+~~~~ num supported intrinsics: 872
+~COST: 5.779000e+03
+~COST: 5.778000e+03
+~COST: 5.770000e+03
+~COST: 5.767000e+03
+~COST: 5.765000e+03
+~COST: 5.756000e+03
+~COST: 5.754000e+03
+~COST: 5.745000e+03
+~COST: 5.743000e+03
+~COST: 5.734000e+03
+~COST: 5.732000e+03
+~COST: 5.723000e+03
+~COST: 5.721000e+03
+~COST: 5.712000e+03
+~COST: 5.710000e+03
+~COST: 5.701000e+03
+~COST: 5.699000e+03
+~COST: 5.690000e+03
+Unroll factor for loop 0x564c06a7d038(depth=1) 1
+~COST: 5.731000e+03
+~COST: 5.730000e+03
+~COST: 5.722000e+03
+~COST: 5.719000e+03
+~COST: 5.717000e+03
+~COST: 5.708000e+03
+~COST: 5.706000e+03
+~COST: 5.697000e+03
+~COST: 5.695000e+03
+~COST: 5.686000e+03
+~COST: 5.684000e+03
+~COST: 5.675000e+03
+~COST: 5.673000e+03
+~COST: 5.664000e+03
+~COST: 5.662000e+03
+~COST: 5.653000e+03
+~COST: 5.651000e+03
+~COST: 5.642000e+03
+Unroll factor for loop 0x564c06a7cfa0(depth=2) 1
+~COST: 4.802000e+03
+~COST: 4.801000e+03
+~COST: 4.799000e+03
+~COST: 4.797000e+03
+~COST: 4.795000e+03
+~COST: 4.793000e+03
+~COST: 4.791000e+03
+~COST: 4.789000e+03
+~COST: 4.787000e+03
+~COST: 4.785000e+03
+Unroll factor for loop 0x564c06a7cf08(depth=3) 1
+~COST: 4.760000e+03
+~COST: 4.759000e+03
+~COST: 4.757000e+03
+~COST: 4.755000e+03
+~COST: 4.753000e+03
+~COST: 4.751000e+03
+~COST: 4.749000e+03
+~COST: 4.747000e+03
+~COST: 4.745000e+03
+~COST: 4.743000e+03
+Unroll factor for loop 0x564c06a7ce70(depth=4) 1
+~COST: 2.234000e+03
+~COST: 2.233000e+03
+~COST: 2.231000e+03
+Unroll factor for loop 0x564c06a7cdd8(depth=5) 0
+~COST: 2.199000e+03
+~COST: 2.198000e+03
+~COST: 2.196000e+03
+Unroll factor for loop 0x564c06a7cd40(depth=6) 0
+========= final unroll plan ========
+Unroll factor for loop 0x564c06a7d038(depth=1) 0
+Unroll factor for loop 0x564c06a7cfa0(depth=2) 0
+Unroll factor for loop 0x564c06a7cf08(depth=3) 0
+Unroll factor for loop 0x564c06a7ce70(depth=4) 0
+Unroll factor for loop 0x564c06a7cdd8(depth=5) 0
+Unroll factor for loop 0x564c06a7cd40(depth=6) 0
+~COST: 6.970000e+02
+~COST: 6.960000e+02
+~COST: 6.940000e+02
+Generating vector code
+Vectorized _Z9ao_serialiiPf
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z9ao_serialiiPf
+Optimizing _Z9ao_serialiiPf
+~~~~ num supported intrinsics: 872
+~COST: 5.779000e+03
+~COST: 5.778000e+03
+~COST: 5.770000e+03
+~COST: 5.767000e+03
+~COST: 5.765000e+03
+~COST: 5.756000e+03
+~COST: 5.754000e+03
+~COST: 5.745000e+03
+~COST: 5.743000e+03
+~COST: 5.734000e+03
+~COST: 5.732000e+03
+~COST: 5.723000e+03
+~COST: 5.721000e+03
+~COST: 5.712000e+03
+~COST: 5.710000e+03
+~COST: 5.701000e+03
+~COST: 5.699000e+03
+~COST: 5.690000e+03
+Unroll factor for loop 0x5588cf5a9988(depth=1) 1
+~COST: 5.731000e+03
+~COST: 5.730000e+03
+~COST: 5.722000e+03
+~COST: 5.719000e+03
+~COST: 5.717000e+03
+~COST: 5.708000e+03
+~COST: 5.706000e+03
+~COST: 5.697000e+03
+~COST: 5.695000e+03
+~COST: 5.686000e+03
+~COST: 5.684000e+03
+~COST: 5.675000e+03
+~COST: 5.673000e+03
+~COST: 5.664000e+03
+~COST: 5.662000e+03
+~COST: 5.653000e+03
+~COST: 5.651000e+03
+~COST: 5.642000e+03
+Unroll factor for loop 0x5588cf5a98f0(depth=2) 1
+~COST: 4.802000e+03
+~COST: 4.801000e+03
+~COST: 4.799000e+03
+~COST: 4.797000e+03
+~COST: 4.795000e+03
+~COST: 4.793000e+03
+~COST: 4.791000e+03
+~COST: 4.789000e+03
+~COST: 4.787000e+03
+~COST: 4.785000e+03
+Unroll factor for loop 0x5588cf5a9858(depth=3) 1
+~COST: 4.760000e+03
+~COST: 4.759000e+03
+~COST: 4.757000e+03
+~COST: 4.755000e+03
+~COST: 4.753000e+03
+~COST: 4.751000e+03
+~COST: 4.749000e+03
+~COST: 4.747000e+03
+~COST: 4.745000e+03
+~COST: 4.743000e+03
+Unroll factor for loop 0x5588cf5a97c0(depth=4) 1
+~COST: 2.234000e+03
+~COST: 2.233000e+03
+~COST: 2.231000e+03
+Unroll factor for loop 0x5588cf5a9728(depth=5) 0
+~COST: 2.199000e+03
+~COST: 2.198000e+03
+~COST: 2.196000e+03
+Unroll factor for loop 0x5588cf5a9690(depth=6) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5588cf5a9988(depth=1) 0
+Unroll factor for loop 0x5588cf5a98f0(depth=2) 0
+Unroll factor for loop 0x5588cf5a9858(depth=3) 0
+Unroll factor for loop 0x5588cf5a97c0(depth=4) 0
+Unroll factor for loop 0x5588cf5a9728(depth=5) 0
+Unroll factor for loop 0x5588cf5a9690(depth=6) 0
+~COST: 6.970000e+02
+~COST: 6.960000e+02
+~COST: 6.940000e+02
+Generating vector code
+Vectorized _Z9ao_serialiiPf
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o ao.rt-vec ao_rtvec.o ao.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o ao_rtnovec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o ao.rt-novec ao_rtnovec.o ao.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o ao_ctvec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z9ao_serialiiPf
+Optimizing _Z9ao_serialiiPf
+~~~~ num supported intrinsics: 872
+~COST: 5.183000e+03
+~COST: 5.182000e+03
+~COST: 5.181000e+03
+~COST: 5.178000e+03
+~COST: 5.177000e+03
+~COST: 5.173000e+03
+~COST: 5.172000e+03
+~COST: 5.168000e+03
+~COST: 5.167000e+03
+~COST: 5.163000e+03
+~COST: 5.162000e+03
+~COST: 5.158000e+03
+~COST: 5.157000e+03
+~COST: 5.153000e+03
+~COST: 5.152000e+03
+~COST: 5.148000e+03
+~COST: 5.147000e+03
+~COST: 5.143000e+03
+Unroll factor for loop 0x564ddb5bae48(depth=1) 1
+~COST: 5.135000e+03
+~COST: 5.134000e+03
+~COST: 5.133000e+03
+~COST: 5.130000e+03
+~COST: 5.129000e+03
+~COST: 5.125000e+03
+~COST: 5.124000e+03
+~COST: 5.120000e+03
+~COST: 5.119000e+03
+~COST: 5.115000e+03
+~COST: 5.114000e+03
+~COST: 5.110000e+03
+~COST: 5.109000e+03
+~COST: 5.105000e+03
+~COST: 5.104000e+03
+~COST: 5.100000e+03
+~COST: 5.099000e+03
+~COST: 5.095000e+03
+Unroll factor for loop 0x564ddb5badb0(depth=2) 1
+~COST: 1.159000e+03
+~COST: 1.158000e+03
+~COST: 1.157000e+03
+~COST: 1.155000e+03
+~COST: 1.152000e+03
+Unroll factor for loop 0x564ddb5bad18(depth=3) 1
+~COST: 1.148000e+03
+~COST: 1.147000e+03
+~COST: 1.146000e+03
+~COST: 1.144000e+03
+~COST: 1.141000e+03
+Unroll factor for loop 0x564ddb5bac80(depth=4) 1
+~COST: 2.129000e+03
+~COST: 2.128000e+03
+~COST: 2.127000e+03
+~COST: 2.124000e+03
+~COST: 2.116000e+03
+Unroll factor for loop 0x564ddb5babe8(depth=5) 0
+~COST: 2.108000e+03
+~COST: 2.107000e+03
+~COST: 2.106000e+03
+~COST: 2.103000e+03
+~COST: 2.095000e+03
+Unroll factor for loop 0x564ddb5bab50(depth=6) 0
+========= final unroll plan ========
+Unroll factor for loop 0x564ddb5bae48(depth=1) 0
+Unroll factor for loop 0x564ddb5badb0(depth=2) 0
+Unroll factor for loop 0x564ddb5bad18(depth=3) 0
+Unroll factor for loop 0x564ddb5bac80(depth=4) 0
+Unroll factor for loop 0x564ddb5babe8(depth=5) 0
+Unroll factor for loop 0x564ddb5bab50(depth=6) 0
+~COST: 6.290000e+02
+~COST: 6.280000e+02
+~COST: 6.270000e+02
+~COST: 6.240000e+02
+Generating vector code
+Vectorized _Z9ao_serialiiPf
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z9ao_serialiiPf
+Optimizing _Z9ao_serialiiPf
+~~~~ num supported intrinsics: 872
+~COST: 5.183000e+03
+~COST: 5.182000e+03
+~COST: 5.181000e+03
+~COST: 5.178000e+03
+~COST: 5.177000e+03
+~COST: 5.173000e+03
+~COST: 5.172000e+03
+~COST: 5.168000e+03
+~COST: 5.167000e+03
+~COST: 5.163000e+03
+~COST: 5.162000e+03
+~COST: 5.158000e+03
+~COST: 5.157000e+03
+~COST: 5.153000e+03
+~COST: 5.152000e+03
+~COST: 5.148000e+03
+~COST: 5.147000e+03
+~COST: 5.143000e+03
+Unroll factor for loop 0x564bec794b88(depth=1) 1
+~COST: 5.135000e+03
+~COST: 5.134000e+03
+~COST: 5.133000e+03
+~COST: 5.130000e+03
+~COST: 5.129000e+03
+~COST: 5.125000e+03
+~COST: 5.124000e+03
+~COST: 5.120000e+03
+~COST: 5.119000e+03
+~COST: 5.115000e+03
+~COST: 5.114000e+03
+~COST: 5.110000e+03
+~COST: 5.109000e+03
+~COST: 5.105000e+03
+~COST: 5.104000e+03
+~COST: 5.100000e+03
+~COST: 5.099000e+03
+~COST: 5.095000e+03
+Unroll factor for loop 0x564bec794af0(depth=2) 1
+~COST: 1.159000e+03
+~COST: 1.158000e+03
+~COST: 1.157000e+03
+~COST: 1.155000e+03
+~COST: 1.152000e+03
+Unroll factor for loop 0x564bec794a58(depth=3) 1
+~COST: 1.148000e+03
+~COST: 1.147000e+03
+~COST: 1.146000e+03
+~COST: 1.144000e+03
+~COST: 1.141000e+03
+Unroll factor for loop 0x564bec7949c0(depth=4) 1
+~COST: 2.129000e+03
+~COST: 2.128000e+03
+~COST: 2.127000e+03
+~COST: 2.124000e+03
+~COST: 2.116000e+03
+Unroll factor for loop 0x564bec794928(depth=5) 0
+~COST: 2.108000e+03
+~COST: 2.107000e+03
+~COST: 2.106000e+03
+~COST: 2.103000e+03
+~COST: 2.095000e+03
+Unroll factor for loop 0x564bec794890(depth=6) 0
+========= final unroll plan ========
+Unroll factor for loop 0x564bec794b88(depth=1) 0
+Unroll factor for loop 0x564bec794af0(depth=2) 0
+Unroll factor for loop 0x564bec794a58(depth=3) 0
+Unroll factor for loop 0x564bec7949c0(depth=4) 0
+Unroll factor for loop 0x564bec794928(depth=5) 0
+Unroll factor for loop 0x564bec794890(depth=6) 0
+~COST: 6.290000e+02
+~COST: 6.280000e+02
+~COST: 6.270000e+02
+~COST: 6.240000e+02
+Generating vector code
+Vectorized _Z9ao_serialiiPf
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o ao.ct-vec ao_ctvec.o ao.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o ao_ctnovec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o ao.ct-novec ao_ctnovec.o ao.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o binomial_rtvec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19binomial_put_serialPfS_S_S_S_S_i
+Optimizing _Z19binomial_put_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x559c44ae8d18(depth=1) 0
+~COST: 1.300000e+02
+Unroll factor for loop 0x559c44ae8c80(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x559c44ae8d18(depth=1) 0
+Unroll factor for loop 0x559c44ae8c80(depth=2) 8
+Unroll factor for loop 0x559c44ae8be8(depth=2) 0
+Unroll factor for loop 0x559c44ae8b50(depth=3) 0
+~COST: 1.300000e+02
+Generating vector code
+Vectorized _Z19binomial_put_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19binomial_put_serialPfS_S_S_S_S_i
+Optimizing _Z19binomial_put_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x557f83ea1918(depth=1) 0
+~COST: 1.300000e+02
+Unroll factor for loop 0x557f83ea1880(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x557f83ea1918(depth=1) 0
+Unroll factor for loop 0x557f83ea1880(depth=2) 8
+Unroll factor for loop 0x557f83ea17e8(depth=2) 0
+Unroll factor for loop 0x557f83ea1750(depth=3) 0
+~COST: 1.300000e+02
+Generating vector code
+Vectorized _Z19binomial_put_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o binomial.rt-vec binomial_rtvec.o binomial.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _ZL5usagev
+Optimizing _ZL5usagev
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o binomial_rtnovec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o binomial.rt-novec binomial_rtnovec.o binomial.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o binomial_ctvec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19binomial_put_serialPfS_S_S_S_S_i
+Optimizing _Z19binomial_put_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55eb9b8c9b58(depth=1) 0
+~COST: 1.310000e+02
+Unroll factor for loop 0x55eb9b8c9ac0(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55eb9b8c9b58(depth=1) 0
+Unroll factor for loop 0x55eb9b8c9ac0(depth=2) 8
+Unroll factor for loop 0x55eb9b8c9a28(depth=2) 0
+Unroll factor for loop 0x55eb9b8c9990(depth=3) 0
+~COST: 1.310000e+02
+Generating vector code
+Vectorized _Z19binomial_put_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19binomial_put_serialPfS_S_S_S_S_i
+Optimizing _Z19binomial_put_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x561ce7f63b78(depth=1) 0
+~COST: 1.310000e+02
+Unroll factor for loop 0x561ce7f63ae0(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x561ce7f63b78(depth=1) 0
+Unroll factor for loop 0x561ce7f63ae0(depth=2) 8
+Unroll factor for loop 0x561ce7f63a48(depth=2) 0
+Unroll factor for loop 0x561ce7f639b0(depth=3) 0
+~COST: 1.310000e+02
+Generating vector code
+Vectorized _Z19binomial_put_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o binomial.ct-vec binomial_ctvec.o binomial.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _ZL5usagev
+Optimizing _ZL5usagev
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o binomial_ctnovec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o binomial.ct-novec binomial_ctnovec.o binomial.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o black-scholes_rtvec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z20black_scholes_serialPfS_S_S_S_S_i
+Optimizing _Z20black_scholes_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x555b42ab2280(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x555b42ab2280(depth=1) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z20black_scholes_serialPfS_S_S_S_S_i
+Optimizing _Z20black_scholes_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55956aafe3e0(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55956aafe3e0(depth=1) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o black-scholes.rt-vec black-scholes_rtvec.o black-scholes.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _ZL5usagev
+Optimizing _ZL5usagev
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o black-scholes_rtnovec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o black-scholes.rt-novec black-scholes_rtnovec.o black-scholes.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o black-scholes_ctvec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z20black_scholes_serialPfS_S_S_S_S_i
+Optimizing _Z20black_scholes_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+~COST: 7.160000e+02
+Unroll factor for loop 0x557a86632de0(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x557a86632de0(depth=1) 8
+~COST: 7.160000e+02
+Generating vector code
+Vectorized _Z20black_scholes_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z20black_scholes_serialPfS_S_S_S_S_i
+Optimizing _Z20black_scholes_serialPfS_S_S_S_S_i
+~~~~ num supported intrinsics: 872
+~COST: 7.160000e+02
+Unroll factor for loop 0x55c5caff8310(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55c5caff8310(depth=1) 8
+~COST: 7.160000e+02
+Generating vector code
+Vectorized _Z20black_scholes_serialPfS_S_S_S_S_i
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o black-scholes.ct-vec black-scholes_ctvec.o black-scholes.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _ZL5usagev
+Optimizing _ZL5usagev
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o black-scholes_ctnovec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o black-scholes.ct-novec black-scholes_ctnovec.o black-scholes.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o convolution_rtvec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z11BM_convolvePiS_iiS_
+Optimizing _Z11BM_convolvePiS_iiS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55b2f4e8e388(depth=1) 0
+Unroll factor for loop 0x55b2f4e8e2f0(depth=2) 0
+Unroll factor for loop 0x55b2f4e8e258(depth=3) 0
+Unroll factor for loop 0x55b2f4e8e1c0(depth=4) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55b2f4e8e388(depth=1) 0
+Unroll factor for loop 0x55b2f4e8e2f0(depth=2) 0
+Unroll factor for loop 0x55b2f4e8e258(depth=3) 0
+Unroll factor for loop 0x55b2f4e8e1c0(depth=4) 0
+Generating vector code
+disable scalarize in func _GLOBAL__sub_I_convolution_serial.cpp
+Optimizing _GLOBAL__sub_I_convolution_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z11BM_convolvePiS_iiS_
+Optimizing _Z11BM_convolvePiS_iiS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x56149d5e6338(depth=1) 0
+Unroll factor for loop 0x56149d5e62a0(depth=2) 0
+Unroll factor for loop 0x56149d5e6208(depth=3) 0
+Unroll factor for loop 0x56149d5e6170(depth=4) 0
+========= final unroll plan ========
+Unroll factor for loop 0x56149d5e6338(depth=1) 0
+Unroll factor for loop 0x56149d5e62a0(depth=2) 0
+Unroll factor for loop 0x56149d5e6208(depth=3) 0
+Unroll factor for loop 0x56149d5e6170(depth=4) 0
+Generating vector code
+disable scalarize in func _GLOBAL__sub_I_convolution_serial.cpp
+Optimizing _GLOBAL__sub_I_convolution_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o convolution.rt-vec convolution_rtvec.o convolution.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+~COST: 1.890000e+02
+~COST: 1.880000e+02
+Generating vector code
+Vectorized main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o convolution_rtnovec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o convolution.rt-novec convolution_rtnovec.o convolution.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o convolution_ctvec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z11BM_convolvePiS_iiS_
+Optimizing _Z11BM_convolvePiS_iiS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55bce7859338(depth=1) 0
+~COST: 6.900000e+01
+Unroll factor for loop 0x55bce78592a0(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55bce7859338(depth=1) 0
+Unroll factor for loop 0x55bce78592a0(depth=2) 8
+~COST: 6.900000e+01
+Generating vector code
+Vectorized _Z11BM_convolvePiS_iiS_
+disable scalarize in func _GLOBAL__sub_I_convolution_serial.cpp
+Optimizing _GLOBAL__sub_I_convolution_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z11BM_convolvePiS_iiS_
+Optimizing _Z11BM_convolvePiS_iiS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x558dcf1a4c68(depth=1) 0
+~COST: 6.900000e+01
+Unroll factor for loop 0x558dcf1a4bd0(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x558dcf1a4c68(depth=1) 0
+Unroll factor for loop 0x558dcf1a4bd0(depth=2) 8
+~COST: 6.900000e+01
+Generating vector code
+Vectorized _Z11BM_convolvePiS_iiS_
+disable scalarize in func _GLOBAL__sub_I_convolution_serial.cpp
+Optimizing _GLOBAL__sub_I_convolution_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o convolution.ct-vec convolution_ctvec.o convolution.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+~COST: 1.890000e+02
+~COST: 1.880000e+02
+Generating vector code
+Vectorized main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o convolution_ctnovec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o convolution.ct-novec convolution_ctnovec.o convolution.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o mandelbrot_rtvec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z17mandelbrot_serialffffiiiPi
+Optimizing _Z17mandelbrot_serialffffiiiPi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5563bcbb9550(depth=1) 0
+Unroll factor for loop 0x5563bcbb94b8(depth=2) 0
+Unroll factor for loop 0x5563bcbb9420(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5563bcbb9550(depth=1) 0
+Unroll factor for loop 0x5563bcbb94b8(depth=2) 0
+Unroll factor for loop 0x5563bcbb9420(depth=3) 0
+Generating vector code
+disable scalarize in func _GLOBAL__sub_I_mandelbrot_serial.cpp
+Optimizing _GLOBAL__sub_I_mandelbrot_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z17mandelbrot_serialffffiiiPi
+Optimizing _Z17mandelbrot_serialffffiiiPi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x562a67a58160(depth=1) 0
+Unroll factor for loop 0x562a67a580c8(depth=2) 0
+Unroll factor for loop 0x562a67a58030(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x562a67a58160(depth=1) 0
+Unroll factor for loop 0x562a67a580c8(depth=2) 0
+Unroll factor for loop 0x562a67a58030(depth=3) 0
+Generating vector code
+disable scalarize in func _GLOBAL__sub_I_mandelbrot_serial.cpp
+Optimizing _GLOBAL__sub_I_mandelbrot_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o mandelbrot.rt-vec mandelbrot_rtvec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5566914f6e00(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5566914f6e00(depth=1) 0
+Generating vector code
+1 warning generated.
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o mandelbrot_rtnovec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o mandelbrot.rt-novec mandelbrot_rtnovec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o mandelbrot_ctvec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z17mandelbrot_serialffffiiiPi
+Optimizing _Z17mandelbrot_serialffffiiiPi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x557339879ed0(depth=1) 0
+~COST: 9.100000e+01
+Unroll factor for loop 0x557339879e38(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x557339879ed0(depth=1) 0
+Unroll factor for loop 0x557339879e38(depth=2) 8
+Unroll factor for loop 0x557339879da0(depth=3) 0
+~COST: 9.100000e+01
+Generating vector code
+Vectorized _Z17mandelbrot_serialffffiiiPi
+disable scalarize in func _GLOBAL__sub_I_mandelbrot_serial.cpp
+Optimizing _GLOBAL__sub_I_mandelbrot_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z17mandelbrot_serialffffiiiPi
+Optimizing _Z17mandelbrot_serialffffiiiPi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5573b74429f0(depth=1) 0
+~COST: 9.100000e+01
+Unroll factor for loop 0x5573b7442958(depth=2) 8
+========= final unroll plan ========
+Unroll factor for loop 0x5573b74429f0(depth=1) 0
+Unroll factor for loop 0x5573b7442958(depth=2) 8
+Unroll factor for loop 0x5573b74428c0(depth=3) 0
+~COST: 9.100000e+01
+Generating vector code
+Vectorized _Z17mandelbrot_serialffffiiiPi
+disable scalarize in func _GLOBAL__sub_I_mandelbrot_serial.cpp
+Optimizing _GLOBAL__sub_I_mandelbrot_serial.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o mandelbrot.ct-vec mandelbrot_ctvec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x559c6deafa00(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x559c6deafa00(depth=1) 0
+Generating vector code
+1 warning generated.
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o mandelbrot_ctnovec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o mandelbrot.ct-novec mandelbrot_ctnovec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -o matrixmult.rt-vec matrixmult.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z15do_x_matrixMultjPdS_S_i
+Optimizing _Z15do_x_matrixMultjPdS_S_i
+~~~~ num supported intrinsics: 872
+~COST: 2.360000e+02
+Adjusted uf = 32
+Unroll factor for loop 0x56347dcaab48(depth=1) 32
+========= final unroll plan ========
+Unroll factor for loop 0x56347dcaab48(depth=1) 32
+Unroll factor for loop 0x56347dcaaab0(depth=2) 0
+Unroll factor for loop 0x56347dcaaa18(depth=3) 0
+Unroll factor for loop 0x56347dcaa980(depth=4) 0
+~COST: 8.120000e+02
+Generating vector code
+Vectorized _Z15do_x_matrixMultjPdS_S_i
+disable scalarize in func _Z16randomInitMatrixPdi
+Optimizing _Z16randomInitMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x56347dcaaa18(depth=1) 0
+Unroll factor for loop 0x56347dcaa980(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x56347dcaaa18(depth=1) 0
+Unroll factor for loop 0x56347dcaa980(depth=2) 0
+Generating vector code
+disable scalarize in func _Z10zeroMatrixPdi
+Optimizing _Z10zeroMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x56347dcaaa18(depth=1) 0
+Unroll factor for loop 0x56347dcaa980(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x56347dcaaa18(depth=1) 0
+Unroll factor for loop 0x56347dcaa980(depth=2) 0
+Generating vector code
+disable scalarize in func _Z6sumAllPdi
+Optimizing _Z6sumAllPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x56347dcaa980(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x56347dcaa980(depth=1) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _GLOBAL__sub_I_matrixmult.cpp
+Optimizing _GLOBAL__sub_I_matrixmult.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -o optreports/vegen-clang-avx2_rtvec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z15do_x_matrixMultjPdS_S_i
+Optimizing _Z15do_x_matrixMultjPdS_S_i
+~~~~ num supported intrinsics: 872
+~COST: 2.360000e+02
+Adjusted uf = 32
+Unroll factor for loop 0x55e485ea7518(depth=1) 32
+========= final unroll plan ========
+Unroll factor for loop 0x55e485ea7518(depth=1) 32
+Unroll factor for loop 0x55e485ea7480(depth=2) 0
+Unroll factor for loop 0x55e485ea73e8(depth=3) 0
+Unroll factor for loop 0x55e485ea7350(depth=4) 0
+~COST: 8.120000e+02
+Generating vector code
+Vectorized _Z15do_x_matrixMultjPdS_S_i
+disable scalarize in func _Z16randomInitMatrixPdi
+Optimizing _Z16randomInitMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55e485ea73e8(depth=1) 0
+Unroll factor for loop 0x55e485ea7350(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55e485ea73e8(depth=1) 0
+Unroll factor for loop 0x55e485ea7350(depth=2) 0
+Generating vector code
+disable scalarize in func _Z10zeroMatrixPdi
+Optimizing _Z10zeroMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55e485ea73e8(depth=1) 0
+Unroll factor for loop 0x55e485ea7350(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55e485ea73e8(depth=1) 0
+Unroll factor for loop 0x55e485ea7350(depth=2) 0
+Generating vector code
+disable scalarize in func _Z6sumAllPdi
+Optimizing _Z6sumAllPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55e485ea7350(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55e485ea7350(depth=1) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _GLOBAL__sub_I_matrixmult.cpp
+Optimizing _GLOBAL__sub_I_matrixmult.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -o matrixmult.rt-novec matrixmult.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -o optreports/vegen-clang-avx2_rtnovec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE  -o matrixmult.ct-vec matrixmult.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z15do_x_matrixMultjPdS_S_i
+Optimizing _Z15do_x_matrixMultjPdS_S_i
+~~~~ num supported intrinsics: 872
+~COST: 1.700000e+02
+Unroll factor for loop 0x5578aa22c2d8(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x5578aa22c2d8(depth=1) 8
+Unroll factor for loop 0x5578aa22c240(depth=2) 0
+Unroll factor for loop 0x5578aa22c1a8(depth=3) 0
+Unroll factor for loop 0x5578aa22c110(depth=4) 0
+~COST: 1.700000e+02
+Generating vector code
+Vectorized _Z15do_x_matrixMultjPdS_S_i
+disable scalarize in func _Z16randomInitMatrixPdi
+Optimizing _Z16randomInitMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5578aa22c1a8(depth=1) 0
+Unroll factor for loop 0x5578aa22c110(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5578aa22c1a8(depth=1) 0
+Unroll factor for loop 0x5578aa22c110(depth=2) 0
+Generating vector code
+disable scalarize in func _Z10zeroMatrixPdi
+Optimizing _Z10zeroMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5578aa22c1a8(depth=1) 0
+Unroll factor for loop 0x5578aa22c110(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5578aa22c1a8(depth=1) 0
+Unroll factor for loop 0x5578aa22c110(depth=2) 0
+Generating vector code
+disable scalarize in func _Z6sumAllPdi
+Optimizing _Z6sumAllPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5578aa22c110(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5578aa22c110(depth=1) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _GLOBAL__sub_I_matrixmult.cpp
+Optimizing _GLOBAL__sub_I_matrixmult.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE  -o optreports/vegen-clang-avx2_ctvec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z15do_x_matrixMultjPdS_S_i
+Optimizing _Z15do_x_matrixMultjPdS_S_i
+~~~~ num supported intrinsics: 872
+~COST: 1.700000e+02
+Unroll factor for loop 0x556faf112908(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x556faf112908(depth=1) 8
+Unroll factor for loop 0x556faf112870(depth=2) 0
+Unroll factor for loop 0x556faf1127d8(depth=3) 0
+Unroll factor for loop 0x556faf112740(depth=4) 0
+~COST: 1.700000e+02
+Generating vector code
+Vectorized _Z15do_x_matrixMultjPdS_S_i
+disable scalarize in func _Z16randomInitMatrixPdi
+Optimizing _Z16randomInitMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x556faf1127d8(depth=1) 0
+Unroll factor for loop 0x556faf112740(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x556faf1127d8(depth=1) 0
+Unroll factor for loop 0x556faf112740(depth=2) 0
+Generating vector code
+disable scalarize in func _Z10zeroMatrixPdi
+Optimizing _Z10zeroMatrixPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x556faf1127d8(depth=1) 0
+Unroll factor for loop 0x556faf112740(depth=2) 0
+========= final unroll plan ========
+Unroll factor for loop 0x556faf1127d8(depth=1) 0
+Unroll factor for loop 0x556faf112740(depth=2) 0
+Generating vector code
+disable scalarize in func _Z6sumAllPdi
+Optimizing _Z6sumAllPdi
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x556faf112740(depth=1) 0
+========= final unroll plan ========
+Unroll factor for loop 0x556faf112740(depth=1) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+disable scalarize in func _GLOBAL__sub_I_matrixmult.cpp
+Optimizing _GLOBAL__sub_I_matrixmult.cpp
+~~~~ num supported intrinsics: 872
+========= final unroll plan ========
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -o matrixmult.ct-novec matrixmult.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -o optreports/vegen-clang-avx2_ctnovec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtvec.txt -ffast-math -c -o stencil_rtvec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Optimizing _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+~~~~ num supported intrinsics: 872
+~COST: 6.400000e+01
+Unroll factor for loop 0x55f702957fb0(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55f702957fb0(depth=1) 8
+~COST: 6.400000e+01
+Generating vector code
+Vectorized _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+disable scalarize in func _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Optimizing _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55f7029580e0(depth=1) 0
+Unroll factor for loop 0x55f702958048(depth=2) 0
+Unroll factor for loop 0x55f702957fb0(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55f7029580e0(depth=1) 0
+Unroll factor for loop 0x55f702958048(depth=2) 0
+Unroll factor for loop 0x55f702957fb0(depth=3) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/vegen-clang-avx2_rtvec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Optimizing _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+~~~~ num supported intrinsics: 872
+~COST: 6.400000e+01
+Unroll factor for loop 0x5646f21cdae0(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x5646f21cdae0(depth=1) 8
+~COST: 6.400000e+01
+Generating vector code
+Vectorized _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+disable scalarize in func _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Optimizing _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x5646f21cdc10(depth=1) 0
+Unroll factor for loop 0x5646f21cdb78(depth=2) 0
+Unroll factor for loop 0x5646f21cdae0(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x5646f21cdc10(depth=1) 0
+Unroll factor for loop 0x5646f21cdb78(depth=2) 0
+Unroll factor for loop 0x5646f21cdae0(depth=3) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o stencil.rt-vec stencil_rtvec.o stencil.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z8InitDataiiiPPfS_
+Optimizing _Z8InitDataiiiPPfS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55aab1b5cce0(depth=1) 0
+Unroll factor for loop 0x55aab1b5cc48(depth=2) 0
+Unroll factor for loop 0x55aab1b5cbb0(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55aab1b5cce0(depth=1) 0
+Unroll factor for loop 0x55aab1b5cc48(depth=2) 0
+Unroll factor for loop 0x55aab1b5cbb0(depth=3) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55aab1b5cce0(depth=1) 0
+Unroll factor for loop 0x55aab1b5cc48(depth=2) 0
+~COST: 3.970000e+02
+~COST: 3.360000e+02
+Unroll factor for loop 0x55aab1b5cbb0(depth=3) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55aab1b5cce0(depth=1) 0
+Unroll factor for loop 0x55aab1b5cc48(depth=2) 0
+Unroll factor for loop 0x55aab1b5cbb0(depth=3) 8
+~COST: 3.970000e+02
+~COST: 3.360000e+02
+Generating vector code
+Vectorized main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -c -o stencil_rtnovec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -c -o optreports/vegen-clang-avx2_rtnovec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o stencil.rt-novec stencil_rtnovec.o stencil.cpp
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o stencil_ctvec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Optimizing _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+~~~~ num supported intrinsics: 872
+~COST: 6.400000e+01
+Unroll factor for loop 0x561a55de4ce0(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x561a55de4ce0(depth=1) 8
+~COST: 6.400000e+01
+Generating vector code
+Vectorized _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+disable scalarize in func _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Optimizing _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x561a55de4e10(depth=1) 0
+Unroll factor for loop 0x561a55de4d78(depth=2) 0
+Unroll factor for loop 0x561a55de4ce0(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x561a55de4e10(depth=1) 0
+Unroll factor for loop 0x561a55de4d78(depth=2) 0
+Unroll factor for loop 0x561a55de4ce0(depth=3) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctvec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+Optimizing _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+~~~~ num supported intrinsics: 872
+~COST: 6.400000e+01
+Unroll factor for loop 0x55b6abad8390(depth=1) 8
+========= final unroll plan ========
+Unroll factor for loop 0x55b6abad8390(depth=1) 8
+~COST: 6.400000e+01
+Generating vector code
+Vectorized _Z19loop_stencil_serialiiiiiiiiiiiPKfS0_PfS1_
+disable scalarize in func _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+Optimizing _ZL12stencil_stepiiiiiiiiiPKfS0_S0_Pf
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x55b6abad84c0(depth=1) 0
+Unroll factor for loop 0x55b6abad8428(depth=2) 0
+Unroll factor for loop 0x55b6abad8390(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x55b6abad84c0(depth=1) 0
+Unroll factor for loop 0x55b6abad8428(depth=2) 0
+Unroll factor for loop 0x55b6abad8390(depth=3) 0
+Generating vector code
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o stencil.ct-vec stencil_ctvec.o stencil.cpp
+Loading inst wrappers: /home/ckf/tmp/rvv/vegen/build/x86.bc
+disable scalarize in func _Z8InitDataiiiPPfS_
+Optimizing _Z8InitDataiiiPPfS_
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x555798b13410(depth=1) 0
+Unroll factor for loop 0x555798b13378(depth=2) 0
+Unroll factor for loop 0x555798b132e0(depth=3) 0
+========= final unroll plan ========
+Unroll factor for loop 0x555798b13410(depth=1) 0
+Unroll factor for loop 0x555798b13378(depth=2) 0
+Unroll factor for loop 0x555798b132e0(depth=3) 0
+Generating vector code
+disable scalarize in func main
+Optimizing main
+~~~~ num supported intrinsics: 872
+Unroll factor for loop 0x555798b13410(depth=1) 0
+Unroll factor for loop 0x555798b13378(depth=2) 0
+~COST: 3.970000e+02
+~COST: 3.360000e+02
+Unroll factor for loop 0x555798b132e0(depth=3) 8
+========= final unroll plan ========
+Unroll factor for loop 0x555798b13410(depth=1) 0
+Unroll factor for loop 0x555798b13378(depth=2) 0
+Unroll factor for loop 0x555798b132e0(depth=3) 8
+~COST: 3.970000e+02
+~COST: 3.360000e+02
+Generating vector code
+Vectorized main
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/vegen_clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -DSPECIALIZE -c -o stencil_ctnovec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -DSPECIALIZE -c -o optreports/vegen-clang-avx2_ctnovec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+vegen-clang++ -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -o stencil.ct-novec stencil_ctnovec.o stencil.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory

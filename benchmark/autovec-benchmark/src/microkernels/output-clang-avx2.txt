@@ -1,0 +1,38 @@
+ ############
+ # Using compiler: clang , isa:avx2 
+ ############
+#--------------
+ao RT NO-VEC cycles = [364.688]
+ao RT VEC cycles = [379.950]
+ao CT NO-VEC cycles = [364.273]
+ao CT VEC cycles = [377.435]
+#--------------
+binomial RT NO-VEC cycles = [192.864]
+binomial RT VEC cycles = [122.455]
+binomial CT NO-VEC cycles = [189.256]
+binomial CT VEC cycles = [124.772]
+#--------------
+black-scholes RT NO-VEC cycles = [39.849]
+black-scholes RT VEC cycles = [28.145]
+black-scholes CT NO-VEC cycles = [43.023]
+black-scholes CT VEC cycles = [22.483]
+#--------------
+convolution RT NO-VEC cycles = [1042.281]
+convolution RT VEC cycles = [1042.865]
+convolution CT NO-VEC cycles = [96.933]
+convolution CT VEC cycles = [27.950]
+#--------------
+mandelbrot RT NO-VEC cycles = [264.902]
+mandelbrot RT VEC cycles = [311.789]
+mandelbrot CT NO-VEC cycles = [113.038]
+mandelbrot CT VEC cycles = [100.835]
+#--------------
+matrixmult RT NO-VEC cycles = 20.671
+matrixmult RT VEC cycles = 22.225
+matrixmult CT NO-VEC cycles = 15.411
+matrixmult CT VEC cycles = 4.498
+#--------------
+stencil RT NO-VEC cycles = [546.707]
+stencil RT VEC cycles = [545.265]
+stencil CT NO-VEC cycles = [498.974]
+stencil CT VEC cycles = [130.662]

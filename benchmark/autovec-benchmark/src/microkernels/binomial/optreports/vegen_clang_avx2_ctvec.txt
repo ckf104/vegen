@@ -1,0 +1,1399 @@
+--- !Passed
+Pass:            inline
+Name:            Inlined
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 20 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - Callee:          _ZSt3maxIfERKT_S2_S2_
+    DebugLoc:        { File: '/usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/bits/stl_algobase.h', 
+                       Line: 223, Column: 0 }
+  - String:          ' inlined into '
+  - Caller:          _Z19binomial_put_serialPfS_S_S_S_S_i
+    DebugLoc:        { File: binomial_serial.cpp, Line: 61, Column: 0 }
+  - String:          ' with '
+  - String:          '(cost='
+  - Cost:            '-20'
+  - String:          ', threshold='
+  - Threshold:       '487'
+  - String:          ')'
+  - String:          ' at callsite '
+  - String:          binomial_put_serial
+  - String:          ':'
+  - Line:            '27'
+  - String:          ':'
+  - Column:          '20'
+  - String:          ';'
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 18 }
+...
+--- !Passed
+Pass:            gvn
+Name:            LoadPRE
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          load eliminated by PRE
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 18 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 18 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 18 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 85, Column: 26 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+    DebugLoc:        { File: binomial_serial.cpp, Line: 85, Column: 26 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' in favor of '
+  - OtherAccess:     load
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+...
+--- !Missed
+Pass:            gvn
+Name:            LoadClobbered
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'load of type '
+  - Type:            float
+  - String:          ' not eliminated'
+  - String:          ' in favor of '
+  - OtherAccess:     load
+  - String:          ' because it is clobbered by '
+  - ClobberedBy:     store
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 22 }
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          loop not vectorized
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          loop not vectorized
+...
+--- !Passed
+Pass:            loop-unroll
+Name:            FullyUnrolled
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'completely unrolled loop with '
+  - UnrollCount:     '8'
+  - String:          ' iterations'
+...
+--- !Passed
+Pass:            loop-unroll
+Name:            PartialUnrolled
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'unrolled loop by a factor of '
+  - UnrollCount:     '2'
+  - String:          ' with run-time trip count'
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 36 }
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            fdiv
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            insertelement
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 76, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 75, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 74, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            getelementptr
+    DebugLoc:        { File: binomial_serial.cpp, Line: 86, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'hoisting '
+  - Inst:            bitcast
+...
+--- !Missed
+Pass:            licm
+Name:            LoadWithLoopInvariantAddressInvalidated
+DebugLoc:        { File: binomial_serial.cpp, Line: 93, Column: 21 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          failed to move load with loop-invariant address because the loop may invalidate its value
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - NumSpills:       '32'
+  - String:          ' spills '
+  - NumReloads:      '19'
+  - String:          ' reloads '
+  - NumFoldedReloads: '22'
+  - String:          ' folded reloads '
+  - String:          generated in loop
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: binomial_serial.cpp, Line: 61, Column: 0 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - NumStackBytes:   '856'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '13'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '6'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '7'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: binomial_serial.cpp, Line: 78, Column: 22 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '217'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: binomial_serial.cpp, Line: 90, Column: 31 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '5'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '1'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '1'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '4'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '16'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: binomial_serial.cpp, Line: 91, Column: 48 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '7'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: binomial_serial.cpp, Line: 95, Column: 1 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '9'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: binomial_serial.cpp, Line: 61, Column: 0 }
+Function:        _Z19binomial_put_serialPfS_S_S_S_S_i
+Args:
+  - NumInstructions: '296'
+  - String:          ' instructions in function'
+...

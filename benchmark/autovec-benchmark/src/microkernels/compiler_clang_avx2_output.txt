@@ -1,0 +1,236 @@
+---
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o ao_rtvec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o ao.rt-vec ao_rtvec.o ao.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o ao_rtnovec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o ao.rt-novec ao_rtnovec.o ao.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o ao_ctvec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o ao.ct-vec ao_ctvec.o ao.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o ao_ctnovec.o ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s ao_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o ao.ct-novec ao_ctnovec.o ao.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o binomial_rtvec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o binomial.rt-vec binomial_rtvec.o binomial.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o binomial_rtnovec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o binomial.rt-novec binomial_rtnovec.o binomial.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o binomial_ctvec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o binomial.ct-vec binomial_ctvec.o binomial.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o binomial_ctnovec.o binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s binomial_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o binomial.ct-novec binomial_ctnovec.o binomial.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o black-scholes_rtvec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o black-scholes.rt-vec black-scholes_rtvec.o black-scholes.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o black-scholes_rtnovec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o black-scholes.rt-novec black-scholes_rtnovec.o black-scholes.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o black-scholes_ctvec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o black-scholes.ct-vec black-scholes_ctvec.o black-scholes.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o black-scholes_ctnovec.o black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s black-scholes_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o black-scholes.ct-novec black-scholes_ctnovec.o black-scholes.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o convolution_rtvec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o convolution.rt-vec convolution_rtvec.o convolution.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o convolution_rtnovec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o convolution.rt-novec convolution_rtnovec.o convolution.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o convolution_ctvec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o convolution.ct-vec convolution_ctvec.o convolution.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o convolution_ctnovec.o convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s convolution_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o convolution.ct-novec convolution_ctnovec.o convolution.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o mandelbrot_rtvec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o mandelbrot.rt-vec mandelbrot_rtvec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o mandelbrot_rtnovec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o mandelbrot.rt-novec mandelbrot_rtnovec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o mandelbrot_ctvec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o mandelbrot.ct-vec mandelbrot_ctvec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o mandelbrot_ctnovec.o mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s mandelbrot_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o mandelbrot.ct-novec mandelbrot_ctnovec.o mandelbrot.cpp
+mandelbrot.cpp:63:35: warning: implicit conversion from 'int' to 'char' changes value from 240 to -16 [-Wconstant-conversion]
+        char c = (buf[i] & 0x1) ? 240 : 20;
+             ~                    ^~~
+1 warning generated.
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -o matrixmult.rt-vec matrixmult.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -o optreports/clang-avx2_rtvec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -o matrixmult.rt-novec matrixmult.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -o optreports/clang-avx2_rtnovec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE  -o matrixmult.ct-vec matrixmult.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE  -o optreports/clang-avx2_ctvec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -o matrixmult.ct-novec matrixmult.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -o optreports/clang-avx2_ctnovec.s matrixmult.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtvec.txt -ffast-math -c -o stencil_rtvec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -c -o optreports/clang-avx2_rtvec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o stencil.rt-vec stencil_rtvec.o stencil.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_rtnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -c -o stencil_rtnovec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -c -o optreports/clang-avx2_rtnovec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o stencil.rt-novec stencil_rtnovec.o stencil.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctvec.txt -ffast-math -DSPECIALIZE -c -o stencil_ctvec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -DSPECIALIZE -c -o optreports/clang-avx2_ctvec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -o stencil.ct-vec stencil_ctvec.o stencil.cpp
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -fsave-optimization-record -foptimization-record-file=optreports/clang_avx2_ctnovec.txt -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o stencil_ctnovec.o stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -S -ffast-math -fno-vectorize -fno-slp-vectorize -DSPECIALIZE -c -o optreports/clang-avx2_ctnovec.s stencil_serial.cpp
+clang-12: warning: -lm: 'linker' input unused [-Wunused-command-line-argument]
+clang-12: warning: -Z-reserved-lib-stdc++: 'linker' input unused [-Wunused-command-line-argument]
+clang -O3 -march=skylake -std=c++11 -lm -lstdc++ -ffast-math -fno-vectorize -fno-slp-vectorize -o stencil.ct-novec stencil_ctnovec.o stencil.cpp
+ ------ Vectorization Report -------
+Hidden info - NoVec:  /bin/sh: ../checksimd.sh: No such file or directory
+Hidden info - Vec:    /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - NoVec: /bin/sh: ../checksimd.sh: No such file or directory
+Exposed info - Vec:   /bin/sh: ../checksimd.sh: No such file or directory

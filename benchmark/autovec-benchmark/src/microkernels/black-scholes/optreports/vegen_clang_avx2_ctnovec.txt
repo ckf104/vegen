@@ -1,0 +1,334 @@
+--- !Passed
+Pass:            inline
+Name:            Inlined
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 25 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - Callee:          _ZL3CNDf
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 52, Column: 0 }
+  - String:          ' inlined into '
+  - Caller:          _Z20black_scholes_serialPfS_S_S_S_S_i
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 75, Column: 0 }
+  - String:          ' with '
+  - String:          '(cost='
+  - Cost:            '80'
+  - String:          ', threshold='
+  - Threshold:       '487'
+  - String:          ')'
+  - String:          ' at callsite '
+  - String:          black_scholes_serial
+  - String:          ':'
+  - Line:            '16'
+  - String:          ':'
+  - Column:          '25'
+  - String:          ';'
+...
+--- !Passed
+Pass:            inline
+Name:            Inlined
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 54 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - Callee:          _ZL3CNDf
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 52, Column: 0 }
+  - String:          ' inlined into '
+  - Caller:          _Z20black_scholes_serialPfS_S_S_S_S_i
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 75, Column: 0 }
+  - String:          ' with '
+  - String:          '(cost='
+  - Cost:            '-14920'
+  - String:          ', threshold='
+  - Threshold:       '487'
+  - String:          ')'
+  - String:          ' at callsite '
+  - String:          black_scholes_serial
+  - String:          ':'
+  - Line:            '16'
+  - String:          ':'
+  - Column:          '54'
+  - String:          ';'
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 81, Column: 5 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          loop not vectorized
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 89, Column: 9 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 84, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 83, Column: 19 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 30 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+...
+--- !Missed
+Pass:            regalloc
+Name:            LoopSpillReload
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 81, Column: 5 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - NumSpills:       '13'
+  - String:          ' spills '
+  - NumReloads:      '8'
+  - String:          ' reloads '
+  - NumFoldedReloads: '14'
+  - String:          ' folded reloads '
+  - String:          generated in loop
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 75, Column: 0 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - NumStackBytes:   '184'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '10'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '13'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 82, Column: 19 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '106'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 91, Column: 1 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '8'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: black-scholes_serial.cpp, Line: 75, Column: 0 }
+Function:        _Z20black_scholes_serialPfS_S_S_S_S_i
+Args:
+  - NumInstructions: '137'
+  - String:          ' instructions in function'
+...

@@ -1,0 +1,38 @@
+ ############
+ # Using compiler: vegen-clang , isa:avx2 
+ ############
+#--------------
+ao RT NO-VEC cycles = [371.636]
+ao RT VEC cycles = [381.109]
+ao CT NO-VEC cycles = [353.711]
+ao CT VEC cycles = [365.320]
+#--------------
+binomial RT NO-VEC cycles = [188.045]
+binomial RT VEC cycles = [206.180]
+binomial CT NO-VEC cycles = [191.476]
+binomial CT VEC cycles = [176.221]
+#--------------
+black-scholes RT NO-VEC cycles = [32.296]
+black-scholes RT VEC cycles = [32.161]
+black-scholes CT NO-VEC cycles = [40.435]
+black-scholes CT VEC cycles = [19.951]
+#--------------
+convolution RT NO-VEC cycles = [1180.390]
+convolution RT VEC cycles = [1170.767]
+convolution CT NO-VEC cycles = [112.415]
+convolution CT VEC cycles = [29.502]
+#--------------
+mandelbrot RT NO-VEC cycles = [244.743]
+mandelbrot RT VEC cycles = [265.718]
+mandelbrot CT NO-VEC cycles = [91.645]
+mandelbrot CT VEC cycles = [16.745]
+#--------------
+matrixmult RT NO-VEC cycles = 22.121
+matrixmult RT VEC cycles = 21.547
+matrixmult CT NO-VEC cycles = 17.190
+matrixmult CT VEC cycles = 21.117
+#--------------
+stencil RT NO-VEC cycles = [562.242]
+stencil RT VEC cycles = [563.844]
+stencil CT NO-VEC cycles = [507.226]
+stencil CT VEC cycles = [515.304]

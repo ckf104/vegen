@@ -1,0 +1,471 @@
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            zext
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 29 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'hoisting '
+  - Inst:            sitofp
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 29 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 31 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'hoisting '
+  - Inst:            fmul
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 31 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 27 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'hoisting '
+  - Inst:            fadd
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 87, Column: 27 }
+...
+--- !Passed
+Pass:            licm
+Name:            Hoisted
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 89, Column: 28 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'hoisting '
+  - Inst:            mul
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 89, Column: 28 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 86, Column: 28 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 86, Column: 28 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+...
+--- !Missed
+Pass:            inline
+Name:            NoDefinition
+DebugLoc:        { File: '/usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/iostream', 
+                   Line: 74, Column: 25 }
+Function:        __cxx_global_var_init
+Args:
+  - Callee:          _ZNSt8ios_base4InitC1Ev
+  - String:          ' will not be inlined into '
+  - Caller:          __cxx_global_var_init
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+  - String:          ' because its definition is unavailable'
+...
+--- !Missed
+Pass:            inline
+Name:            NoDefinition
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+Function:        __cxx_global_var_init
+Args:
+  - Callee:          __cxa_atexit
+  - String:          ' will not be inlined into '
+  - Caller:          __cxx_global_var_init
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+  - String:          ' because its definition is unavailable'
+...
+--- !Passed
+Pass:            inline
+Name:            Inlined
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+Function:        _GLOBAL__sub_I_mandelbrot_serial.cpp
+Args:
+  - Callee:          __cxx_global_var_init
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+  - String:          ' inlined into '
+  - Caller:          _GLOBAL__sub_I_mandelbrot_serial.cpp
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+  - String:          ' with '
+  - String:          '(cost='
+  - Cost:            '-14950'
+  - String:          ', threshold='
+  - Threshold:       '375'
+  - String:          ')'
+  - String:          ' at callsite '
+  - String:          _GLOBAL__sub_I_mandelbrot_serial.cpp
+  - String:          ':'
+  - Line:            '0'
+  - String:          ':'
+  - Column:          '0'
+  - String:          ';'
+...
+--- !Missed
+Pass:            loop-vectorize
+Name:            MissedDetails
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          loop not vectorized
+...
+--- !Passed
+Pass:            loop-unroll
+Name:            PartialUnrolled
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'unrolled loop by a factor of '
+  - UnrollCount:     '4'
+  - String:          ' with a breakout at trip '
+  - BreakoutTrip:    '0'
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            or
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            or
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            or
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 92, Column: 46 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            getelementptr
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 86, Column: 28 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+    DebugLoc:        { File: mandelbrot_serial.cpp, Line: 86, Column: 28 }
+...
+--- !Passed
+Pass:            licm
+Name:            InstSunk
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'sinking '
+  - Inst:            trunc
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 65, Column: 0 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - NumStackBytes:   '0'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '6'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 84, Column: 34 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '3'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '7'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '1'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 27 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '4'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 86, Column: 28 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '6'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 93, Column: 26 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '5'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 95, Column: 36 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '9'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 95, Column: 36 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '9'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 95, Column: 36 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '9'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 95, Column: 36 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '7'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 99, Column: 13 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '2'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 102, Column: 1 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '1'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 65, Column: 0 }
+Function:        _Z17mandelbrot_serialffffiiiPi
+Args:
+  - NumInstructions: '73'
+  - String:          ' instructions in function'
+...
+--- !Analysis
+Pass:            prologepilog
+Name:            StackSize
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+Function:        _GLOBAL__sub_I_mandelbrot_serial.cpp
+Args:
+  - NumStackBytes:   '8'
+  - String:          ' stack bytes in function'
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionMix
+Function:        _GLOBAL__sub_I_mandelbrot_serial.cpp
+Args:
+  - String:          'BasicBlock: '
+  - BasicBlock:      ''
+  - String:          "\n"
+  - String:          ''
+  - String:          ': '
+  - INST_:           '8'
+  - String:          "\n"
+...
+--- !Analysis
+Pass:            asm-printer
+Name:            InstructionCount
+DebugLoc:        { File: mandelbrot_serial.cpp, Line: 0, Column: 0 }
+Function:        _GLOBAL__sub_I_mandelbrot_serial.cpp
+Args:
+  - NumInstructions: '8'
+  - String:          ' instructions in function'
+...
