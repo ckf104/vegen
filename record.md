@@ -134,7 +134,9 @@ tmp1 == tmp3;
 * <u>canonicalize each llvm ast( defined in `canonicalize.py`)</u>
 * translate each llvm ast into llvm pattern match code. `Operation` is a scalar function, describing how some scalar inputs are mapped to a output. `BoundOperation`  binds `Operation` and `InputSlice`(defining mapping between `Operation` inputs and verctor input lanes). `InstBinding` has a `BoundOperation` vector, a element for each output lanes. So `InstBinding` has complete semantic description for a SIMD instruction
 
-
+1.13  about the result of dot-product benchmark
+* scalarization will decrease the speed of SIMD version of dot-product(approximate 150ns), but why scalar version
+will need 500ns ?
 
 two differences:
 

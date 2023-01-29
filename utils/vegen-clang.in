@@ -20,10 +20,7 @@ do
 done
 
 if test $loadlib = yes
-then lib='-Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so'
+then lib='-Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so -mllvm --wrappers-dir=@CMAKE_BINARY_DIR@'
 fi
 
-exec $clang $lib\
-       -mllvm --wrappers-dir=@CMAKE_BINARY_DIR@\
-       $@\
-       -fno-slp-vectorize -fno-vectorize
+exec $clang $lib $@ -fno-slp-vectorize -fno-vectorize
