@@ -63,7 +63,7 @@ static cl::list<std::string>
 
 
 static cl::opt<std::string>
-    Filter("filter",
+    Filter("filt",
            cl::desc("only run on function names containing this substring"));
 
 static cl::opt<bool> DisableUnrolling("no-unroll", cl::desc("Don't unroll"),
