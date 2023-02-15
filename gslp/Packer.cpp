@@ -2,10 +2,13 @@
 #include "ConsecutiveCheck.h"
 #include "MatchManager.h"
 #include "VectorPack.h"
+#include "CastIntoFloat.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h" // isSafeToSpeculativelyExecute
 #include "llvm/IR/InstIterator.h"
-#include "llvm/ADT/PostOrderIterator.h"
+#include <cassert>
 
 using namespace llvm;
 
@@ -194,18 +197,17 @@ static bool supersedes(VLoop *VL1, const ControlCondition *C1, VLoop *VL2,
 const ControlCondition *
 Packer::findSpeculationCond(Instruction *I, ArrayRef<Instruction *> Users) {
   auto *VL = getVLoopFor(I);
-  SmallVector<const ControlCondition *, 8> Conds { VL->getInstCond(I) };
+  SmallVector<const ControlCondition *, 8> Conds{VL->getInstCond(I)};
   for (auto *U : Users) {
     auto *UserVL = getVLoopFor(U);
     if (VLoop::isSafeToCoIterate(VL, UserVL))
       Conds.push_back(UserVL->getInstCond(U));
     else {
       auto SubLoops = VL->getSubLoops();
-      auto It = find_if(SubLoops, [&](auto &SubVL) {
-        return SubVL->contains(U);
-      });
+      auto It =
+          find_if(SubLoops, [&](auto &SubVL) { return SubVL->contains(U); });
       assert(It != SubLoops.end());
-      Conds.push_back((*It)->getLoopCond());
+      Conds.push_back((*It)->getLoopCond()); // ckf: Why not UserVL->getLoopCond()
     }
   }
   return getGreatestCommonCondition(Conds);
@@ -300,8 +302,8 @@ static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
       SmallVector<const ControlCondition *, 8> Conds;
       auto *AddrComp =
           dyn_cast<Instruction>(Loads.front()->getPointerOperand());
-      if (AddrComp && !Pkr->canSpeculateAt(
-                          AddrComp, Pkr->findSpeculationCond(AddrComp, LoadInsts)))
+      if (AddrComp && !Pkr->canSpeculateAt(AddrComp, Pkr->findSpeculationCond(
+                                                         AddrComp, LoadInsts)))
         return;
 
       // Pad
@@ -564,15 +566,15 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
 
 float Packer::getScalarCost(Instruction *I) {
   if (auto *LI = dyn_cast<LoadInst>(I)) {
-    return TTI>getMemoryOpCost(Instruction::Load, LI->getType(),
-                                LI->getAlign(), 0, TTI::TCK_RecipThroughput,
-                                LI);
+    return getMemoryOpCostFromTTI(TTI, Instruction::Load, LI->getType(),
+                                  LI->getAlign(), 0, TTI::TCK_RecipThroughput,
+                                  LI);
   }
 
   if (auto *SI = dyn_cast<StoreInst>(I))
-    return TTI->getMemoryOpCost(
-        Instruction::Store, SI->getValueOperand()->getType(), SI->getAlign(), 0,
-        TTI::TCK_RecipThroughput, SI);
+    return getMemoryOpCostFromTTI(
+        TTI, Instruction::Store, SI->getValueOperand()->getType(),
+        SI->getAlign(), 0, TTI::TCK_RecipThroughput, SI);
 
   if (auto *CI = dyn_cast<CallInst>(I)) {
     auto *Callee = CI->getCalledFunction();
@@ -591,14 +593,14 @@ float Packer::getScalarCost(Instruction *I) {
     case Intrinsic::log2:
     case Intrinsic::fabs:
     case Intrinsic::pow:
-      return TTI->getIntrinsicInstrCost(
+      getIntrinsicInstrCostFromTTI(TTI,
           IntrinsicCostAttributes(ID, I->getType(), {I->getType()}),
           TTI::TCK_RecipThroughput);
     }
   }
 
   if (isa<CastInst>(I)) {
-    return TTI->getCastInstrCost(I->getOpcode(), I->getOperand(0)->getType(),
+    return getCastInstrCostFromTTI(TTI, I->getOpcode(), I->getOperand(0)->getType(),
                                  I->getType(), TTI::getCastContextHint(I),
                                  TTI::TCK_RecipThroughput);
   }
@@ -611,7 +613,7 @@ float Packer::getScalarCost(Instruction *I) {
       !isa<SelectInst>(I))
     return 1;
   SmallVector<const Value *, 4> Operands(I->operand_values());
-  return TTI->getArithmeticInstrCost(
+  return getArithmeticInstrCostFromTTI(TTI,
       I->getOpcode(), I->getType(), TTI::TCK_RecipThroughput, TTI::OK_AnyValue,
       TTI::OK_AnyValue, TTI::OP_None, TTI::OP_None, Operands, I);
 }

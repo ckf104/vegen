@@ -2,6 +2,7 @@
 #define CONSECUTIVE_CHECK_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 
 namespace llvm {
 class Instruction;
@@ -10,7 +11,6 @@ class DataLayout;
 class ScalarEvolution;
 class LoopInfo;
 class SCEV;
-template<typename T> class EquivalenceClasses;
 } // namespace llvm
 
 std::vector<std::pair<llvm::Instruction *, llvm::Instruction *>>

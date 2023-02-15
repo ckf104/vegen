@@ -9,7 +9,10 @@
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
+#include "llvm/Analysis/IVDescriptors.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/FMF.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/PatternMatch.h"
@@ -982,10 +985,13 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       IdentityVector = Builder.CreateVectorSplat(VecTy->getElementCount(),
                                                  useScalar(RI.StartValue));
     } else {
-      auto *Identity = RecurrenceDescriptor::getRecurrenceIdentity(
-          RI.Kind, RI.Phi->getType());
+      // ckf: After adding SelectICmp and SelectFCmp, static property of 
+      // getRecurrenceIdentity has been removed, but vegen now does not use it
+      RecurrenceDescriptor r;
+      auto *Identity = r.getRecurrenceIdentity(
+          RI.Kind, RI.Phi->getType(), FastMathFlags());
       IdentityVector =
-          ConstantVector::getSplat(VecTy->getElementCount(), Identity);
+          ConstantVector::getSplat(VecTy->getElementCount(), cast<Constant>(Identity));
     }
 
     for (auto Pair : zip(VecPhis, RdxOps)) {

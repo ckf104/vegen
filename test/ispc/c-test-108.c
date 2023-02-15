@@ -1,4 +1,4 @@
-// RUN: %clang-o3 -march=native -mllvm -filter=kernel %s -o %t -lm && %t
+// RUN: %clang-o3 -march=native -mllvm -filt=kernel %s -o %t -lm && %t
 
 float sqrtf(float);
 

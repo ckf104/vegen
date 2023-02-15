@@ -1,4 +1,4 @@
-; RUN: %opt -gslp -test-codegen %s | ~/tmp/llvm-15.0.0-x86/bin/lli | FileCheck %s
+; RUN: %opt --passes=gslp -test-codegen %s | %lli | FileCheck %s
 
 ; CHECK: 0
 

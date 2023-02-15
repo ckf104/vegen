@@ -133,3 +133,19 @@ tmp1 == tmp3;
 * translate z3 expression into llvm ast (`translator` defined in `lift_sema.py` do core work). 
 * <u>canonicalize each llvm ast( defined in `canonicalize.py`)</u>
 * translate each llvm ast into llvm pattern match code. `Operation` is a scalar function, describing how some scalar inputs are mapped to a output. `BoundOperation`  binds `Operation` and `InputSlice`(defining mapping between `Operation` inputs and verctor input lanes). `InstBinding` has a `BoundOperation` vector, a element for each output lanes. So `InstBinding` has complete semantic description for a SIMD instruction
+
+
+
+## GSLP
+
+1. VectorPackContext: 为每个Instruction分配一个ID
+2. GlobalDependenceAnalysis: 分析每个Instruction的依赖（直接user依赖，memory依赖），并计算出依赖的传递闭包
+3. ControlDependenceAnalysis: 大概来讲，用来分析每个block在什么情况下才会被执行，一个接口是给一个Block，返回一个ControlCondition(And型或者Or型)
+4. VLoop, VLoopInfo: 为每个Loop对应了一个VLoop, 具有与Loop相同的层级结构，VLoopInfo只有一个，存储全局信息（例如哪个Loop对应到哪个VLoop）
+5. MatchManager: 对每个Operation，对每个Value进行match,
+
+
+
+LLVM 有 ScalarizerPass , 为啥要多此一举呢
+
+fingerprintSCEV这个函数是干嘛的

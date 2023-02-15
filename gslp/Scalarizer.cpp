@@ -67,8 +67,8 @@ static cl::opt<bool> ScalarizeLoadStore(
     cl::desc("Allow the scalarizer pass to scalarize loads and store"));
 
 // ckf: enable of scalarize, worse result for dot-product
-static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
-                                     cl::Hidden);
+//static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
+//                                     cl::Hidden);
 
 namespace llvm {
 void initializeScalarizerPass(PassRegistry &);
@@ -335,10 +335,10 @@ Value *Scatterer::operator[](unsigned I) {
 }
 
 bool Scalarizer::runOnFunction(Function &F) {
-  if (!ScalarizeEnable) {
+  /*if (!ScalarizeEnable) {
     errs() << "disable scalarize in func " << F.getName() << "\n";
     return false;
-  }
+  }*/
   if (skipFunction(F)) return false;
 
   auto IsInvoke = [](Instruction &I) { return isa<InvokeInst>(&I); };

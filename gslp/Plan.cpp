@@ -4,6 +4,7 @@
 #include "Solver.h"
 #include "VectorPack.h"
 #include "VectorPackContext.h"
+#include "CastIntoFloat.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -13,30 +14,6 @@ static cl::opt<bool> EnableCostVerification(
     "verify-costs", cl::desc("verify cost during vector planning"),
     cl::init(false));
 
-static float getShuffleCostFromTTI(
-    const TargetTransformInfo *TTI, TTI::ShuffleKind Kind, VectorType *Tp,
-    ArrayRef<int> Mask = ArrayRef<int>(),
-    TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput, int Index = 0,
-    VectorType *SubTp = nullptr,
-    ArrayRef<const Value *> Args = ArrayRef<const Value *>()) {
-#ifndef LLVM16
-  auto cost =
-      TTI->getShuffleCost(Kind, Tp, Mask, Index, SubTp, Args).getValue();
-#else
-  auto cost = TTI->getShuffleCost(Kind, Tp, Mask, CostKind, Index, SubTp, Args)
-                  .getValue();
-#endif
-  assert(cost && "shuffle cost is not valid");
-  return (float)cost.value();
-}
-
-static float getVectorInstrCostFromTTI(const TargetTransformInfo *TTI,
-                                       unsigned Opcode, Type *Val,
-                                       unsigned Index = -1) {
-  auto cost = TTI->getVectorInstrCost(Opcode, Val, Index).getValue();
-  assert(cost && "vector inst cost is not valid");
-  return (float)cost.value();
-}
 
 Plan::Plan(Packer *Pkr) : Pkr(Pkr), Cost(0) {
   for (auto &I : instructions(Pkr->getFunction())) {

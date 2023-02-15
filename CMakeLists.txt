@@ -1,9 +1,10 @@
+set(CMAKE_CXX_COMPILER /home/ckf104/install/llvm/bin/clang++)
+set(CMAKE_C_COMPILER /home/ckf104/install/llvm/bin/clang) 
+# uncommented this if debugging
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-15-debug/)
+
 cmake_minimum_required(VERSION 3.4)
 project(GSLP)
-
-set(CMAKE_PREFIX_PATH /home/ckf/tmp/llvm-15.0.0-x86/lib/cmake)
-#set(CMAKE_CXX_COMPILER /home/ckf/tmp/llvm-15.0.0-x86/bin/clang++)
-#set(CMAKE_C_COMPILER /home/ckf/tmp/llvm-15.0.0-x86/bin/clang)
 
 string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
@@ -37,11 +38,13 @@ configure_file(
 configure_file(
   ${CMAKE_SOURCE_DIR}/utils/vegen-clang.in
   ${CMAKE_BINARY_DIR}/vegen-clang
+  @ONLY
 )
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/utils/vegen-clang.in
   ${CMAKE_BINARY_DIR}/vegen-clang++
+  @ONLY
 )
 
 configure_file(

@@ -1,36 +1,11 @@
 #include "IRVec.h"
+#include "CastIntoFloat.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/FormatVariadic.h"
 
 using namespace llvm;
 using namespace PatternMatch;
-
-static float getCastInstrCostFromTTI(
-    const TargetTransformInfo *TTI, unsigned opcode, Type *Dst, Type *Src,
-    TTI::CastContextHint CCH,
-    TTI::TargetCostKind CostKind = TTI::TCK_SizeAndLatency,
-    const Instruction *I = nullptr) {
-  auto cost =
-      TTI->getCastInstrCost(opcode, Dst, Src, CCH, CostKind, I).getValue();
-  assert(cost && "Cast cost is not valid");
-  return (float)cost.value();
-}
-
-static float getArithInstrCostFromTTI(const TargetTransformInfo *TTI,
-                                      unsigned opcode, Type *Ty) {
-  auto cost = TTI->getArithmeticInstrCost(opcode, Ty).getValue();
-  assert(cost && "Arith cost is not valid!");
-  return (float)cost.value();
-}
-
-static float getIntrinsicInstrCostFromTTI(const TargetTransformInfo *TTI,
-                                          const IntrinsicCostAttributes &ICA,
-                                          TTI::TargetCostKind CostKind) {
-  auto cost = TTI->getIntrinsicInstrCost(ICA, CostKind).getValue();
-  assert(cost && "Intrinsic cost in not valid");
-  return (float)cost.value();
-}
 
 static bool isFloat(Instruction::BinaryOps Opcode) {
   switch (Opcode) {

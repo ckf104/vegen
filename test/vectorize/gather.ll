@@ -1,12 +1,11 @@
-; RUN: %opt -gslp %s -S -adce | FileCheck %s
+; RUN: %opt --passes=gslp,adce %s -S | FileCheck %s
 
-; CHECK:       [[IDX_ADDR:%.*]] = bitcast i32* %idx to <4 x i32>*
-; CHECK-NEXT:  [[IDX:%.*]] = load <4 x i32>, <4 x i32>* [[IDX_ADDR]]
-; CHECK-NEXT:  [[IDX_EXT:%.*]] = sext <4 x i32> %1 to <4 x i64>
-; CHECK-NEXT:  [[ADDRS:%.*]] = getelementptr i32, i32* %A, <4 x i64> [[IDX_EXT]]
-; CHECK-NEXT:  [[LOAD:%.*]] = call <4 x i32> @llvm.masked.gather.v4i32.v4p0i32(<4 x i32*> [[ADDRS]], i32 4, <4 x i1> <i1 true, i1 true, i1 true, i1 true>, <4 x i32> undef)
-; CHECK-NEXT:  [[DST:%.*]] = bitcast i32* %dst to <4 x i32>*
-; CHECK-NEXT:  store <4 x i32> [[LOAD]], <4 x i32>* [[DST]]
+; remove bitcast check because of opaque pointers
+; CHECK:  [[IDX:%.*]] = load <4 x i32>, ptr
+; CHECK-NEXT:  [[IDX_EXT:%.*]] = sext <4 x i32> [[IDX]] to <4 x i64>
+; CHECK-NEXT:  [[ADDRS:%.*]] = getelementptr i32, ptr %A, <4 x i64> [[IDX_EXT]]
+; CHECK-NEXT:  [[LOAD:%.*]] = call <4 x i32> @llvm.masked.gather.v4i32.v4p0(<4 x ptr> [[ADDRS]], i32 4, <4 x i1> <i1 true, i1 true, i1 true, i1 true>, <4 x i32> undef)
+; CHECK-NEXT:  store <4 x i32> [[LOAD]], ptr
 
 ; ModuleID = 'gather2.c'
 source_filename = "gather2.c"

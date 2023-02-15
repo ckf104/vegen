@@ -1,62 +1,11 @@
 #include "VectorPack.h"
 #include "ControlDependence.h"
 #include "MatchManager.h"
+#include "CastIntoFloat.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/VectorUtils.h"
 
 using namespace llvm;
-static float getArithmeticReductionCostFromTTI(
-    const TargetTransformInfo *TTI, unsigned Opcode, VectorType *Ty,
-    Optional<FastMathFlags> FMF,
-    TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) {
-  auto cost =
-      TTI->getArithmeticReductionCost(Opcode, Ty, FMF, CostKind).getValue();
-  assert(cost && "Arith reduction cost is not valid");
-  return (float)cost.value();
-}
-
-static float getMinMaxReductionCostFromTTI(
-    const TargetTransformInfo *TTI, VectorType *Ty, VectorType *CondTy,
-    bool IsUnsigned, TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) {
-  auto cost =
-      TTI->getMinMaxReductionCost(Ty, CondTy, IsUnsigned, CostKind).getValue();
-  assert(cost && "MinMax reduction cost is not valid");
-  return (float)cost.value();
-}
-
-static int getGatherScatterOpCostFromTTI(
-    const TargetTransformInfo *TTI, unsigned Opcode, Type *DataTy,
-    const Value *Ptr, bool VariableMask, Align Alignment,
-    TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput,
-    const Instruction *I = nullptr) {
-  auto cost = TTI->getGatherScatterOpCost(Opcode, DataTy, Ptr, VariableMask,
-                                          Alignment, CostKind, I)
-                  .getValue();
-  assert(cost && "Gather scatter op cost is not valid");
-  return (int)cost.value();
-}
-
-static int getMaskedMemoryOpCostFromTTI(
-    const TargetTransformInfo *TTI, unsigned Opcode, Type *Src, Align Alignment,
-    unsigned AddressSpace,
-    TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) {
-  auto cost =
-      TTI->getMaskedMemoryOpCost(Opcode, Src, Alignment, AddressSpace, CostKind)
-          .getValue();
-  assert(cost && "Masked memory op cost is not valid");
-  return (int)cost.value();
-}
-
-static int getMemoryOpCostFromTTI(
-    const TargetTransformInfo *TTI, unsigned Opcode, Type *Src, Align Alignment,
-    unsigned AddressSpace,
-    TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput,
-    const Instruction *I = nullptr) {
-  auto cost =
-      TTI->getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, CostKind, I).getValue();
-  assert(cost && "memory op cost is not valid");
-  return (int)cost.value();
-}
 
 // FIXME: we need to generalize the definition of an operand pack
 // because some of the input lanes are "DONT CARES" (e.g. _mm_div_pd)

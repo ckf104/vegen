@@ -1,10 +1,9 @@
-; RUN: %opt -gslp -no-unroll -adce %s -o - -S | FileCheck %s
+; RUN: %opt --passes=gslp,adce -no-unroll %s -o - -S | FileCheck %s
 
-; CHECK: [[B:%.*]] = bitcast i32* %arrayidx to <2 x i32>*
-; CHECK: [[LOAD:%.*]] = load <2 x i32>, <2 x i32>* [[B]]
+; remove bitcast check because of opaque pointers
+; CHECK: [[LOAD:%.*]] = load <2 x i32>, ptr
 ; CHECK: [[MUL:%.*]] = mul <2 x i32> [[LOAD]], <i32 3, i32 5>
-; CHECK: [[A:%.*]] = bitcast i32* %arrayidx4 to <2 x i32>*
-; CHECK: store <2 x i32> [[MUL]], <2 x i32>* [[A]]
+; CHECK: store <2 x i32> [[MUL]], ptr
 
 target datalayout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.15.0"

@@ -55,6 +55,8 @@ add_library(GSLP MODULE GSLP.cpp TestConsecutiveCheck.cpp)
 llvm_map_components_to_libnames(LLVM_LIBRARIES support core transformutils irreader analysis scalaropts)
 
 target_link_libraries(GSLP Packing)
+# uncommented this if debugging
+#target_link_libraries(GSLP LLVMSupport)
 
 set_target_properties(GSLP PROPERTIES COMPILE_FLAGS "-fno-rtti")
 
