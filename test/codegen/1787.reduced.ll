@@ -1,4 +1,4 @@
-; RUN: %opt --passes=gslp -test-codegen %s | %lli | FileCheck %s
+; RUN: %opt --gslp -test-codegen %s | %lli | FileCheck %s
 
 ; CHECK: 0
 

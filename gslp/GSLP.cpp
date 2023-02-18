@@ -96,7 +96,7 @@ void initializeGSLPPass(PassRegistry &);
 
 namespace {
 
-class GSLP : public PassInfoMixin<GSLP> {
+class GSLP : public FunctionPass {
   std::unique_ptr<Module> InstWrappers;
   Triple::ArchType Arch = Triple::ArchType::UnknownArch;
 
@@ -112,11 +112,26 @@ class GSLP : public PassInfoMixin<GSLP> {
   }
 
 public:
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
+  static char ID; // Pass identification, replacement for typeid
+  GSLP() : FunctionPass(ID) {
+    initializeGSLPPass(*PassRegistry::getPassRegistry());
+  }
 
-  void doInitialization(Module &M) {
-    if (Arch != Triple::ArchType::UnknownArch)
-      return;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<ScalarEvolutionWrapperPass>();
+    AU.addRequired<LazyValueInfoWrapperPass>();
+    AU.addRequired<AAResultsWrapperPass>();
+    AU.addRequired<DependenceAnalysisWrapperPass>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
+    AU.addRequired<PostDominatorTreeWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
+    AU.addRequired<BlockFrequencyInfoWrapperPass>();
+  }
+
+  bool runOnFunction(llvm::Function &) override;
+
+  bool doInitialization(Module &M) override{
     Arch = Triple(M.getTargetTriple()).getArch();
     SMDiagnostic Err;
     std::string Wrapper;
@@ -137,6 +152,7 @@ public:
       report_fatal_error(std::string("Error parsing Inst Wrappers") +
                          Err.getMessage());
     }
+    return false;
   }
 };
 
@@ -167,6 +183,8 @@ bool isSupported(InstBinding *Inst, const llvm::Function &F,
 }
 
 } // namespace
+
+char GSLP::ID = 0;
 
 static SmallVector<Value *, 4>
 collectReductionElements(Instruction *I,
@@ -249,47 +267,47 @@ static void balanceReductionTree(Function &F) {
   }
 }
 
-PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
-  doInitialization(*F.getParent());
+bool GSLP::runOnFunction(Function &F)  {
   if (!VectorizeOnly.empty() &&
       none_of(VectorizeOnly,
               [&F](StringRef FuncName) { return F.getName() == FuncName; }))
-    return PreservedAnalyses::all();
+    return false;
   if (F.getName() ==
       "_ZN3pov17Check_And_EnqueueEPNS_21Priority_Queue_StructEPNS_16BBox_Tree_"
       "StructEPNS_19Bounding_Box_StructEPNS_14Rayinfo_StructE")
-    return PreservedAnalyses::all();
+    return false;
   if (!Filter.empty() && !F.getName().contains(Filter))
-    return PreservedAnalyses::all();
+    return false;
   errs() << "Optimizing " << F.getName() << '\n';
   if (!DisableReductionBalancing)
     balanceReductionTree(F);
   // Table holding all IR vector instructions
   IRInstTable VecBindingTable;
 
-  auto *AA = &FAM.getResult<AAManager>(F);
-  auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
-  auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
-  auto *LI = &FAM.getResult<LoopAnalysis>(F);
-  auto *DI = &FAM.getResult<DependenceAnalysis>(F);
-  auto *LVI = &FAM.getResult<LazyValueAnalysis>(F);
-  auto *TTI = &FAM.getResult<TargetIRAnalysis>(F);
-  auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
+  auto *AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  auto *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  auto *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  auto *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  auto *DI = &getAnalysis<DependenceAnalysisWrapperPass>().getDI();
+  auto *LVI = &getAnalysis<LazyValueInfoWrapperPass>().getLVI();
+  auto *TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+  auto *BFI = &getAnalysis<BlockFrequencyInfoWrapperPass>().getBFI();
+
 
   // Don't deal with irreducible CFG
   if (mayContainIrreducibleControl(F, LI))
-    return PreservedAnalyses::all();
+    return false;
 
   // We don't deal with things like switches or invoke
   for (auto &BB : F)
     if (!isa<ReturnInst>(BB.getTerminator()) &&
         !isa<BranchInst>(BB.getTerminator()))
-      return PreservedAnalyses::all();
+      return false;
 
   // Don't deal with infinite loops
   for (auto *L : LI->getLoopsInPreorder())
     if (!L->isRotatedForm() || L->hasNoExitBlocks())
-      return PreservedAnalyses::all();
+      return false;
 
   std::vector<const InstBinding *> SupportedIntrinsics;
   for (InstBinding &Inst : getInsts())
@@ -348,10 +366,9 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   Packs.codegen(Builder, Pkr);
 
   assert(!verifyFunction(F, &errs()));
-  return PreservedAnalyses::none();
+  return true;
 }
 
-#if 0
 INITIALIZE_PASS_BEGIN(GSLP, "gslp", "gslp", false, false)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
@@ -364,52 +381,40 @@ INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
 INITIALIZE_PASS_END(GSLP, "gslp", "gslp", false, false)
-#endif
 
 // Automatically enable the pass.
 // http://adriansampson.net/blog/clangpass.html
-static void registerGSLP(FunctionPassManager &FPM) {
-#if 0
-  if (ScalarizeEnable)   // temporarily disable
-    FPM.addPass(createVeGenScalarizerPass());
-#endif
-  // MPM.add(createStructurizeCFGPass(false));
-  // MPM.add(createCFGSimplificationPass());
-  FPM.addPass(GVNHoistPass());
-  FPM.addPass(UnifyFunctionExitNodesPass());
-  FPM.addPass(LoopSimplifyPass());
+static void registerGSLP(const PassManagerBuilder &PMB,
+                         legacy::PassManagerBase &MPM) {
+  //MPM.add(createVeGenScalarizerPass());   
+  // ckf: disable scalarizer pass temporarily
 
-  FPM.addPass(createFunctionToLoopPassAdaptor(LoopRotatePass()));
-  FPM.addPass(LCSSAPass());
+  //MPM.add(createStructurizeCFGPass(false));
+  //MPM.add(createCFGSimplificationPass());
+  MPM.add(createGVNHoistPass());
+  MPM.add(createUnifyFunctionExitNodesPass());
+  MPM.add(createLoopSimplifyPass());
+  MPM.add(createLoopRotatePass());
+  MPM.add(createLCSSAPass());
 
-  FPM.addPass(GSLP());
+  MPM.add(new GSLP());
 
   if (!DisableCleanup) {
-    FPM.addPass(SimplifyCFGPass());
-    FPM.addPass(JumpThreadingPass());
-    FPM.addPass(InstCombinePass(true));
-    FPM.addPass(GVNPass());
-    FPM.addPass(ADCEPass());
+    MPM.add(createCFGSimplificationPass());
+    MPM.add(createJumpThreadingPass());
+    MPM.add(createInstructionCombiningPass(true /*expensive combines*/));
+    MPM.add(createGVNPass());
+    MPM.add(createAggressiveDCEPass());
   }
 }
 
-extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
-llvmGetPassPluginInfo() {
-  return {LLVM_PLUGIN_API_VERSION, "MyPlugin", "v0.1", [](PassBuilder &PB) {
-            using PipelineElement = typename PassBuilder::PipelineElement;
-            PB.registerPipelineParsingCallback([](StringRef n,
-                                                  FunctionPassManager &FPM,
-                                                  ArrayRef<PipelineElement>) {
-              if (n == "gslp") {
-                registerGSLP(FPM);
-                return true;
-              }
-              return false;
-            });
-            PB.registerVectorizerStartEPCallback(
-                [](FunctionPassManager &FPM, OptimizationLevel OL) {
-                  if (OL.getSpeedupLevel() >= 3)
-                    registerGSLP(FPM);
-                });
-          }};
-}
+
+
+// Register this pass to run after all optimization,
+// because we want this pass to replace LLVM SLP.
+static RegisterStandardPasses
+    RegisterMyPass(PassManagerBuilder::EP_VectorizerStart, registerGSLP);
+
+static struct RegisterGSLP {
+  RegisterGSLP() { initializeGSLPPass(*PassRegistry::getPassRegistry()); }
+} X;

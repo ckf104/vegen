@@ -12,49 +12,16 @@ else
   exit 1
 fi
 
-opt=@LLVM_TOOLS_BINARY_DIR@/opt
-llc=@LLVM_TOOLS_BINARY_DIR@/llc
 loadlib=yes
-optlevel=-O0
-real_args=""
-output_file="a.out"
-lasto=""
-optargs=""
-linkargs=""
-outputIR=""
 for arg in $*
 do
-  if test $arg = -fno-vectorize
+  if test $arg = -fno-vectorize -o $arg = -O0 -o $arg = -O1 -o $arg = -O2
   then loadlib=no
-  elif test $arg = -O0 -o $arg = -O1 -o $arg = -O2 -o $arg = -O3 -o $arg = -Os -o $arg = -Oz
-  then optlevel=$arg
-  elif test $arg = -o -o $arg = -mllvm
-  then lasto=$arg
-  elif test "$lasto" = "-o"
-  then output_file=$arg; lasto=""
-  elif test "$lasto" = "-mllvm"
-  then optargs="$optargs $arg"; lasto="" 
-  elif test ${arg: 0: 2} = -l -a ${#arg} -gt 2
-  then linkargs="$linkargs $arg"
-  elif test "$arg" = "-emit-llvm"
-  then outputIR="yes"
-  elif test "$arg" = "-c" -o "$arg" = "-S"
-  then real_args="$real_args $arg"; linkargs="$linkargs $arg";
-  else 
-    real_args="$real_args $arg"
   fi
 done
 
 if test $loadlib = yes
-then lib='-load-pass-plugin=@CMAKE_BINARY_DIR@/gslp/libGSLP.so --wrappers-dir=@CMAKE_BINARY_DIR@'
+then lib='-Xclang -load -Xclang @CMAKE_BINARY_DIR@/gslp/libGSLP.so -mllvm --wrappers-dir=@CMAKE_BINARY_DIR@'
 fi
 
-if test "$outputIR" = ""; then
-tmp=$(mktemp --suffix=.s)
-exec $clang -O0 -emit-llvm -S -Xclang -disable-O0-optnone -o - -fno-slp-vectorize -fno-vectorize $real_args |\
-     $opt $lib $optlevel $optargs -S | llc --relocation-model=pic --regalloc=greedy -o $tmp; $clang -o $output_file $tmp $linkargs
-rm $tmp
-else
-exec $clang -O0 -emit-llvm -S -Xclang -disable-O0-optnone -o - -fno-slp-vectorize -fno-vectorize $real_args |\
-     $opt $lib $optlevel $optargs -S -o $output_file 
-fi
+exec $clang $lib $@ -fno-slp-vectorize -fno-vectorize

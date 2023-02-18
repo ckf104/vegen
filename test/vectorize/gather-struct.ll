@@ -1,4 +1,4 @@
-; RUN: %opt --passes=gslp,adce %s -S | FileCheck %s
+; RUN: %opt --gslp --adce %s -S | FileCheck %s
 
 ; CHECK:       [[GEP:%.*]] = getelementptr %struct.point, ptr %pts, <4 x i64> <i64 0, i64 1, i64 2, i64 3>, i32 0
 ; CHECK-NEXT:  [[GATHER:%.*]] = call <4 x i32> @llvm.masked.gather.v4i32.v4p0(<4 x ptr> [[GEP]], i32 4, <4 x i1> <i1 true, i1 true, i1 true, i1 true>, <4 x i32> undef)

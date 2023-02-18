@@ -1,4 +1,4 @@
-; RUN: %opt --passes=gslp,adce -no-unroll %s -o - -S | FileCheck %s
+; RUN: %opt --gslp --adce -no-unroll %s -o - -S | FileCheck %s
 
 ; remove bitcast check because of opaque pointers
 ; CHECK: [[LOAD:%.*]] = load <2 x i32>, ptr
