@@ -26,6 +26,8 @@ private:
   friend struct VectorPackCache;
 
   const VectorPackContext *VPCtx;
+  // Elements: scalar values of output vector, I think
+  // it's just OrderedValues after filtering out nullptr
   llvm::BitVector Elements;
   llvm::BitVector Depended;
 
@@ -56,7 +58,9 @@ private:
   const ConditionPack *CP = nullptr;
 
   llvm::SmallVector<llvm::Value *, 4> OrderedValues;
+  // result vector of this vector inst
   llvm::SmallVector<const OperandPack *, 4> OperandPacks;
+  // operand vectors of this vector inst
 
   int Cost;
   int ProducingCost;
@@ -193,14 +197,14 @@ public:
   dependedValues() const {
     return VPCtx->iter_values(Depended);
   }
-  llvm::Value *emitVectorLoad(llvm::ArrayRef<llvm::Value *> Operands,
-                              llvm::Value *Mask,
-                              std::function<llvm::Value *(llvm::Value *)> GetScalar,
-                              IntrinsicBuilder &Builder) const;
-  llvm::Value *emitVectorStore(llvm::ArrayRef<llvm::Value *> Operands,
-                               llvm::Value *Mask,
-                               std::function<llvm::Value *(llvm::Value *)> GetScalar,
-                               IntrinsicBuilder &Builder) const;
+  llvm::Value *
+  emitVectorLoad(llvm::ArrayRef<llvm::Value *> Operands, llvm::Value *Mask,
+                 std::function<llvm::Value *(llvm::Value *)> GetScalar,
+                 IntrinsicBuilder &Builder) const;
+  llvm::Value *
+  emitVectorStore(llvm::ArrayRef<llvm::Value *> Operands, llvm::Value *Mask,
+                  std::function<llvm::Value *(llvm::Value *)> GetScalar,
+                  IntrinsicBuilder &Builder) const;
 
   bool isStore() const { return Kind == Store; }
   bool isLoad() const { return Kind == Load; }

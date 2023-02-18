@@ -21,6 +21,7 @@ output_file="a.out"
 lasto=""
 optargs=""
 linkargs=""
+outputIR=""
 for arg in $*
 do
   if test $arg = -fno-vectorize
@@ -35,8 +36,10 @@ do
   then optargs="$optargs $arg"; lasto="" 
   elif test ${arg: 0: 2} = -l -a ${#arg} -gt 2
   then linkargs="$linkargs $arg"
+  elif test "$arg" = "-emit-llvm"
+  then outputIR="yes"
   elif test "$arg" = "-c" -o "$arg" = "-S"
-  then real_args="$real_args $arg"; linkargs="$linkargs $arg"
+  then real_args="$real_args $arg"; linkargs="$linkargs $arg";
   else 
     real_args="$real_args $arg"
   fi
@@ -46,5 +49,12 @@ if test $loadlib = yes
 then lib='-load-pass-plugin=@CMAKE_BINARY_DIR@/gslp/libGSLP.so --wrappers-dir=@CMAKE_BINARY_DIR@'
 fi
 
+if test "$outputIR" = ""; then
+tmp=$(mktemp --suffix=.s)
 exec $clang -O0 -emit-llvm -S -Xclang -disable-O0-optnone -o - -fno-slp-vectorize -fno-vectorize $real_args |\
-     $opt $lib $optlevel $optargs -S | $clang -x ir -o $output_file - $linkargs
+     $opt $lib $optlevel $optargs -S | llc --relocation-model=pic --regalloc=greedy -o $tmp; $clang -o $output_file $tmp $linkargs
+rm $tmp
+else
+exec $clang -O0 -emit-llvm -S -Xclang -disable-O0-optnone -o - -fno-slp-vectorize -fno-vectorize $real_args |\
+     $opt $lib $optlevel $optargs -S -o $output_file 
+fi

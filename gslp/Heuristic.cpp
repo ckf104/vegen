@@ -61,6 +61,7 @@ Heuristic::Solution Heuristic::solve(const OperandPack *OP) {
     if (V && !isa<Constant>(V) && Inserted.insert(V).second)
       Cost += getCost(V) + C_Insert;
   }
+  // ckf: above calculation method adds some cost repeatedly?
 
   // The baseline solution is building the vector by implicit insertion
   Solution Sol(Cost);

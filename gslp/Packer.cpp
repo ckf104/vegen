@@ -547,9 +547,13 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
     for (unsigned i = 0; i < NumLanes; i++) {
       ArrayRef<Operation::Match> Matches =
           findMatches(LaneOps[i].getOperation(), (*OP)[i]);
+      // Forget to consider the case OP[0] == nullptr?
       if (Matches.empty())
         break;
       // FIXME: consider multiple matches for the same operation
+      // ckf: Here the idea of FIXME is not to match Operation and
+      // output value by order, and we can follow a shuffle then.
+      // Possible OPT!
       Lanes.push_back(&Matches[0]);
     }
 

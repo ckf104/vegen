@@ -25,11 +25,12 @@ class Plan {
     const VectorPack *VP;
     unsigned i;
   };
-  // mapping inst -> the pack that contains the inst
+  // map inst -> vector pack that produces it
   llvm::DenseMap<llvm::Instruction *, VectorPackSlot> InstToPackMap;
   using OperandPackSet = llvm::SmallPtrSet<const OperandPack *, 2>;
   // mapping inst -> operands that contains the instruction
   llvm::DenseMap<llvm::Instruction *, OperandPackSet> InstToOperandsMap;
+  // ValuesToPackMap: given a value vector, find the vectorPack that produces it
   llvm::DenseMap<llvm::ArrayRef<llvm::Value *>, const VectorPack *>
       ValuesToPackMap;
   // Num scalar + vector uses

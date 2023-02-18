@@ -455,7 +455,7 @@ static void improvePlan(Packer *Pkr, Plan &P,
     } else {
       P2.add(VP);
     }
-
+    // ckf: No vector load pack in seeds?
     if (VP->isLoad()) {
       if (P2.cost() < P.cost()) {
         P = P2;
