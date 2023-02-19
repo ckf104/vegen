@@ -1,4 +1,5 @@
 #include "LoopUnrolling.h"
+#include "SimpleParser.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
@@ -56,11 +57,9 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
-    UnrollRuntimeEpilog("vegen-unroll-runtime-epilog", cl::init(false),
-                        cl::Hidden,
-                        cl::desc("Allow runtime unrolled loops to be unrolled "
-                                 "with epilog instead of prolog."));
+// Allow runtime unrolled loops to be unrolled with epilog instead of prolog.
+static OptionItem<bool, false>
+    UnrollRuntimeEpilog("vegen-unroll-runtime-epilog", false);
 
 static bool needToInsertPhisForLCSSA(Loop *L,
                                      const std::vector<BasicBlock *> &Blocks,
@@ -383,7 +382,8 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
       for (ValueToValueMapTy::iterator VI = VMap.begin(), VE = VMap.end();
            VI != VE; ++VI) {
         LastValueMap[VI->first] = VI->second;
-        UnrollToOrigMap[VI->second] = UnrolledValue{It, const_cast<Value *>(VI->first)};
+        UnrollToOrigMap[VI->second] =
+            UnrolledValue{It, const_cast<Value *>(VI->first)};
       }
 
       // Add phi entries for newly created values to all exit blocks.

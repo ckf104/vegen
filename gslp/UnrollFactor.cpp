@@ -1,9 +1,11 @@
 #include "UnrollFactor.h"
 #include "LoopUnrolling.h"
 #include "Packer.h"
+#include "SimpleParser.h"
 #include "Solver.h"
 #include "VectorPack.h"
 #include "VectorPackContext.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
@@ -23,13 +25,11 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
-#include "llvm/ADT/PostOrderIterator.h"
 
 using namespace llvm;
 
-static cl::opt<bool> ForwardSeeds("forward-seeds",
-                                  cl::desc("Forward seeds from the unroller"),
-                                  cl::init(false));
+// Forward seeds from the unroller
+static OptionItem<bool, false> ForwardSeeds("forward-seeds", false);
 
 namespace {
 class AAResultsBuilder {
@@ -54,7 +54,8 @@ public:
                    std::function<const TargetLibraryInfo &(Function &F)> GetTLI,
                    AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI)
       : GetTLI(GetTLI), PV(F),
-        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV), CG(M),  // without loopinfo to build BasicAA
+        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV),
+        CG(M), // without loopinfo to build BasicAA
         GlobalsResult(GlobalsAAResult::analyzeModule(M, GetTLI, CG)),
         Result(GetTLI(F)) {
     Result.addAAResult(ScopedNoAliasResult);
@@ -301,7 +302,6 @@ static void refineUnrollFactors(Function *F, DominatorTree &DT, LoopInfo &LI,
   AAResults &AA = AABuilder.getResult();
   DependenceInfo DI(F, &AA, &SE, &LI);
 
-
   // Wrap all the analysis in the packer
   PostDominatorTree PDT(*F);
   Packer Pkr(Insts, *F, &AA, &LI, &SE, &DT, &PDT, &DI, LVI, TTI, BFI,
@@ -321,8 +321,8 @@ static void refineUnrollFactors(Function *F, DominatorTree &DT, LoopInfo &LI,
     if (VP->isReduction()) {
       auto &RI = VP->getReductionInfo();
       auto *L = GetOrigLoop(LI.getLoopFor(RI.Phi->getParent()));
-      LoopsWithReductions[L] = std::max<unsigned>(
-          LoopsWithReductions[L], VP->getOperandPacks().size());
+      LoopsWithReductions[L] = std::max<unsigned>(LoopsWithReductions[L],
+                                                  VP->getOperandPacks().size());
     }
 
     std::map<Loop *, Range> PackedIterations;
@@ -423,14 +423,15 @@ void computeUnrollFactor(ArrayRef<const InstBinding *> Insts,
                          const LoopInfo &LI, DenseMap<Loop *, unsigned> &UFs) {
   DenseSet<Loop *> UnrolledLoops;
   for (auto *L : const_cast<LoopInfo &>(LI).getLoopsInPreorder()) {
-    if (any_of(UnrolledLoops, [L](Loop *UnrolledL) { return UnrolledL->contains(L); })) {
+    if (any_of(UnrolledLoops,
+               [L](Loop *UnrolledL) { return UnrolledL->contains(L); })) {
       UFs[L] = 0;
       continue;
     }
     UFs[L] = 8;
     computeUnrollFactorImpl(Insts, LVI, TTI, BFI, F, LI, UFs);
     errs() << "Unroll factor for loop " << L << "(depth=" << L->getLoopDepth()
-      << ')' << " " << UFs.lookup(L) << '\n';
+           << ')' << " " << UFs.lookup(L) << '\n';
     if (UFs[L] > 1) {
       UnrolledLoops.insert(L);
       break;

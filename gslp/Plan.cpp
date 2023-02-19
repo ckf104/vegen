@@ -1,24 +1,24 @@
 #include "Plan.h"
+#include "CastIntoFloat.h"
 #include "Heuristic.h"
 #include "Packer.h"
+#include "SimpleParser.h"
 #include "Solver.h"
 #include "VectorPack.h"
 #include "VectorPackContext.h"
-#include "CastIntoFloat.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 
-static cl::opt<bool> EnableCostVerification(
-    "verify-costs", cl::desc("verify cost during vector planning"),
-    cl::init(false));
-
+// verify cost during vector planning
+static OptionItem<bool, false> EnableCostVerification("verify-costs", false);
 
 Plan::Plan(Packer *Pkr) : Pkr(Pkr), Cost(0) {
   for (auto &I : instructions(Pkr->getFunction())) {
     NumScalarUses[&I] = I.getNumUses();
-    if (isAlive(&I)) Cost += Pkr->getScalarCost(&I);
+    if (isAlive(&I))
+      Cost += Pkr->getScalarCost(&I);
   }
 }
 
@@ -38,7 +38,8 @@ void Plan::incScalarUses(Instruction *I) {
   }
   bool WasDead = !isAlive(I);
   ++NumScalarUses[I];
-  if (WasDead && isAlive(I) && !getProducer(I)) revive(I);
+  if (WasDead && isAlive(I) && !getProducer(I))
+    revive(I);
 }
 
 float Plan::computeShuffleCost(const OperandPack *OP) const {
@@ -47,11 +48,13 @@ float Plan::computeShuffleCost(const OperandPack *OP) const {
   auto *TTI = Pkr->getTTI();
 
   // Fast path: OP is produced exactly
-  if (ValuesToPackMap.count(*OP)) return 0;
+  if (ValuesToPackMap.count(*OP))
+    return 0;
 
   // Second fastest path: OP is a broadcast
   if (is_splat(*OP))
-    return getShuffleCostFromTTI(TTI, TargetTransformInfo::SK_Broadcast, VecTy); // default index=0
+    return getShuffleCostFromTTI(TTI, TargetTransformInfo::SK_Broadcast,
+                                 VecTy); // default index=0
 
   float ShuffleCost = 0;
 
@@ -61,11 +64,12 @@ float Plan::computeShuffleCost(const OperandPack *OP) const {
     if (auto *I = dyn_cast_or_null<Instruction>(V)) {
       if (auto *VP = getProducer(I)) {
         // I is produced by a pack we've never seen, shuffle!
-        if (Gathered.insert(VP).second) ShuffleCost += C_Shuffle;
+        if (Gathered.insert(VP).second)
+          ShuffleCost += C_Shuffle;
       } else {
         // I not produced as in a vector, insert!
-        ShuffleCost +=
-            getVectorInstrCostFromTTI(TTI, Instruction::InsertElement, VecTy, i);
+        ShuffleCost += getVectorInstrCostFromTTI(
+            TTI, Instruction::InsertElement, VecTy, i);
       }
     } else if (V && !isa<Constant>(V)) {
       // Not an internal instruction, insert!
@@ -80,7 +84,8 @@ void Plan::updateCostOfVectorUses(ArrayRef<Value *> Values) {
   SmallPtrSet<const OperandPack *, 4> Uses;
   for (auto *V : Values)
     if (auto *I = dyn_cast_or_null<Instruction>(V))
-      for (auto *OP : InstToOperandsMap.lookup(I)) Uses.insert(OP);
+      for (auto *OP : InstToOperandsMap.lookup(I))
+        Uses.insert(OP);
   for (auto *OP : Uses) {
     assert(NumVectorUses.lookup(OP));
     assert(ShuffleCosts.count(OP));
@@ -90,7 +95,8 @@ void Plan::updateCostOfVectorUses(ArrayRef<Value *> Values) {
 }
 
 void Plan::incVectorUses(const OperandPack *OP) {
-  if (NumVectorUses[OP]++) return;
+  if (NumVectorUses[OP]++)
+    return;
 
   float ShuffleCost = computeShuffleCost(OP);
   ShuffleCosts[OP] = ShuffleCost;
@@ -102,7 +108,8 @@ void Plan::incVectorUses(const OperandPack *OP) {
     if (auto *I = dyn_cast_or_null<Instruction>(V)) {
       bool WasDead = !isAlive(I);
       InstToOperandsMap[I].insert(OP);
-      if (isAlive(I) && WasDead && !getProducer(I)) revive(I);
+      if (isAlive(I) && WasDead && !getProducer(I))
+        revive(I);
     }
 }
 
@@ -114,16 +121,19 @@ bool Plan::isAlive(llvm::Instruction *I) const {
 
 void Plan::decVectorUses(const OperandPack *OP) {
   assert(NumVectorUses[OP] > 0);
-  if (--NumVectorUses[OP]) return;
+  if (--NumVectorUses[OP])
+    return;
   // OP is dead because it has zero uses
   SmallPtrSet<Instruction *, 8> Visited;
   for (auto *V : *OP)
     if (auto *I = dyn_cast_or_null<Instruction>(V)) {
       bool Inserted = Visited.insert(I).second;
-      if (!Inserted) continue;
+      if (!Inserted)
+        continue;
       assert(InstToOperandsMap.lookup(I).count(OP));
       InstToOperandsMap[I].erase(OP);
-      if (!isAlive(I)) kill(I);
+      if (!isAlive(I))
+        kill(I);
     }
   NumVectorUses.erase(OP);
   assert(ShuffleCosts.count(OP));
@@ -151,11 +161,13 @@ void Plan::kill(Instruction *I) {
         AllDead = false;
         break;
       }
-    if (AllDead) removeImpl(VP);
+    if (AllDead)
+      removeImpl(VP);
   } else {
     Cost -= Pkr->getScalarCost(I);
     for (Value *O : I->operands())
-      if (auto *I2 = dyn_cast<Instruction>(O)) decScalarUses(I2);
+      if (auto *I2 = dyn_cast<Instruction>(O))
+        decScalarUses(I2);
   }
 }
 
@@ -169,11 +181,13 @@ void Plan::decScalarUses(Instruction *I) {
     ExtractCosts.erase(I);
   }
 
-  if (!isAlive(I)) kill(I);
+  if (!isAlive(I))
+    kill(I);
 }
 
 bool Plan::verifyCost() const {
-  if (!EnableCostVerification) return true;
+  if (!EnableCostVerification)
+    return true;
 
   float TotalExtractCost = 0;
   for (auto KV : ExtractCosts) {
@@ -195,7 +209,8 @@ bool Plan::verifyCost() const {
       TotalScalarCost += Pkr->getScalarCost(&I);
 
   float TotalVectorCost = 0;
-  for (auto *VP : Packs) TotalVectorCost += VP->getProducingCost();
+  for (auto *VP : Packs)
+    TotalVectorCost += VP->getProducingCost();
   float Cost2 =
       TotalExtractCost + TotalShuffleCost + TotalScalarCost + TotalVectorCost;
   bool Ok = Cost2 == Cost;
@@ -213,7 +228,8 @@ bool Plan::verifyCost() const {
 void Plan::addImpl(const VectorPack *VP) {
   Packs.insert(VP);
   Cost += VP->getProducingCost();
-  for (auto *OP : VP->getOperandPacks()) incVectorUses(OP);
+  for (auto *OP : VP->getOperandPacks())
+    incVectorUses(OP);
 
   ArrayRef<Value *> Values = VP->getOrderedValues();
   ValuesToPackMap[Values] = VP;
@@ -231,15 +247,16 @@ void Plan::addImpl(const VectorPack *VP) {
   for (unsigned i = 0, N = Values.size(); i < N; i++)
     if (auto *I = dyn_cast_or_null<Instruction>(Values[i])) {
       if (!VP->isReduction() && NumScalarUses.lookup(I)) {
-        float ExtractCost =
-            getVectorInstrCostFromTTI(TTI, Instruction::ExtractElement, VecTy, i);
+        float ExtractCost = getVectorInstrCostFromTTI(
+            TTI, Instruction::ExtractElement, VecTy, i);
         Cost += ExtractCost;
         ExtractCosts[I] = ExtractCost;
       }
       if (isAlive(I)) {
         Cost -= Pkr->getScalarCost(I);
         for (Value *O : I->operands())
-          if (auto *I2 = dyn_cast<Instruction>(O)) decScalarUses(I2);
+          if (auto *I2 = dyn_cast<Instruction>(O))
+            decScalarUses(I2);
       }
     }
 }
@@ -278,9 +295,11 @@ void Plan::removeImpl(const VectorPack *VP) {
           for (auto *V : Values) {
             auto *I2 = dyn_cast_or_null<Instruction>(V);
             for (Value *O : I2->operands())
-              if (O == I) ++NumIntraPackUses;
+              if (O == I)
+                ++NumIntraPackUses;
           }
-          if (NumUses == NumIntraPackUses) continue;
+          if (NumUses == NumIntraPackUses)
+            continue;
         }
 
         // Since we are producing I as a scalar now, we don't need to pay the
@@ -296,5 +315,6 @@ void Plan::removeImpl(const VectorPack *VP) {
   }
 
   // Update the uses
-  for (auto *OP : VP->getOperandPacks()) decVectorUses(OP);
+  for (auto *OP : VP->getOperandPacks())
+    decVectorUses(OP);
 }

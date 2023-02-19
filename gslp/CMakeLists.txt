@@ -51,7 +51,7 @@ if(BUILD_TYPE STREQUAL "RELEASE")
 endif()
 ]]
 
-add_library(GSLP MODULE GSLP.cpp TestConsecutiveCheck.cpp)
+add_library(GSLP MODULE GSLP.cpp TestConsecutiveCheck.cpp SimpleParser.cpp)
 llvm_map_components_to_libnames(LLVM_LIBRARIES support core transformutils irreader analysis scalaropts)
 
 target_link_libraries(GSLP Packing)

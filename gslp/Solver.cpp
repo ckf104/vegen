@@ -2,6 +2,7 @@
 #include "Heuristic.h"
 #include "Packer.h"
 #include "Plan.h"
+#include "SimpleParser.h"
 #include "VectorPackSet.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/InstIterator.h"
@@ -9,10 +10,8 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
-    RefinePlans("refine-plans",
-                cl::desc("Refine the initial vectorization plan"),
-                cl::init(false));
+// Refine the initial vectorization plan
+static OptionItem<bool, false> RefinePlans("refine-plans", false);
 
 unsigned getBitWidth(Value *V, const DataLayout *DL) {
   auto *Ty = V->getType();
@@ -345,8 +344,8 @@ static void findLoopFreeReductions(SmallVectorImpl<const VectorPack *> &Seeds,
     Optional<ReductionInfo>(RI) = matchLoopFreeReduction(Root);
     if (RI && RI->Elts.size() % 2 == 0) {
       unsigned RdxLen =
-        std::min<unsigned>(greatestPowerOfTwoDivisor(RI->Elts.size()),
-            MaxVecWidth / getBitWidth(Root, DL));
+          std::min<unsigned>(greatestPowerOfTwoDivisor(RI->Elts.size()),
+                             MaxVecWidth / getBitWidth(Root, DL));
       BitVector Depended(VPCtx->getNumValues());
       for (auto *V : RI->Elts)
         if (auto *I2 = dyn_cast<Instruction>(V)) {

@@ -1,4 +1,5 @@
 #include "BlockBuilder.h"
+#include "SimpleParser.h"
 #include "ControlDependence.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -8,9 +9,9 @@
 
 using namespace llvm;
 
-static cl::opt<bool> RunTest1("test1", cl::init(false));
-static cl::opt<bool> RunTest2("test2", cl::init(false));
-static cl::opt<bool> RunTest3("test3", cl::init(false));
+static OptionItem<bool, false> RunTest1("test1", false);
+static OptionItem<bool, false> RunTest2("test2", false);
+static OptionItem<bool, false> RunTest3("test3", false);
 
 static void test1() {
   LLVMContext Ctx;
@@ -20,7 +21,8 @@ static void test1() {
   auto *F =
       Function::Create(FTy, GlobalValue::LinkageTypes::InternalLinkage, "foo");
 
-  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F), [](Value *V) { return V; });
+  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F),
+                       [](Value *V) { return V; });
   DominatorTree DT(*F);
   PostDominatorTree PDT(*F);
   LoopInfo LI(DT);
@@ -53,7 +55,8 @@ static void test2() {
   auto *F =
       Function::Create(FTy, GlobalValue::LinkageTypes::InternalLinkage, "foo");
 
-  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F), [](Value *V) { return V; });
+  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F),
+                       [](Value *V) { return V; });
   DominatorTree DT(*F);
   PostDominatorTree PDT(*F);
   LoopInfo LI(DT);
@@ -86,7 +89,8 @@ static void test3() {
   auto *F =
       Function::Create(FTy, GlobalValue::LinkageTypes::InternalLinkage, "foo");
 
-  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F), [](Value *V) { return V; });
+  BlockBuilder Builder(BasicBlock::Create(Ctx, "entry", F),
+                       [](Value *V) { return V; });
   DominatorTree DT(*F);
   PostDominatorTree PDT(*F);
   LoopInfo LI(DT);
@@ -105,7 +109,8 @@ static void test3() {
 
   auto *If_X2 = CDA.getAnd(True, X2, true);
   auto *Or_X1_X2 = CDA.getOr({If_X1, If_X2});
-  BinaryOperator::CreateNot(X1, "DUMMY-x1-or-x2", Builder.getBlockFor(Or_X1_X2));
+  BinaryOperator::CreateNot(X1, "DUMMY-x1-or-x2",
+                            Builder.getBlockFor(Or_X1_X2));
 
   ReturnInst::Create(Ctx, Builder.getBlockFor(nullptr));
 

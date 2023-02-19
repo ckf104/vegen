@@ -1,4 +1,5 @@
 #include "Heuristic.h"
+#include "SimpleParser.h"
 #include "Packer.h"
 #include "Solver.h"
 #include "VectorPack.h"
@@ -15,8 +16,8 @@ static constexpr float C_Insert = 2;
 static constexpr float C_Shuffle = 2;
 static constexpr float C_Extract = 1.0;
 
-static cl::opt<bool> AllowDeinterleave("allow-deinterleave", cl::init(false));
-static cl::opt<bool> AllowTranspose("allow-transpose", cl::init(false));
+static OptionItem<bool, false> AllowDeinterleave("allow-deinterleave", false);
+static OptionItem<bool, false> AllowTranspose("allow-transpose", false);
 
 float Heuristic::getCost(const VectorPack *VP) {
   float Cost = VP->getProducingCost();

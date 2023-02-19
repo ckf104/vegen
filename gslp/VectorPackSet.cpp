@@ -5,6 +5,7 @@
 #include "Heuristic.h"
 #include "Packer.h"
 #include "Plan.h"
+#include "SimpleParser.h"
 #include "Solver.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -17,24 +18,25 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace PatternMatch;
 
 #define DEBUG_TYPE "vegen-codegen"
 
-extern cl::opt<bool> TestCodeGen;
+extern OptionItem<bool, false> TestCodeGen;
 
-static cl::opt<bool> DumpAfterErasingOldBlocks("dump-after-erasing-old-blocks",
-                                               cl::init(false));
+// dump-after-erasing-old-blocks
+static OptionItem<bool, false>
+    DumpAfterErasingOldBlocks("dump-after-erasing-old-blocks", false);
 
-static cl::opt<bool>
-    DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks",
-                               cl::init(false));
+// dump-before-erasing-old-blocks
+static OptionItem<bool, false>
+    DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks", false);
 
 static bool shouldSkip(const VectorPack *VP) {
 #if 0
@@ -745,7 +747,8 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       }
 
       // Demote the phi to memory
-      auto *Alloca = createAlloca(PN->getType(), PN->getName()+".demoted", Entry);
+      auto *Alloca =
+          createAlloca(PN->getType(), PN->getName() + ".demoted", Entry);
       Allocas.push_back(Alloca);
       if (auto MaybeOneHot = VL.getOneHotPhi(PN)) {
         Builder.SetInsertPoint(GetBlock(nullptr));
@@ -859,8 +862,8 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         } else {
           Builder.SetInsertPoint(GetBlock(getGreatestCommonCondition(Conds)));
           VecInst = Builder.CreateSelect(getOrEmitMask(Conds, &VL),
-              gatherOperandPack(IfTrue),
-              gatherOperandPack(IfFalse));
+                                         gatherOperandPack(IfTrue),
+                                         gatherOperandPack(IfFalse));
         }
         VecInst->setName(SomePhi->getName());
       } else {
@@ -896,7 +899,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         Vec = emitReduction(RI.Kind, Vec, gatherOperandPack(*OP), Builder);
       // Do the final horizontal reduction
       auto *HorizontalRdx =
-        createSimpleTargetReduction(Builder, Pkr.getTTI(), Vec, RI.Kind);
+          createSimpleTargetReduction(Builder, Pkr.getTTI(), Vec, RI.Kind);
       ReplacedUses[RI.Ops.front()] = HorizontalRdx;
     } else {
       Builder.SetInsertPoint(GetBlock(getGreatestCommonCondition(Conds)));
@@ -911,14 +914,14 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       // Now we can emit the vector instruction
       ArrayRef<Value *> Vals = VP->getOrderedValues();
       if (VP->isLoad())
-        VecInst =
-            VP->emitVectorLoad(Operands, getLoadStoreMask(Vals, &VL), UseScalar, Builder);
+        VecInst = VP->emitVectorLoad(Operands, getLoadStoreMask(Vals, &VL),
+                                     UseScalar, Builder);
       else if (VP->isStore()) {
-        VecInst =
-            VP->emitVectorStore(Operands, getLoadStoreMask(Vals, &VL), UseScalar, Builder);
+        VecInst = VP->emitVectorStore(Operands, getLoadStoreMask(Vals, &VL),
+                                      UseScalar, Builder);
       } else {
         VecInst = VP->emit(Operands, Builder);
-        // GEPs may have scalar operands that requires fixing 
+        // GEPs may have scalar operands that requires fixing
         // (e.g., from using a mu node)
         if (auto *GEP = dyn_cast<GetElementPtrInst>(VecInst))
           fixScalarUses(GEP);
@@ -985,13 +988,13 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       IdentityVector = Builder.CreateVectorSplat(VecTy->getElementCount(),
                                                  useScalar(RI.StartValue));
     } else {
-      // ckf: After adding SelectICmp and SelectFCmp, static property of 
+      // ckf: After adding SelectICmp and SelectFCmp, static property of
       // getRecurrenceIdentity has been removed, but vegen now does not use it
       RecurrenceDescriptor r;
-      auto *Identity = r.getRecurrenceIdentity(
-          RI.Kind, RI.Phi->getType(), FastMathFlags());
-      IdentityVector =
-          ConstantVector::getSplat(VecTy->getElementCount(), cast<Constant>(Identity));
+      auto *Identity =
+          r.getRecurrenceIdentity(RI.Kind, RI.Phi->getType(), FastMathFlags());
+      IdentityVector = ConstantVector::getSplat(VecTy->getElementCount(),
+                                                cast<Constant>(Identity));
     }
 
     for (auto Pair : zip(VecPhis, RdxOps)) {
@@ -1117,7 +1120,7 @@ static bool condsAreDependent(ArrayRef<const ControlCondition *> Conds) {
   for (auto *C : Conds) {
     if (C && any_of(Conds, [C](auto *C2) {
           return C != C2 && C2 && (isImplied(C, C2) || isImplied(C2, C));
-          })) {
+        })) {
       return true;
     }
   }
@@ -1301,7 +1304,8 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
   for (auto *VP : P)
     tryAdd(VP);
 
-  // Look of consecutive loads/stores and speculatively compute their pointers if necessary
+  // Look of consecutive loads/stores and speculatively compute their pointers
+  // if necessary
   for (auto *VP : AllPacks) {
     auto *Addr = VP->getLoadStorePointer();
     if (!Addr)

@@ -1,4 +1,5 @@
 #include "BlockBuilder.h"
+#include "SimpleParser.h"
 #include "ControlDependence.h"
 #include "IRVec.h"
 #include "InstSema.h"
@@ -34,6 +35,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 // For pass building
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
@@ -46,49 +50,42 @@
 #include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/Vectorize.h"
+#include <memory>
 #include <set>
+#include <string>
+#include <vector>
 
 using namespace llvm;
 using namespace PatternMatch;
 
+
 namespace llvm {
 FunctionPass *createScalarizerPass();
 }
+// test lowering from vloop without vectorization
+OptionItem<bool, false> TestCodeGen("test-codegen", false);
 
-cl::opt<bool>
-    TestCodeGen("test-codegen",
-                cl::desc("test lowering from vloop without vectorization"),
-                cl::init(false));
+// Path to the directory containing InstWrappers.*.bc
+OptionItem<std::string, false, true> WrappersDir("wrappers-dir");
 
-static cl::opt<std::string>
-    WrappersDir("wrappersdir",
-                cl::desc("Path to the directory containing InstWrappers.*.bc"),
-                cl::Required);
+// only vectorize specified passes
+OptionItem<std::string, true> VectorizeOnly("vectorize-only");
 
-static cl::list<std::string>
-    VectorizeOnly("vectorize-only", cl::desc("only vectorize specified passes"),
-                  cl::CommaSeparated);
+// only run on function names containing this substring
+OptionItem<std::string, false> Filter("filt");
 
-static cl::opt<std::string>
-    Filter("filt",
-           cl::desc("only run on function names containing this substring"));
+// Don't unroll
+OptionItem<bool, false> DisableUnrolling("no-unroll", false);
 
-static cl::opt<bool> DisableUnrolling("no-unroll", cl::desc("Don't unroll"),
-                                      cl::init(false));
+// Don't run GVN and ADCE after vectorization
+OptionItem<bool, false> DisableCleanup("no-cleanup", false);
 
-static cl::opt<bool>
-    DisableCleanup("no-cleanup",
-                   cl::desc("Don't run GVN and ADCE after vectorization"),
-                   cl::init(false));
-
-static cl::opt<bool>
-    DisableReductionBalancing("no-balance-rdx",
-                              cl::desc("Don't balance reduction tree"),
-                              cl::init(false));
+// Don't balance reduction tree
+OptionItem<bool, false> DisableReductionBalancing("no-balance-rdx",
+                                                         false); 
 
 // ckf: enable of scalarize, worse result for dot-product
-static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
-                                     cl::Hidden);
+OptionItem<bool, false> ScalarizeEnable("vegen-scalarize-enable", false);
 
 namespace llvm {
 void initializeGSLPPass(PassRegistry &);
@@ -393,7 +390,22 @@ static void registerGSLP(FunctionPassManager &FPM) {
   }
 }
 
+using namespace clang;
+class ParseArgPlugin : public PluginASTAction {
+public:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &,
+                                                 StringRef) override {
+    errs() << "plugin run!\n";
+    return std::make_unique<ASTConsumer>();
+  }
+  bool ParseArgs(const CompilerInstance &,
+                 const std::vector<std::string> &arg) override {
+    GlobalParser(arg);
+    return true;
+  }
+};
 
+static FrontendPluginRegistry::Add<ParseArgPlugin> X("gslp", "gslp argument passer"); 
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
