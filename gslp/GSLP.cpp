@@ -61,7 +61,7 @@ cl::opt<bool>
                 cl::init(false));
 
 static cl::opt<std::string>
-    WrappersDir("wrappers-dir",
+    WrappersDir("wrappersdir",
                 cl::desc("Path to the directory containing InstWrappers.*.bc"),
                 cl::Required);
 
@@ -392,6 +392,8 @@ static void registerGSLP(FunctionPassManager &FPM) {
     FPM.addPass(ADCEPass());
   }
 }
+
+
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {

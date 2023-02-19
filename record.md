@@ -153,6 +153,8 @@ tmp1 == tmp3;
 6. improvePlan中创建各种VectorPack
 7. 在vegen的pack定义中，需要要求各个outputLane不能使用同一个inputLane?
 
+使用legacy pass的问题：clang15不再使用legacy pass manager，没办法把pass加载进来
+
 一些LLVM中的测试用例：
 
 SLPVectorizer, LoopVectorize, SpeculativeExecution
