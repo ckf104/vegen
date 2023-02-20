@@ -1,4 +1,4 @@
-// RUN: %clang-o3 -march=native -mllvm -filt=kernel %s -o %t && %t
+// RUN: %clang-o3 -march=native -fplugin-arg-gslp-filt=kernel %s -o %t && %t
 
 __attribute__((noinline))
 void kernel(int n, float *restrict RET, float *restrict aFOO) {

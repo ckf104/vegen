@@ -1,13 +1,14 @@
 #include "BlockBuilder.h"
-#include "SimpleParser.h"
 #include "ControlDependence.h"
 #include "IRVec.h"
 #include "InstSema.h"
 #include "Packer.h"
 #include "Scalarizer.h"
+#include "SimpleParser.h"
 #include "Solver.h"
 #include "UnrollFactor.h"
 #include "VectorPackSet.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
@@ -58,10 +59,46 @@
 using namespace llvm;
 using namespace PatternMatch;
 
-
 namespace llvm {
 FunctionPass *createScalarizerPass();
 }
+
+#ifdef OPT_PASS
+cl::opt<bool>
+    TestCodeGen("test-codegen",
+                cl::desc("test lowering from vloop without vectorization"),
+                cl::init(false));
+
+static cl::opt<std::string>
+    WrappersDir("wrappers-dir",
+                cl::desc("Path to the directory containing InstWrappers.*.bc"),
+                cl::Required);
+
+static cl::list<std::string>
+    VectorizeOnly("vectorize-only", cl::desc("only vectorize specified passes"),
+                  cl::CommaSeparated);
+
+static cl::opt<std::string>
+    Filter("filt",
+           cl::desc("only run on function names containing this substring"));
+
+static cl::opt<bool> DisableUnrolling("no-unroll", cl::desc("Don't unroll"),
+                                      cl::init(false));
+
+static cl::opt<bool>
+    DisableCleanup("no-cleanup",
+                   cl::desc("Don't run GVN and ADCE after vectorization"),
+                   cl::init(false));
+
+static cl::opt<bool>
+    DisableReductionBalancing("no-balance-rdx",
+                              cl::desc("Don't balance reduction tree"),
+                              cl::init(false));
+
+// ckf: enable of scalarize, worse result for dot-product
+static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
+                                     cl::Hidden);
+#else
 // test lowering from vloop without vectorization
 OptionItem<bool, false> TestCodeGen("test-codegen", false);
 
@@ -81,11 +118,11 @@ OptionItem<bool, false> DisableUnrolling("no-unroll", false);
 OptionItem<bool, false> DisableCleanup("no-cleanup", false);
 
 // Don't balance reduction tree
-OptionItem<bool, false> DisableReductionBalancing("no-balance-rdx",
-                                                         false); 
+OptionItem<bool, false> DisableReductionBalancing("no-balance-rdx", false);
 
 // ckf: enable of scalarize, worse result for dot-product
 OptionItem<bool, false> ScalarizeEnable("vegen-scalarize-enable", false);
+#endif
 
 namespace llvm {
 void initializeGSLPPass(PassRegistry &);
@@ -128,6 +165,8 @@ public:
     default:
       llvm_unreachable("architecture not supported");
     }
+    if (WrappersDir.empty())
+      WrappersDir = (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build").str();
     errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
     InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
     if (!InstWrappers) {
@@ -389,7 +428,7 @@ static void registerGSLP(FunctionPassManager &FPM) {
     FPM.addPass(ADCEPass());
   }
 }
-
+#ifndef OPT_PASS
 using namespace clang;
 class ParseArgPlugin : public PluginASTAction {
 public:
@@ -405,7 +444,9 @@ public:
   }
 };
 
-static FrontendPluginRegistry::Add<ParseArgPlugin> X("gslp", "gslp argument passer"); 
+static FrontendPluginRegistry::Add<ParseArgPlugin> X("gslp",
+                                                     "gslp argument passer");
+#endif
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {

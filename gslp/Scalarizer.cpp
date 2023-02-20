@@ -54,6 +54,19 @@ using namespace llvm;
 
 #define DEBUG_TYPE "scalarizer"
 
+#ifdef OPT_PASS
+static cl::opt<bool> ScalarizeVariableInsertExtract(
+    "vegen-scalarize-variable-insert-extract", cl::init(true), cl::Hidden,
+    cl::desc("Allow the scalarizer pass to scalarize "
+             "insertelement/extractelement with variable index"));
+
+// This is disabled by default because having separate loads and stores
+// makes it more likely that the -combiner-alias-analysis limits will be
+// reached.
+static cl::opt<bool> ScalarizeLoadStore(
+    "vegen-scalarize-load-store", cl::init(false), cl::Hidden,
+    cl::desc("Allow the scalarizer pass to scalarize loads and store"));
+#else
 // Allow the scalarizer pass to scalarize insertelement/extractelement with
 // variable index
 static OptionItem<bool, false>
@@ -66,7 +79,7 @@ static OptionItem<bool, false>
 // Allow the scalarizer pass to scalarize loads and store"
 static OptionItem<bool, false> ScalarizeLoadStore(
     "vegen-scalarize-load-store", false);
-
+#endif
 // ckf: enable of scalarize, worse result for dot-product
 // static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable",
 // cl::init(false),

@@ -10,9 +10,15 @@
 
 using namespace llvm;
 
+#ifdef OPT_PASS
+static cl::opt<bool>
+    RefinePlans("refine-plans",
+                cl::desc("Refine the initial vectorization plan"),
+                cl::init(false));
+#else
 // Refine the initial vectorization plan
 static OptionItem<bool, false> RefinePlans("refine-plans", false);
-
+#endif
 unsigned getBitWidth(Value *V, const DataLayout *DL) {
   auto *Ty = V->getType();
   if (Ty->isIntegerTy())

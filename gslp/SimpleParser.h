@@ -1,3 +1,8 @@
+#include "ControlDependence.h"
+#ifndef OPT_PASS
+#ifndef __SimpleParser_HPP
+#define __SimpleParser_HPP
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -36,6 +41,7 @@ struct OptionItemBase : public ConvertType<Type, IsList> {
   OptionItemBase() = default;
 
   void setValue(const ConvertType &t) { ConvertType::operator=(t); }
+  ConvertType& getValue() { return *this;}
   void reset() {
     ConvertType::~ConvertType();
     ConvertType::ConvertType();
@@ -45,6 +51,7 @@ struct OptionItemBase : public ConvertType<Type, IsList> {
 template <class Type, bool IsClass>
 struct OptionItemBase<Type, true, IsClass> : public std::vector<Type> {
   void setValue(const std::vector<Type> &t) { std::vector<Type>::operator=(t); }
+  std::vector<Type>& getValue() { return *this;}
   void addValue(const Type &t) { this->push_back(t); }
   void reset() { this->clear(); }
 };
@@ -52,6 +59,7 @@ struct OptionItemBase<Type, true, IsClass> : public std::vector<Type> {
 template <class Type> struct OptionItemBase<Type, false, false> {
   operator Type() const { return data; }
   void setValue(const Type &t) { data = t; }
+  Type& getValue() { return data;}
   void reset() { data = Type(); }
 
 private:
@@ -72,8 +80,15 @@ struct OptionItem
 
   friend bool Parser<Type, IsList, IsRequired>(OptionItem &item,
                                                llvm::StringRef arg);
+  
+  OptionItem& operator=(const OptionItem& other) = delete;
+  OptionItem(const OptionItem& other) = delete;
+  ConvertType operator=(const ConvertType& v){
+    this->setValue(v);
+    return this->getValue();
+  }  
 
-  OptionItem(const char *name, ConvertType initValue = ConvertType())
+  explicit OptionItem(const char *name, ConvertType initValue = ConvertType())
       : name(name) {
     this->setValue(initValue);
   }
@@ -160,3 +175,6 @@ inline void GlobalParser(const std::vector<std::string> &args) {
     }
   }
 }
+
+#endif
+#endif

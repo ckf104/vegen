@@ -3,9 +3,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # The main "lib packing"
 set(LIB_PACKING_SRC
   target-sema/x86.cpp target-sema/arm.cpp
+)
 
-  Plan.cpp
-
+set(LIB_GSLP_SRC  Plan.cpp
+  GSLP.cpp TestConsecutiveCheck.cpp
   Scalarizer.cpp
 
   ControlDependence.cpp
@@ -51,14 +52,17 @@ if(BUILD_TYPE STREQUAL "RELEASE")
 endif()
 ]]
 
-add_library(GSLP MODULE GSLP.cpp TestConsecutiveCheck.cpp SimpleParser.cpp)
+add_library(GSLP MODULE ${LIB_GSLP_SRC} SimpleParser.cpp)
+add_library(GSLP_opt MODULE ${LIB_GSLP_SRC})
+target_compile_definitions(GSLP_opt PRIVATE OPT_PASS)
+
 llvm_map_components_to_libnames(LLVM_LIBRARIES support core transformutils irreader analysis scalaropts)
 
 target_link_libraries(GSLP Packing)
+target_link_libraries(GSLP_opt Packing)
 # uncommented this if debugging
-#target_link_libraries(GSLP LLVMSupport)
+target_link_libraries(GSLP LLVMSupport)
 
-set_target_properties(GSLP PROPERTIES COMPILE_FLAGS "-fno-rtti")
 
 # THANKS AJAY!
 set(X86_WRAPPERS "${CMAKE_BINARY_DIR}/x86.bc")

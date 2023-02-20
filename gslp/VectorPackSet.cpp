@@ -27,7 +27,16 @@ using namespace llvm;
 using namespace PatternMatch;
 
 #define DEBUG_TYPE "vegen-codegen"
+#ifdef OPT_PASS
+extern cl::opt<bool> TestCodeGen;
 
+static cl::opt<bool> DumpAfterErasingOldBlocks("dump-after-erasing-old-blocks",
+                                               cl::init(false));
+
+static cl::opt<bool>
+    DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks",
+                               cl::init(false));
+#else
 extern OptionItem<bool, false> TestCodeGen;
 
 // dump-after-erasing-old-blocks
@@ -37,7 +46,7 @@ static OptionItem<bool, false>
 // dump-before-erasing-old-blocks
 static OptionItem<bool, false>
     DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks", false);
-
+#endif
 static bool shouldSkip(const VectorPack *VP) {
 #if 0
   return !(VP->isLoad() || VP->isStore());

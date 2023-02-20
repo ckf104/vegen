@@ -9,10 +9,15 @@
 
 using namespace llvm;
 
+#ifdef OPT_PASS
+static cl::opt<bool> RunTest1("test1", cl::init(false));
+static cl::opt<bool> RunTest2("test2", cl::init(false));
+static cl::opt<bool> RunTest3("test3", cl::init(false));
+#else
 static OptionItem<bool, false> RunTest1("test1", false);
 static OptionItem<bool, false> RunTest2("test2", false);
 static OptionItem<bool, false> RunTest3("test3", false);
-
+#endif
 static void test1() {
   LLVMContext Ctx;
   auto *Int1Ty = Type::getInt1Ty(Ctx);

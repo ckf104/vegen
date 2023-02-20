@@ -57,10 +57,17 @@
 
 using namespace llvm;
 
+#ifdef OPT_PASS
+static cl::opt<bool>
+    UnrollRuntimeEpilog("vegen-unroll-runtime-epilog", cl::init(false),
+                        cl::Hidden,
+                        cl::desc("Allow runtime unrolled loops to be unrolled "
+                                 "with epilog instead of prolog."));
+#else
 // Allow runtime unrolled loops to be unrolled with epilog instead of prolog.
 static OptionItem<bool, false>
     UnrollRuntimeEpilog("vegen-unroll-runtime-epilog", false);
-
+#endif
 static bool needToInsertPhisForLCSSA(Loop *L,
                                      const std::vector<BasicBlock *> &Blocks,
                                      LoopInfo *LI) {

@@ -28,9 +28,14 @@
 
 using namespace llvm;
 
+#ifdef OPT_PASS
+static cl::opt<bool> ForwardSeeds("forward-seeds",
+                                  cl::desc("Forward seeds from the unroller"),
+                                  cl::init(false));
+#else
 // Forward seeds from the unroller
 static OptionItem<bool, false> ForwardSeeds("forward-seeds", false);
-
+#endif
 namespace {
 class AAResultsBuilder {
   std::function<const TargetLibraryInfo &(Function &F)> GetTLI;

@@ -11,9 +11,14 @@
 
 using namespace llvm;
 
+#ifdef OPT_PASS
+static cl::opt<bool> EnableCostVerification(
+    "verify-costs", cl::desc("verify cost during vector planning"),
+    cl::init(false));
+#else
 // verify cost during vector planning
 static OptionItem<bool, false> EnableCostVerification("verify-costs", false);
-
+#endif
 Plan::Plan(Packer *Pkr) : Pkr(Pkr), Cost(0) {
   for (auto &I : instructions(Pkr->getFunction())) {
     NumScalarUses[&I] = I.getNumUses();

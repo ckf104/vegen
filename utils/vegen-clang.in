@@ -21,7 +21,7 @@ do
 done
 
 if test $loadlib = yes
-then lib='-fpass-plugin=@CMAKE_BINARY_DIR@/gslp/libGSLP.so -fplugin-arg-MyPlgin-wrappersdir @CMAKE_BINARY_DIR@'
+then lib='-fpass-plugin=@CMAKE_BINARY_DIR@/gslp/libGSLP.so -fplugin=@CMAKE_BINARY_DIR@/gslp/libGSLP.so -Xclang -add-plugin -Xclang gslp -fplugin-arg-gslp-wrappers-dir=@CMAKE_BINARY_DIR@'
 fi
 # 
 exec $clang $lib $@ -fno-slp-vectorize -fno-vectorize
