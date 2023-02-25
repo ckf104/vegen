@@ -9,7 +9,11 @@
 #include "UnrollFactor.h"
 #include "VectorPackSet.h"
 #include "llvm/ADT/StringRef.h"
+#ifndef LLVM_17
 #include "llvm/ADT/Triple.h"
+#else
+#include "llvm/TargetParser/Triple.h"
+#endif
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
@@ -161,7 +165,10 @@ public:
     case Triple::aarch64:
       Wrapper = "/arm.bc";
       break;
-
+    case Triple::riscv64:
+      Wrapper = "/riscv64.bc";
+      break;
+    
     default:
       llvm_unreachable("architecture not supported");
     }
@@ -423,7 +430,7 @@ static void registerGSLP(FunctionPassManager &FPM) {
   if (!DisableCleanup) {
     FPM.addPass(SimplifyCFGPass());
     FPM.addPass(JumpThreadingPass());
-    FPM.addPass(InstCombinePass(true));
+    FPM.addPass(InstCombinePass());
     FPM.addPass(GVNPass());
     FPM.addPass(ADCEPass());
   }

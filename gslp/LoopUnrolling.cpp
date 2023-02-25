@@ -1,4 +1,5 @@
 #include "LoopUnrolling.h"
+#include "Compatible.h"
 #include "SimpleParser.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -52,6 +53,7 @@
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <algorithm>
 #include <assert.h>
+#include <numeric>
 #include <type_traits>
 #include <vector>
 
@@ -119,7 +121,8 @@ void simplifyLoopAfterUnroll2(Loop *L, bool SimplifyIVs, LoopInfo *LI,
         if (LI->replacementPreservesLCSSAForm(Inst, V))
           Inst->replaceAllUsesWith(V);
       if (isInstructionTriviallyDead(Inst))
-        BB->getInstList().erase(Inst);
+        // BB->getInstList().erase(Inst);
+        Inst->eraseFromParent();
     }
   }
 
@@ -188,8 +191,12 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
 
   bool Peeled = false;
   if (ULO.PeelCount) {
+#ifndef LLVM_17
     Peeled = peelLoop(L, ULO.PeelCount, LI, SE, *DT, AC, PreserveLCSSA);
-
+#else
+    ValueToValueMapTy mp;
+    Peeled = peelLoop(L, ULO.PeelCount, LI, SE, *DT, AC, PreserveLCSSA, mp);
+#endif
     // Successful peeling may result in a change in the loop preheader/trip
     // counts. If we later unroll the loop, we want these to be updated.
     if (Peeled) {
@@ -272,8 +279,7 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
     ULO.TripMultiple = 0;
   } else {
     // Figure out what multiple to use.
-    BreakoutTrip = ULO.TripMultiple =
-        (unsigned)GreatestCommonDivisor64(ULO.Count, ULO.TripMultiple);
+    BreakoutTrip = ULO.TripMultiple = std::gcd(ULO.Count, ULO.TripMultiple);
   }
 
   // We are going to make changes to this loop. SCEV may be keeping cached info
@@ -336,15 +342,18 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
   SmallSetVector<Loop *, 4> LoopsToSimplify;
   for (Loop *SubLoop : *L)
     LoopsToSimplify.insert(SubLoop);
-
+#ifndef LLVM_17
   if (Header->getParent()->isDebugInfoForProfiling())
+#else
+  if (Header->getParent()->shouldEmitDebugInfoForProfiling())
+#endif
     for (BasicBlock *BB : L->getBlocks())
       for (Instruction &I : *BB)
         if (!isa<DbgInfoIntrinsic>(&I))
           if (const DILocation *DIL = I.getDebugLoc()) {
             auto NewDIL = DIL->cloneByMultiplyingDuplicationFactor(ULO.Count);
             if (NewDIL)
-              I.setDebugLoc(NewDIL.getValue());
+              I.setDebugLoc(NewDIL.value());
           }
 
   // Identify what noalias metadata is inside the loop: if it is inside the
@@ -360,8 +369,11 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
     for (LoopBlocksDFS::RPOIterator BB = BlockBegin; BB != BlockEnd; ++BB) {
       ValueToValueMapTy VMap;
       BasicBlock *New = CloneBasicBlock(*BB, VMap, "." + Twine(It));
+#ifndef LLVM_17
       Header->getParent()->getBasicBlockList().push_back(New);
-
+#else
+      Header->getParent()->insert(Header->getParent()->end(), New);
+#endif
       UnrollToOrigMap[New] = UnrolledValue{It, *BB};
 
       assert((*BB != Header || LI->getLoopFor(*BB) == L) &&
@@ -381,7 +393,8 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
             if (It > 1 && L->contains(InValI))
               InVal = LastValueMap[InValI];
           VMap[OrigPHI] = InVal;
-          New->getInstList().erase(NewPHI);
+          NewPHI->eraseFromParent();
+          // New->getInstList().erase(NewPHI);
         }
 
       // Update our running map of newest clones
@@ -465,7 +478,8 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
   for (PHINode *PN : OrigPHINode) {
     if (CompletelyUnroll) {
       PN->replaceAllUsesWith(PN->getIncomingValueForBlock(Preheader));
-      Header->getInstList().erase(PN);
+      PN->eraseFromParent();
+      // Header->getInstList().erase(PN);
     } else if (ULO.Count > 1) {
       Value *InVal = PN->removeIncomingValue(LatchBlock, false);
       // If this value was defined in the loop, take the value defined by the
@@ -486,7 +500,7 @@ UnrollLoopWithVMap(Loop *L, VegenUnrollLoopOptions ULO, LoopInfo *LI,
     if (NeedConditional) {
       // Update the conditional branch's successor for the following
       // iteration.
-      assert(ContinueOnTrue.hasValue() &&
+      assert(ContinueOnTrue.has_value() &&
              "Expecting valid ContinueOnTrue when NeedConditional is true");
       Term->setSuccessor(!(*ContinueOnTrue), Dest);
     } else {

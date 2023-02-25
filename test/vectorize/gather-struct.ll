@@ -1,7 +1,7 @@
 ; RUN: %opt --passes=gslp,adce %s -S | FileCheck %s
 
 ; CHECK:       [[GEP:%.*]] = getelementptr %struct.point, ptr %pts, <4 x i64> <i64 0, i64 1, i64 2, i64 3>, i32 0
-; CHECK-NEXT:  [[GATHER:%.*]] = call <4 x i32> @llvm.masked.gather.v4i32.v4p0(<4 x ptr> [[GEP]], i32 4, <4 x i1> <i1 true, i1 true, i1 true, i1 true>, <4 x i32> undef)
+; CHECK-NEXT:  [[GATHER:%.*]] = call <4 x i32> @llvm.masked.gather.v4i32.v4p0(<4 x ptr> [[GEP]], i32 4, <4 x i1> <i1 true, i1 true, i1 true, i1 true>, <4 x i32> {{undef|poison}})
 ; CHECK-NEXT:  store <4 x i32> [[GATHER]], ptr %x
 
 target datalayout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"

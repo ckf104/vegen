@@ -2,6 +2,7 @@
 #define INST_SEMA_H
 
 #include "IntrinsicBuilder.h"
+#include "Compatible.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Value.h"
@@ -82,8 +83,8 @@ public:
   virtual ~InstBinding() {}
   virtual float getCost(llvm::TargetTransformInfo *,
                         llvm::LLVMContext &) const {
-    assert(Cost.hasValue());
-    return Cost.getValue();
+    assert(Cost.value());
+    return Cost.value();
   }
   llvm::ArrayRef<std::string> getTargetFeatures() const {
     return TargetFeatures;

@@ -212,10 +212,10 @@ public:
   bool isGEP() const { return Kind == GEP; }
   bool isPHI() const { return Kind == Phi; }
   bool isGamma() const { return Kind == Gamma; }
-  bool isReduction() const { return Rdx.hasValue() && Rdx->Phi; }
-  bool isLoopFreeReduction() const { return Rdx.hasValue() && !Rdx->Phi; }
+  bool isReduction() const { return Rdx.has_value() && Rdx->Phi; }
+  bool isLoopFreeReduction() const { return Rdx.has_value() && !Rdx->Phi; }
   const ReductionInfo &getReductionInfo() const {
-    assert(Rdx.hasValue());
+    assert(Rdx.has_value());
     return *Rdx;
   };
   llvm::ArrayRef<const GammaNode *> getGammas() const {

@@ -1,6 +1,7 @@
 .vscode/
 *.swp
-build/
+build*
+tmp
 __pycache__/
 InstSema.x86.cpp
 InstWrappers.x86.c

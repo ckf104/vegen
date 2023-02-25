@@ -1,20 +1,24 @@
-set(CMAKE_CXX_COMPILER /home/ckf104/install/llvm/bin/clang++)
-set(CMAKE_C_COMPILER /home/ckf104/install/llvm/bin/clang) 
-# uncommented this if debugging
-#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-15-debug/)
+#set(CMAKE_CXX_COMPILER /home/ckf104/install/llvm/bin/clang++)
+#set(CMAKE_C_COMPILER /home/ckf104/install/llvm/bin/clang)
+set(CMAKE_CXX_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang++)
+set(CMAKE_C_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang)
 
 cmake_minimum_required(VERSION 3.4)
 project(GSLP)
+# uncommented this if debugging
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-epi)
+set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git)
+
+find_package(LLVM REQUIRED CONFIG)
 
 string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 include(sanitizers.cmake)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
@@ -22,6 +26,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(LLVM_BUILD_TOOLS ON)
 
 add_definitions(${LLVM_DEFINITIONS})
+if(LLVM_PACKAGE_VERSION VERSION_GREATER_EQUAL 17.0.0)
+  add_definitions(-DLLVM_17)
+endif()
+  
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(-fno-rtti)

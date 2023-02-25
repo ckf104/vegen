@@ -1,3 +1,4 @@
+#include "Compatible.h"
 #include "Heuristic.h"
 #include "Packer.h"
 #include "SimpleParser.h"

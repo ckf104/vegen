@@ -1,3 +1,4 @@
+#include "Compatible.h"
 #include "Plan.h"
 #include "CastIntoFloat.h"
 #include "Heuristic.h"

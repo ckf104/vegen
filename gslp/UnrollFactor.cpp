@@ -6,7 +6,11 @@
 #include "VectorPack.h"
 #include "VectorPackContext.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#ifndef LLVM_17
 #include "llvm/ADT/Triple.h"
+#else
+#include "llvm/TargetParser/Triple.h"
+#endif
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
@@ -41,7 +45,9 @@ class AAResultsBuilder {
   std::function<const TargetLibraryInfo &(Function &F)> GetTLI;
 
   // BasicAA
+#ifndef LLVM_17
   PhiValues PV;
+#endif
   BasicAAResult BasicResult;
 
   ScopedNoAliasAAResult ScopedNoAliasResult;
@@ -58,8 +64,13 @@ public:
   AAResultsBuilder(Module &M, Function &F,
                    std::function<const TargetLibraryInfo &(Function &F)> GetTLI,
                    AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI)
-      : GetTLI(GetTLI), PV(F),
+      : GetTLI(GetTLI),
+#ifndef LLVM_17
+        PV(F),
         BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV),
+#else
+        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT),
+#endif
         CG(M), // without loopinfo to build BasicAA
         GlobalsResult(GlobalsAAResult::analyzeModule(M, GetTLI, CG)),
         Result(GetTLI(F)) {

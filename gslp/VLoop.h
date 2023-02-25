@@ -1,6 +1,7 @@
 #ifndef VLOOP_H
 #define VLOOP_H
 
+#include "Compatible.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"

@@ -1,3 +1,4 @@
+#include "Compatible.h"
 #include "VectorPack.h"
 #include "ControlDependence.h"
 #include "MatchManager.h"
@@ -205,7 +206,7 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
     auto &DL = FirstStore->getParent()->getModule()->getDataLayout();
     if (!Alignment)
       Alignment =
-          DL.getABITypeAlignment(FirstStore->getValueOperand()->getType());
+          DL.getABITypeAlign(FirstStore->getValueOperand()->getType()).value();
 
     // Cast the scalar pointer to vector pointer
     Value *ScalarPtr = GetScalar(FirstStore->getPointerOperand());

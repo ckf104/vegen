@@ -1,3 +1,4 @@
+#include "Compatible.h"
 #include "Packer.h"
 #include "ConsecutiveCheck.h"
 #include "MatchManager.h"

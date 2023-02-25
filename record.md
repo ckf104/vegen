@@ -26,6 +26,17 @@ llvm vector type
 * https://llvm.org/docs/LangRef.html#t-vector
 * bitcast from vector to int, first consider that the vector is concatenated into a big int. in little endianness, elements with higher index(right side) are put into more significant bits. so \<i4 1, i4, 2, i4, 3, i4 5\> -> 0x5321
 
+编译流程
+
+```shel
+$ ~/tmp/install/llvm-epi/bin/clang --target=riscv64-unknown-linux-gnu -march=rv64gcv rvv_saxpy.c  -menable-experimental-extensions --sysroot=/home/ckf104/install/riscv/sysroot -no-integrated-as -S -O3 -o out/rvv_saxpy.s
+$ riscv64-unknown-linux-gnu-gcc -march=rv64gcv out/rvv_saxpy.s -o out/rvv_saxpy
+$ qemu-riscv64 -cpu rv64,v=on out/rvv_saxpy
+
+```
+
+
+
 11.29, vegen drawback:
 ~~inherent drawback because of generating from xml? unnecessarily complicated llvm expression.~~
 eg: _mm256_sra_epi32

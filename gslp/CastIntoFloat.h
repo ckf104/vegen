@@ -1,3 +1,5 @@
+#include "Compatible.h"
+#include "VectorPackContext.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include <cassert>
 
@@ -35,9 +37,16 @@ getMemoryOpCostFromTTI(const TargetTransformInfo *TTI, unsigned Opcode,
                        Type *Src, Align Alignment, unsigned AddressSpace,
                        TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput,
                        const Instruction *I = nullptr) {
+#ifndef LLVM_17
   auto cost =
       TTI->getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, CostKind, I)
           .getValue();
+#else
+  auto cost = TTI->getMemoryOpCost(
+                     Opcode, Src, Alignment, AddressSpace, CostKind,
+                     TTI::OperandValueInfo{TTI::OK_AnyValue, TTI::OP_None}, I)
+                  .getValue();
+#endif
   assert(cost && "cost is not valid?");
   return (float)cost.value();
 }
@@ -48,7 +57,7 @@ inline float getShuffleCostFromTTI(
     TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput, int Index = 0,
     VectorType *SubTp = nullptr,
     ArrayRef<const Value *> Args = ArrayRef<const Value *>()) {
-#ifndef LLVM16
+#ifndef LLVM_17
   auto cost =
       TTI->getShuffleCost(Kind, Tp, Mask, Index, SubTp, Args).getValue();
 #else
@@ -62,7 +71,13 @@ inline float getShuffleCostFromTTI(
 inline float getVectorInstrCostFromTTI(const TargetTransformInfo *TTI,
                                        unsigned Opcode, Type *Val,
                                        unsigned Index = -1) {
+#ifndef LLVM_17
   auto cost = TTI->getVectorInstrCost(Opcode, Val, Index).getValue();
+#else
+  auto cost =
+      TTI->getVectorInstrCost(Opcode, Val, TTI::TCK_RecipThroughput, Index)
+          .getValue();
+#endif
   assert(cost && "vector inst cost is not valid");
   return (float)cost.value();
 }
@@ -118,10 +133,17 @@ inline float getArithmeticInstrCostFromTTI(
     TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None,
     ArrayRef<const Value *> Args = ArrayRef<const Value *>(),
     const Instruction *CxtI = nullptr) {
+#ifndef LLVM_17
   auto cost =
       TTI->getArithmeticInstrCost(Opcode, Ty, CostKind, Opd1Info, Opd2Info,
                                   Opd1PropInfo, Opd2PropInfo, Args, CxtI)
           .getValue();
+#else
+  auto cost = TTI->getArithmeticInstrCost(Opcode, Ty, CostKind,
+                                          {Opd1Info, Opd1PropInfo},
+                                          {Opd2Info, Opd2PropInfo}, Args, CxtI)
+                  .getValue();
+#endif
   assert(cost && "Arith cost is not valid?");
   return (float)cost.value();
 }

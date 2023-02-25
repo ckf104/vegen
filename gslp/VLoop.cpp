@@ -1,4 +1,5 @@
 #include "VLoop.h"
+#include "Compatible.h"
 #include "ControlDependence.h"
 #include "DependenceAnalysis.h"
 #include "VectorPackContext.h"

@@ -1,5 +1,6 @@
 #include "VectorPackSet.h"
 #include "BlockBuilder.h"
+#include "Compatible.h"
 #include "ControlDependence.h"
 #include "ControlReifier.h"
 #include "Heuristic.h"
@@ -559,7 +560,11 @@ static Value *emitReduction(RecurKind Kind, Value *A, Value *B,
 static void moveToEnd(Instruction *I, BasicBlock *BB) {
   if (I->getParent())
     I->removeFromParent();
-  BB->getInstList().push_back(I);
+#ifndef LLVM_17
+// BB->getInstList().push_back(I);
+#else
+  I->insertInto(BB, BB->end());
+#endif
   assert(I->getParent() == BB);
 }
 
@@ -568,7 +573,11 @@ static PHINode *emitMu(Value *Init, Value *Iter, BasicBlock *Preheader,
   auto *PN = PHINode::Create(Init->getType(), 2, "mu");
   PN->addIncoming(Init, Preheader);
   PN->addIncoming(Iter, Latch);
+#ifndef LLVM_17
   Header->getInstList().push_front(PN);
+#else
+  PN->insertInto(Header, Header->begin());
+#endif
   return PN;
 }
 

@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Compatible.h"
 #include "SimpleParser.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallVector.h"

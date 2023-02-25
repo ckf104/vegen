@@ -1,4 +1,5 @@
 #include "Reduction.h"
+#include "Compatible.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/PatternMatch.h"
 
