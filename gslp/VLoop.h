@@ -99,6 +99,8 @@ class VLoop {
   llvm::SmallVector<llvm::Instruction *> TopLevelInsts;
   llvm::SmallVector<std::unique_ptr<VLoop>, 4> SubLoops;
   // Mapping phi nodes to their equivalent etas
+  // Mu node is the classic loop phi, Gated Phis are others(e.g., 
+  // get `if else` value or used to get LCSSA form...).
   llvm::SmallDenseMap<llvm::PHINode *, MuNode, 8> Mus;
   llvm::DenseMap<llvm::PHINode *, OneHotPhi> OneHotPhis;
   llvm::DenseMap<llvm::PHINode *, llvm::SmallVector<const ControlCondition *, 4>> GatedPhis;

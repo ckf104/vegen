@@ -18,10 +18,10 @@ void MatchManager::match(Value *V) {
 
 MatchManager::MatchManager(ArrayRef<const InstBinding *> Insts,
                            Function &F) {
-  for (auto &Inst : Insts)
-    for (auto &LaneOp : Inst->getLaneOps())
-      OpMatches.FindAndConstruct(LaneOp.getOperation());
-
+  for (auto &Inst : Insts){
+    for (auto* LaneOp : Inst->getUniqueOps())
+      OpMatches.FindAndConstruct(LaneOp);
+  }
   for (auto &I : instructions(&F))
     match(&I);
 
@@ -34,8 +34,8 @@ MatchManager::MatchManager(ArrayRef<const InstBinding *> Insts,
 MatchManager::MatchManager(ArrayRef<const InstBinding *> Insts,
                            ArrayRef<Instruction *> ToMatch) {
   for (auto &Inst : Insts)
-    for (auto &LaneOp : Inst->getLaneOps())
-      OpMatches.FindAndConstruct(LaneOp.getOperation());
+    for (auto* LaneOp : Inst->getUniqueOps())
+      OpMatches.FindAndConstruct(LaneOp);
 
   for (auto *I : ToMatch)
     match(I);

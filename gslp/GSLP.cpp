@@ -134,16 +134,25 @@ void initializeGSLPPass(PassRegistry &);
 
 namespace {
 
+bool hasFeature(const llvm::Function &F, std::string Feature) {
+  Attribute Features = F.getFnAttribute("target-features");
+  return !Features.hasAttribute(Attribute::None) &&
+         Features.getValueAsString().contains("+" + Feature);
+}
+
 class GSLP : public PassInfoMixin<GSLP> {
   std::unique_ptr<Module> InstWrappers;
   Triple::ArchType Arch = Triple::ArchType::UnknownArch;
 
   std::vector<InstBinding> &getInsts() const {
+    auto& DEbug = X86Insts[75];
     switch (Arch) {
     case Triple::x86_64:
       return X86Insts;
     case Triple::aarch64:
       return ArmInsts;
+    case Triple::riscv64:
+      return X86Insts;
     default:
       llvm_unreachable("unsupported target architecture");
     }
@@ -151,10 +160,35 @@ class GSLP : public PassInfoMixin<GSLP> {
 
 public:
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
+  bool isSupported(InstBinding *Inst, const llvm::Function &F,
+                   TargetTransformInfo *TTI) {
+    if (Arch == Triple::x86_64 || Arch == Triple::aarch64) {
+      unsigned PreferVectorWidth = TTI->getLoadStoreVecRegBitWidth(0);
+      if (Inst->getName().contains("cvtepi32_epi64"))
+        return true;
+      if (Inst->getName().contains("hadd"))
+        return false;
+      if (Inst->getName().contains("hsub"))
+        return false;
+      if (Inst->getName().contains("broadcast"))
+        return false;
+      if (Inst->getName().contains("fmadd"))
+        return false;
+      for (auto &Feature : Inst->getTargetFeatures())
+        if (!hasFeature(F, Feature) ||
+            Inst->getSignature().outputSig.getVecWidth().value() >
+                PreferVectorWidth)
+          return false;
+      return true;
+    } else if (Arch == Triple::riscv64) {
+      // FIXME: filter insts by feature, get right LMUL value
+    }
+    return false;
+  }
 
-  void doInitialization(Module &M) {
+  bool doInitialization(Module &M, TargetTransformInfo *TTI) {
     if (Arch != Triple::ArchType::UnknownArch)
-      return;
+      return true;
     Arch = Triple(M.getTargetTriple()).getArch();
     SMDiagnostic Err;
     std::string Wrapper;
@@ -168,46 +202,24 @@ public:
     case Triple::riscv64:
       Wrapper = "/riscv64.bc";
       break;
-    
+
     default:
       llvm_unreachable("architecture not supported");
     }
     if (WrappersDir.empty())
-      WrappersDir = (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build").str();
+      WrappersDir =
+          (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build")
+              .str();
     errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
     InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
     if (!InstWrappers) {
       report_fatal_error(std::string("Error parsing Inst Wrappers") +
                          Err.getMessage());
     }
+    // vscale should can set to be at least TTI->getVScaleForTuning()
+    return Arch != Triple::riscv64 || !TTI->getVScaleForTuning();
   }
 };
-
-bool hasFeature(const llvm::Function &F, std::string Feature) {
-  Attribute Features = F.getFnAttribute("target-features");
-  return !Features.hasAttribute(Attribute::None) &&
-         Features.getValueAsString().contains("+" + Feature);
-}
-
-bool isSupported(InstBinding *Inst, const llvm::Function &F,
-                 TargetTransformInfo *TTI) {
-  unsigned PreferVectorWidth = TTI->getLoadStoreVecRegBitWidth(0);
-  if (Inst->getName().contains("cvtepi32_epi64"))
-    return true;
-  if (Inst->getName().contains("hadd"))
-    return false;
-  if (Inst->getName().contains("hsub"))
-    return false;
-  if (Inst->getName().contains("broadcast"))
-    return false;
-  if (Inst->getName().contains("fmadd"))
-    return false;
-  for (auto &Feature : Inst->getTargetFeatures())
-    if (!hasFeature(F, Feature) ||
-        Inst->getSignature().OutputBitwidths[0] > PreferVectorWidth)
-      return false;
-  return true;
-}
 
 } // namespace
 
@@ -293,7 +305,17 @@ static void balanceReductionTree(Function &F) {
 }
 
 PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
-  doInitialization(*F.getParent());
+  auto *AA = &FAM.getResult<AAManager>(F);
+  auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
+  auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
+  auto *LI = &FAM.getResult<LoopAnalysis>(F);
+  auto *DI = &FAM.getResult<DependenceAnalysis>(F);
+  auto *LVI = &FAM.getResult<LazyValueAnalysis>(F);
+  auto *TTI = &FAM.getResult<TargetIRAnalysis>(F);
+  auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
+
+  if (!doInitialization(*F.getParent(), TTI))
+    return PreservedAnalyses::all();
   if (!VectorizeOnly.empty() &&
       none_of(VectorizeOnly,
               [&F](StringRef FuncName) { return F.getName() == FuncName; }))
@@ -309,15 +331,6 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
     balanceReductionTree(F);
   // Table holding all IR vector instructions
   IRInstTable VecBindingTable;
-
-  auto *AA = &FAM.getResult<AAManager>(F);
-  auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
-  auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
-  auto *LI = &FAM.getResult<LoopAnalysis>(F);
-  auto *DI = &FAM.getResult<DependenceAnalysis>(F);
-  auto *LVI = &FAM.getResult<LazyValueAnalysis>(F);
-  auto *TTI = &FAM.getResult<TargetIRAnalysis>(F);
-  auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
 
   // Don't deal with irreducible CFG
   if (mayContainIrreducibleControl(F, LI))
@@ -338,29 +351,32 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   for (InstBinding &Inst : getInsts())
     if (isSupported(&Inst, F, TTI))
       SupportedIntrinsics.push_back(&Inst);
-  for (auto &Inst : VecBindingTable.getBindings()) {
-    // if (Inst.isSupported(TTI))
-    SupportedIntrinsics.push_back(&Inst);
-  }
-  for (auto &Inst : VecBindingTable.getUnarys()) {
-    // if (Inst.isSupported(TTI))
-    SupportedIntrinsics.push_back(&Inst);
-  }
-  for (auto &Ext : VecBindingTable.getExtensions())
-    SupportedIntrinsics.push_back(&Ext);
-  for (auto &Trunc : VecBindingTable.getTruncates())
-    SupportedIntrinsics.push_back(&Trunc);
-  for (auto &Select : VecBindingTable.getSelects())
-    SupportedIntrinsics.push_back(&Select);
-  for (auto &UnaryMath : VecBindingTable.getUnaryMathFuncs())
-    SupportedIntrinsics.push_back(&UnaryMath);
-  for (auto &BinaryMath : VecBindingTable.getBinaryMathFuncs())
-    SupportedIntrinsics.push_back(&BinaryMath);
-  for (auto &FloatToInt : VecBindingTable.getFloatToInts())
-    SupportedIntrinsics.push_back(&FloatToInt);
-  for (auto &IntToFloat : VecBindingTable.getIntToFloats())
-    SupportedIntrinsics.push_back(&IntToFloat);
 
+  // disable llvm's vector inst temporarily for riscv64
+  if (Arch == Triple::x86_64 || Arch == Triple::riscv64) {
+    for (auto &Inst : VecBindingTable.getBindings()) {
+      // if (Inst.isSupported(TTI))
+      SupportedIntrinsics.push_back(&Inst);
+    }
+    for (auto &Inst : VecBindingTable.getUnarys()) {
+      // if (Inst.isSupported(TTI))
+      SupportedIntrinsics.push_back(&Inst);
+    }
+    for (auto &Ext : VecBindingTable.getExtensions())
+      SupportedIntrinsics.push_back(&Ext);
+    for (auto &Trunc : VecBindingTable.getTruncates())
+      SupportedIntrinsics.push_back(&Trunc);
+    for (auto &Select : VecBindingTable.getSelects())
+      SupportedIntrinsics.push_back(&Select);
+    for (auto &UnaryMath : VecBindingTable.getUnaryMathFuncs())
+      SupportedIntrinsics.push_back(&UnaryMath);
+    for (auto &BinaryMath : VecBindingTable.getBinaryMathFuncs())
+      SupportedIntrinsics.push_back(&BinaryMath);
+    for (auto &FloatToInt : VecBindingTable.getFloatToInts())
+      SupportedIntrinsics.push_back(&FloatToInt);
+    for (auto &IntToFloat : VecBindingTable.getIntToFloats())
+      SupportedIntrinsics.push_back(&IntToFloat);
+  }
   errs() << "~~~~ num supported intrinsics: " << SupportedIntrinsics.size()
          << '\n';
 

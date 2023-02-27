@@ -1,15 +1,17 @@
-#include "Compatible.h"
 #include "Packer.h"
+#include "CastIntoFloat.h"
+#include "Compatible.h"
 #include "ConsecutiveCheck.h"
 #include "MatchManager.h"
 #include "VectorPack.h"
-#include "CastIntoFloat.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h" // isSafeToSpeculativelyExecute
 #include "llvm/IR/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <optional>
 
 using namespace llvm;
 
@@ -76,14 +78,16 @@ Packer::Packer(ArrayRef<const InstBinding *> Insts, Function &F,
 
       BO(&F), MM(Insts, F), SE(SE), DT(DT), PDT(PDT), LI(LI),
       SupportedInsts(Insts.vec()), LVI(LVI), TTI(TTI), BFI(BFI) {
-
   for (auto &BB : F) {
     BlockConditions[&BB] = CDA.getConditionForBlock(&BB);
     if (!isa<PHINode>(&BB.front()))
       continue;
     for (auto *Pred : predecessors(&BB))
       EdgeConditions[{Pred, &BB}] = CDA.getConditionForEdge(Pred, &BB);
+    //errs() << "BLOCK: "; BB.printAsOperand(errs()); errs() << "\n";
+    //errs() << *BlockConditions[&BB] << "\n"; 
   }
+  
 
   std::vector<Instruction *> Loads, Stores;
   for (auto &I : instructions(&F)) {
@@ -207,8 +211,12 @@ Packer::findSpeculationCond(Instruction *I, ArrayRef<Instruction *> Users) {
       auto SubLoops = VL->getSubLoops();
       auto It =
           find_if(SubLoops, [&](auto &SubVL) { return SubVL->contains(U); });
+      // OK, this is guaranteed by LCSSA form(LCSSA pass will run before GSLP)
+      // So any use of a inst will not be outside that innermost loop contains
+      // that inst
       assert(It != SubLoops.end());
-      Conds.push_back((*It)->getLoopCond()); // ckf: Why not UserVL->getLoopCond()
+      Conds.push_back(
+          (*It)->getLoopCond()); // ckf: Why not UserVL->getLoopCond()
     }
   }
   return getGreatestCommonCondition(Conds);
@@ -377,13 +385,20 @@ static bool matchPackableGEPs(ArrayRef<Value *> Values,
   return true;
 }
 
-ArrayRef<Operation::Match> Packer::findMatches(const Operation *O, Value *V) {
+const Operation::Match *Packer::findMatches(const Operation *O, Value *V) {
   auto Matches = MM.getMatchesForOutput(O, V);
+  assert(Matches.size() <= 1 && "an operation has many match with the same "
+                                "value?");
   if (!Matches.empty())
-    return Matches;
-  if (SecondaryMM)
-    return SecondaryMM->getMatchesForOutput(O, V);
-  return {};
+    return &Matches[0];
+  if (SecondaryMM) {
+    Matches = SecondaryMM->getMatchesForOutput(O, V);
+    assert(Matches.size() <= 1 && "an operation has many match with the same "
+                                  "value?");
+    if (!Matches.empty())
+      return &Matches[0];
+  }
+  return nullptr;
 }
 
 const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
@@ -538,29 +553,38 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
   }
 
   for (auto *Inst : getInsts()) {
-    ArrayRef<BoundOperation> LaneOps = Inst->getLaneOps();
-    if (LaneOps.size() < NumLanes)
-      continue;
-    if (LaneOps.size() != NumLanes)
+    // ArrayRef<BoundOperation> LaneOps = Inst->getLaneOps();
+    auto instOutLane = Inst->getLaneNum();
+    // if (instOutLane && instOutLane.value() < NumLanes)
+    //   continue;
+
+    // FIXME: remove the following if sentence, I'm concerned that
+    // if inst output lane is greater than needed op lane, we need
+    // additional shuffle inst when emitting.
+    // Also, this can speed up pass running greatly
+    if (instOutLane && instOutLane.value() != NumLanes)
       continue;
 
     std::vector<const Operation::Match *> Lanes;
     for (unsigned i = 0; i < NumLanes; i++) {
-      ArrayRef<Operation::Match> Matches =
-          findMatches(LaneOps[i].getOperation(), (*OP)[i]);
-      // Forget to consider the case OP[0] == nullptr?
-      if (Matches.empty())
+      auto opValue = (*OP)[i];
+      if (!opValue)
+        Lanes.push_back(nullptr);
+
+      auto Matches = findMatches(Inst->getLaneOps(i).getOperation(), opValue);
+      if (!Matches)
         break;
       // FIXME: consider multiple matches for the same operation
       // ckf: Here the idea of FIXME is not to match Operation and
       // output value by order, and we can follow a shuffle then.
       // Possible OPT!
-      Lanes.push_back(&Matches[0]);
+      Lanes.push_back(Matches);
     }
 
     if (Lanes.size() == NumLanes) {
-      while (Lanes.size() < LaneOps.size())
-        Lanes.push_back(nullptr);
+      // we don't need while loop when "inst output lane == op lane" is required
+      // while (Lanes.size() < LaneOps.size())
+      //  Lanes.push_back(nullptr);
       OPI.Producers.push_back(
           VPCtx.createVectorPack(Lanes, OPI.Elements, Depended, Inst, TTI));
     }
@@ -598,16 +622,16 @@ float Packer::getScalarCost(Instruction *I) {
     case Intrinsic::log2:
     case Intrinsic::fabs:
     case Intrinsic::pow:
-      getIntrinsicInstrCostFromTTI(TTI,
-          IntrinsicCostAttributes(ID, I->getType(), {I->getType()}),
+      getIntrinsicInstrCostFromTTI(
+          TTI, IntrinsicCostAttributes(ID, I->getType(), {I->getType()}),
           TTI::TCK_RecipThroughput);
     }
   }
 
   if (isa<CastInst>(I)) {
-    return getCastInstrCostFromTTI(TTI, I->getOpcode(), I->getOperand(0)->getType(),
-                                 I->getType(), TTI::getCastContextHint(I),
-                                 TTI::TCK_RecipThroughput);
+    return getCastInstrCostFromTTI(
+        TTI, I->getOpcode(), I->getOperand(0)->getType(), I->getType(),
+        TTI::getCastContextHint(I), TTI::TCK_RecipThroughput);
   }
 
   if (isa<GetElementPtrInst>(I) || isa<PHINode>(I))
@@ -618,9 +642,10 @@ float Packer::getScalarCost(Instruction *I) {
       !isa<SelectInst>(I))
     return 1;
   SmallVector<const Value *, 4> Operands(I->operand_values());
-  return getArithmeticInstrCostFromTTI(TTI,
-      I->getOpcode(), I->getType(), TTI::TCK_RecipThroughput, TTI::OK_AnyValue,
-      TTI::OK_AnyValue, TTI::OP_None, TTI::OP_None, Operands, I);
+  return getArithmeticInstrCostFromTTI(TTI, I->getOpcode(), I->getType(),
+                                       TTI::TCK_RecipThroughput,
+                                       TTI::OK_AnyValue, TTI::OK_AnyValue,
+                                       TTI::OP_None, TTI::OP_None, Operands, I);
 }
 
 bool Packer::isCompatible(Instruction *I1, Instruction *I2) {

@@ -43,7 +43,7 @@ class IRVectorBinding : public InstBinding {
   const BinaryIROperation *Op;
 
   IRVectorBinding(const BinaryIROperation *Op, std::string Name,
-                  InstSignature Sig, std::vector<BoundOperation> LaneOps)
+                  InstSignature Sig, std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -61,7 +61,7 @@ class UnaryIRVectorBinding : public InstBinding {
   const UnaryIROperation *Op;
 
   UnaryIRVectorBinding(const UnaryIROperation *Op, std::string Name,
-                       InstSignature Sig, std::vector<BoundOperation> LaneOps)
+                       InstSignature Sig, std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -86,7 +86,7 @@ struct Truncate : public Operation {
 class VectorTruncate : public InstBinding {
   const Truncate *TruncOp;
   VectorTruncate(const Truncate *TruncOp, std::string Name, InstSignature Sig,
-                 std::vector<BoundOperation> LaneOps)
+                 std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         TruncOp(TruncOp) {}
 
@@ -119,7 +119,7 @@ struct FloatToInt : public Operation {
 class VectorIntToFloat : public InstBinding {
   const IntToFloat *Op;
   VectorIntToFloat(const IntToFloat *Op, std::string Name, InstSignature Sig,
-                 std::vector<BoundOperation> LaneOps)
+                 std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -134,7 +134,7 @@ public:
 class VectorFloatToInt : public InstBinding {
   const FloatToInt *Op;
   VectorFloatToInt (const FloatToInt *Op, std::string Name, InstSignature Sig,
-                 std::vector<BoundOperation> LaneOps)
+                 std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -158,7 +158,7 @@ struct Extension : public Operation {
 class VectorExtension : public InstBinding {
   const Extension *ExtOp;
   VectorExtension(const Extension *ExtOp, std::string Name, InstSignature Sig,
-                 std::vector<BoundOperation> LaneOps)
+                 std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         ExtOp(ExtOp) {}
 
@@ -180,7 +180,7 @@ struct Select : Operation {
 class VectorSelect : public InstBinding {
   const Select *SelOp;
   VectorSelect(const Select *SelOp, std::string Name, InstSignature Sig,
-               std::vector<BoundOperation> LaneOps)
+               std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         SelOp(SelOp) {}
 
@@ -206,7 +206,7 @@ struct UnaryMath : public Operation {
 class VectorUnaryMath : public InstBinding {
   const UnaryMath *Op;
   VectorUnaryMath(const UnaryMath *Op, std::string Name, InstSignature Sig,
-                  std::vector<BoundOperation> LaneOps)
+                  std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -231,7 +231,7 @@ struct BinaryMath : public Operation {
 class VectorBinaryMath : public InstBinding {
   const BinaryMath *Op;
   VectorBinaryMath(const BinaryMath *Op, std::string Name, InstSignature Sig,
-                   std::vector<BoundOperation> LaneOps)
+                   std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 

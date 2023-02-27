@@ -144,7 +144,7 @@ public:
   llvm::LazyValueInfo &getLVI() const { return *LVI; }
   ControlDependenceAnalysis &getCDA() { return CDA; }
 
-  llvm::ArrayRef<Operation::Match> findMatches(const Operation *, llvm::Value *);
+  const Operation::Match* findMatches(const Operation *, llvm::Value *);
 
   const llvm::DataLayout *getDataLayout() const {
     return &F->getParent()->getDataLayout();

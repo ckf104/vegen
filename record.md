@@ -175,3 +175,11 @@ LLVM 有 ScalarizerPass , 为啥要多此一举呢
 **x86.c 为什么要把这个wrapper中的立即数枚举为常数呢**
 
 fingerprintSCEV这个函数是干嘛的
+
+
+
+**emitloop函数疑问**
+
+* `loop coiteration`
+
+* 什么是`GuardedLiveOuts`

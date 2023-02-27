@@ -1,24 +1,28 @@
-#include "Compatible.h"
 #include "VectorPack.h"
-#include "ControlDependence.h"
-#include "MatchManager.h"
 #include "CastIntoFloat.h"
+#include "Compatible.h"
+#include "ControlDependence.h"
+#include "InstSema.h"
+#include "MatchManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include <cassert>
+#include <cstdint>
 
 using namespace llvm;
 
 // FIXME: we need to generalize the definition of an operand pack
 // because some of the input lanes are "DONT CARES" (e.g. _mm_div_pd)
 std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
+  const auto &DL = VPCtx->getFunction()->getParent()->getDataLayout();
   auto &Sig = Producer->getSignature();
   unsigned NumInputs = Sig.numInputs();
-  auto LaneOps = Producer->getLaneOps();
-  unsigned NumLanes = LaneOps.size();
+  // auto LaneOps = Producer->getLaneOps();
+  unsigned NumLanes = Matches.size();
   std::vector<OperandPack> OperandPacks(NumInputs);
 
   struct BoundInput {
-    InputSlice Slice;
+    InputId Slice;
     Value *V;
     // Order by offset of the slice
     bool operator<(const BoundInput &Other) const {
@@ -33,38 +37,43 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
     unsigned ElementSize = 0;
     // Find output lanes that uses input `i` and record those uses
     for (unsigned j = 0; j < NumLanes; j++) {
-      ArrayRef<InputSlice> BoundSlices = LaneOps[j].getBoundSlices();
+      auto BoundSlices = Producer->getLaneOps(j).getBoundSlices();
       for (unsigned k = 0; k < BoundSlices.size(); k++) {
         auto &BS = BoundSlices[k];
-        if (BS.InputId != i) continue;
-        ElementSize = BS.size();
-        InputValues.push_back(
-            {BS, Matches[j] ? Matches[j]->Inputs[k] : nullptr});
+        if (BS.vecId != i)
+          continue;
+        if (Matches[j]) {
+          ElementSize =
+              DL.getTypeStoreSizeInBits(Matches[j]->Inputs[k]->getType());
+          InputValues.push_back({BS, Matches[j]->Inputs[k]});
+        } else
+          InputValues.push_back({BS, nullptr});
       }
     }
+    // FIXME: here we do not check if all element size is the same,
+    // leave this in matching procedure before
     assert(ElementSize != 0);
 
     // Sort the input values by their slice offset
     std::sort(InputValues.begin(), InputValues.end());
 
-    unsigned CurOffset = 0;
-    unsigned Stride = InputValues[0].Slice.size();
+    uint32_t CurId = 0;
     auto &OP = OperandPacks[i];
     for (const BoundInput &BV : InputValues) {
-      while (CurOffset < BV.Slice.Lo) {
+      while (CurId < BV.Slice.eleId) {
         OP.push_back(nullptr);
-        CurOffset += Stride;
+        CurId++;
       }
-      assert(CurOffset == BV.Slice.Lo);
+      assert(CurId == BV.Slice.eleId &&
+             "checks have been done in matching procedure?");
       OP.push_back(BV.V);
-      CurOffset += Stride;
+      CurId++;
     }
-    unsigned InputSize = Sig.InputBitwidths[i];
-    while (CurOffset < InputSize) {
+    uint32_t InputEleNum = Sig.getInputLanes(Matches.size(), i);
+    while (CurId < InputEleNum) {
       OP.push_back(nullptr);
-      CurOffset += Stride;
+      CurId++;
     }
-    assert(OP.size() * Stride == InputSize);
 
     // Compute the type of don't care vector as special cases
     if (!OP.front() && is_splat(OP)) {
@@ -83,9 +92,12 @@ void getOperandPacksFromCondition(const ConditionPack *CP,
   SmallVector<const ConditionPack *, 8> Worklist{CP};
   while (!Worklist.empty()) {
     auto *CP = Worklist.pop_back_val();
-    if (!CP) continue;
-    if (!Visited.insert(CP).second) continue;
-    if (CP->OP) OPs.push_back(CP->OP);
+    if (!CP)
+      continue;
+    if (!Visited.insert(CP).second)
+      continue;
+    if (CP->OP)
+      OPs.push_back(CP->OP);
     if (CP->Parent)
       Worklist.push_back(CP->Parent);
     else
@@ -100,18 +112,22 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForLoad() {
   }
 
   OperandPack OP;
-  for (auto *L : Loads) OP.push_back(L->getPointerOperand());
+  for (auto *L : Loads)
+    OP.push_back(L->getPointerOperand());
   return {OP};
 }
 
 std::vector<OperandPack> VectorPack::computeOperandPacksForStore() {
   OperandPack ValueOP;
-  for (auto *S : Stores) ValueOP.push_back(S->getValueOperand());
+  for (auto *S : Stores)
+    ValueOP.push_back(S->getValueOperand());
 
-  if (!IsGatherScatter) return {ValueOP};
+  if (!IsGatherScatter)
+    return {ValueOP};
 
   OperandPack PtrOP;
-  for (auto *S : Stores) PtrOP.push_back(S->getPointerOperand());
+  for (auto *S : Stores)
+    PtrOP.push_back(S->getPointerOperand());
   return {PtrOP, ValueOP};
 }
 
@@ -123,13 +139,15 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForPhi() {
   for (unsigned i = 0; i < NumIncomings; i++)
     // FIXME: make sure that PH->getIncomingBlock(i) is control-equivalent to
     // FirstPHI->getIncomingBlock(i)
-    for (auto *PH : PHIs) OperandPacks[i].push_back(PH->getIncomingValue(i));
+    for (auto *PH : PHIs)
+      OperandPacks[i].push_back(PH->getIncomingValue(i));
   return OperandPacks;
 }
 
 static Type *getScalarTy(ArrayRef<const Operation::Match *> Matches) {
   for (auto &M : Matches)
-    if (M) return M->Output->getType();
+    if (M)
+      return M->Output->getType();
   llvm_unreachable("Matches can't be all null");
   return nullptr;
 }
@@ -143,13 +161,13 @@ Value *VectorPack::emitVectorGeneral(ArrayRef<Value *> Operands,
 }
 
 namespace {
-template <typename LoadStores>
-Align getCommonAlignment(LoadStores Insts) {
+template <typename LoadStores> Align getCommonAlignment(LoadStores Insts) {
   Align A = Insts.front()->getAlign();
-  for (auto *I : drop_begin(Insts)) A = std::min(A, I->getAlign());
+  for (auto *I : drop_begin(Insts))
+    A = std::min(A, I->getAlign());
   return A;
 }
-}  // namespace
+} // namespace
 
 Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
                                   std::function<Value *(Value *)> GetScalar,
@@ -182,7 +200,8 @@ Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
 
   std::vector<Value *> Values;
   for (auto *LI : Loads)
-    if (LI) Values.push_back(LI);
+    if (LI)
+      Values.push_back(LI);
   return propagateMetadata(VecLoad, Values);
 }
 
@@ -226,71 +245,75 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
 
 static void getGEPOperands(unsigned i, ArrayRef<GetElementPtrInst *> GEPs,
                            SmallVectorImpl<Value *> &Operands) {
-  for (auto *GEP : GEPs) Operands.push_back(GEP->getOperand(i));
+  for (auto *GEP : GEPs)
+    Operands.push_back(GEP->getOperand(i));
 }
 
 void VectorPack::computeOperandPacks() {
   switch (Kind) {
-    case General:
-      canonicalizeOperandPacks(computeOperandPacksForGeneral());
-      break;
-    case Load:
-      canonicalizeOperandPacks(computeOperandPacksForLoad());
-      break;
-    case Store:
-      canonicalizeOperandPacks(computeOperandPacksForStore());
-      break;
-    case Phi:
-      canonicalizeOperandPacks(computeOperandPacksForPhi());
-      break;
-    case Reduction: {
-      SmallVector<OperandPack, 4> OPs;
-      assert(Rdx->Elts.size() % RdxLen == 0);
-      for (unsigned Offset = 0; Offset < Rdx->Elts.size(); Offset += RdxLen)
-        OPs.emplace_back().assign(Rdx->Elts.begin() + Offset,
-                                  Rdx->Elts.begin() + Offset + RdxLen);
-      canonicalizeOperandPacks(OPs);
-    } break;
-    case GEP: {
-      unsigned NumOperands = GEPs.front()->getNumOperands();
-      SmallVector<OperandPack, 4> OPs;
-      for (unsigned i = 0; i < NumOperands; i++) {
-        SmallVector<Value *, 8> Operands;
-        getGEPOperands(i, GEPs, Operands);
-        if (!is_splat(Operands)) OPs.emplace_back().assign(Operands);
-      }
-      canonicalizeOperandPacks(OPs);
-    } break;
-    case Gamma: {
-      unsigned NumIncomings = Gammas.front()->PN->getNumIncomingValues();
-      assert(all_of(Gammas, [&](auto *G2) {
-        return G2->PN->getNumIncomingValues() == NumIncomings;
-      }));
+  case General:
+    canonicalizeOperandPacks(computeOperandPacksForGeneral());
+    break;
+  case Load:
+    canonicalizeOperandPacks(computeOperandPacksForLoad());
+    break;
+  case Store:
+    canonicalizeOperandPacks(computeOperandPacksForStore());
+    break;
+  case Phi:
+    canonicalizeOperandPacks(computeOperandPacksForPhi());
+    break;
+  case Reduction: {
+    SmallVector<OperandPack, 4> OPs;
+    assert(Rdx->Elts.size() % RdxLen == 0);
+    for (unsigned Offset = 0; Offset < Rdx->Elts.size(); Offset += RdxLen)
+      OPs.emplace_back().assign(Rdx->Elts.begin() + Offset,
+                                Rdx->Elts.begin() + Offset + RdxLen);
+    canonicalizeOperandPacks(OPs);
+  } break;
+  case GEP: {
+    unsigned NumOperands = GEPs.front()->getNumOperands();
+    SmallVector<OperandPack, 4> OPs;
+    for (unsigned i = 0; i < NumOperands; i++) {
+      SmallVector<Value *, 8> Operands;
+      getGEPOperands(i, GEPs, Operands);
+      if (!is_splat(Operands))
+        OPs.emplace_back().assign(Operands);
+    }
+    canonicalizeOperandPacks(OPs);
+  } break;
+  case Gamma: {
+    unsigned NumIncomings = Gammas.front()->PN->getNumIncomingValues();
+    assert(all_of(Gammas, [&](auto *G2) {
+      return G2->PN->getNumIncomingValues() == NumIncomings;
+    }));
 
-      for (unsigned i = 0; i < NumIncomings; i++) {
-        SmallVector<const ControlCondition *> Conds;
-        OperandPack ValOP;
-        for (auto *G : Gammas) {
-          Conds.push_back(G->Conds[i]);
-          ValOP.push_back(G->Vals[i]);
-        }
-        getOperandPacksFromCondition(VPCtx->getConditionPack(Conds),
-                                     OperandPacks);
-        OperandPacks.push_back(VPCtx->getCanonicalOperandPack(ValOP));
+    for (unsigned i = 0; i < NumIncomings; i++) {
+      SmallVector<const ControlCondition *> Conds;
+      OperandPack ValOP;
+      for (auto *G : Gammas) {
+        Conds.push_back(G->Conds[i]);
+        ValOP.push_back(G->Vals[i]);
       }
-    } break;
-    case Cmp: {
-      SmallVector<OperandPack, 2> OPs;
-      OPs.resize(2);
-      for (unsigned i : {0, 1}) {
-        for (auto *Cmp : Cmps) OPs[i].push_back(Cmp->getOperand(i));
-      }
-      canonicalizeOperandPacks(OPs);
-    } break;
+      getOperandPacksFromCondition(VPCtx->getConditionPack(Conds),
+                                   OperandPacks);
+      OperandPacks.push_back(VPCtx->getCanonicalOperandPack(ValOP));
+    }
+  } break;
+  case Cmp: {
+    SmallVector<OperandPack, 2> OPs;
+    OPs.resize(2);
+    for (unsigned i : {0, 1}) {
+      for (auto *Cmp : Cmps)
+        OPs[i].push_back(Cmp->getOperand(i));
+    }
+    canonicalizeOperandPacks(OPs);
+  } break;
 
-  }  // end switch
+  } // end switch
 
-  if (CP) getOperandPacksFromCondition(CP, OperandPacks);
+  if (CP)
+    getOperandPacksFromCondition(CP, OperandPacks);
 }
 
 static Value *emitVectorGEP(ArrayRef<GetElementPtrInst *> GEPs,
@@ -319,7 +342,8 @@ static Value *emitVectorGEP(ArrayRef<GetElementPtrInst *> GEPs,
   }
   auto *GEP =
       Builder.CreateGEP(GEPs.front()->getSourceElementType(), Ptr, Idxs);
-  if (GEP->getType()->isVectorTy()) return GEP;
+  if (GEP->getType()->isVectorTy())
+    return GEP;
   // Sometimes we end up not needing to vectorize,
   // in which case, we just broadcast the GEP to fix the type
   return Builder.CreateVectorSplat(GEPs.size(), GEP);
@@ -339,18 +363,18 @@ Value *VectorPack::emit(ArrayRef<Value *> Operands,
 
   // FIXME: choose insert point
   switch (Kind) {
-    case General:
-      return emitVectorGeneral(Operands, Builder);
-    case GEP:
-      return emitVectorGEP(GEPs, Operands, Builder);
-    case Cmp:
-      return emitVectorCmp(Cmps, Operands, Builder);
-    case Load:
-    case Store:
-    case Reduction:
-    case Gamma:
-    case Phi:
-      llvm_unreachable("Don't call emit on reduction and gamma pack directly");
+  case General:
+    return emitVectorGeneral(Operands, Builder);
+  case GEP:
+    return emitVectorGEP(GEPs, Operands, Builder);
+  case Cmp:
+    return emitVectorCmp(Cmps, Operands, Builder);
+  case Load:
+  case Store:
+  case Reduction:
+  case Gamma:
+  case Phi:
+    llvm_unreachable("Don't call emit on reduction and gamma pack directly");
   }
 }
 
@@ -359,34 +383,33 @@ static float getReductionCost(const ReductionInfo &RI, unsigned RdxLen,
   auto *VecTy = FixedVectorType::get(RI.Elts.front()->getType(), RdxLen);
   auto RdxKind = RI.Kind;
   switch (RdxKind) {
-    case RecurKind::Add:
-    case RecurKind::Mul:
-    case RecurKind::Or:
-    case RecurKind::And:
-    case RecurKind::Xor:
-    case RecurKind::FAdd:
-    case RecurKind::FMul: {
-      unsigned RdxOpcode = RecurrenceDescriptor::getOpcode(RdxKind);
-      // ckf: pairwise=false -> default FastMathFlags
-      return getArithmeticReductionCostFromTTI(TTI, RdxOpcode, VecTy,
-                                               Optional<FastMathFlags>());
-    }
-    case RecurKind::FMax:
-    case RecurKind::FMin: {
-      auto *VecCondTy = cast<VectorType>(CmpInst::makeCmpResultType(VecTy));
-      return getMinMaxReductionCostFromTTI(TTI, VecTy, VecCondTy, false);
-    }
-    case RecurKind::SMax:
-    case RecurKind::SMin:
-    case RecurKind::UMax:
-    case RecurKind::UMin: {
-      auto *VecCondTy = cast<VectorType>(CmpInst::makeCmpResultType(VecTy));
-      bool IsUnsigned =
-          RdxKind == RecurKind::UMax || RdxKind == RecurKind::UMin;
-      return getMinMaxReductionCostFromTTI(TTI, VecTy, VecCondTy, IsUnsigned);
-    }
-    default:
-      llvm_unreachable("unexpected reduction type");
+  case RecurKind::Add:
+  case RecurKind::Mul:
+  case RecurKind::Or:
+  case RecurKind::And:
+  case RecurKind::Xor:
+  case RecurKind::FAdd:
+  case RecurKind::FMul: {
+    unsigned RdxOpcode = RecurrenceDescriptor::getOpcode(RdxKind);
+    // ckf: pairwise=false -> default FastMathFlags
+    return getArithmeticReductionCostFromTTI(TTI, RdxOpcode, VecTy,
+                                             Optional<FastMathFlags>());
+  }
+  case RecurKind::FMax:
+  case RecurKind::FMin: {
+    auto *VecCondTy = cast<VectorType>(CmpInst::makeCmpResultType(VecTy));
+    return getMinMaxReductionCostFromTTI(TTI, VecTy, VecCondTy, false);
+  }
+  case RecurKind::SMax:
+  case RecurKind::SMin:
+  case RecurKind::UMax:
+  case RecurKind::UMin: {
+    auto *VecCondTy = cast<VectorType>(CmpInst::makeCmpResultType(VecTy));
+    bool IsUnsigned = RdxKind == RecurKind::UMax || RdxKind == RecurKind::UMin;
+    return getMinMaxReductionCostFromTTI(TTI, VecTy, VecCondTy, IsUnsigned);
+  }
+  default:
+    llvm_unreachable("unexpected reduction type");
   }
 }
 
@@ -394,68 +417,70 @@ void VectorPack::computeCost(TargetTransformInfo *TTI) {
   Cost = 0;
   // 1) First figure out cost of the vector instruction
   switch (Kind) {
-    case General:
-      Cost = Producer->getCost(TTI, VPCtx->getFunction()->getContext());
-      break;
-    case Load: {
-      auto *LI = Loads[0];
-      auto *VecTy = FixedVectorType::get(LI->getType(), Loads.size());
-      if (IsGatherScatter) {
-        Cost = getGatherScatterOpCostFromTTI(
-            TTI, Instruction::Load, VecTy, LI->getPointerOperand(),
-            (bool)CP /*variable mask*/, getCommonAlignment(Loads),
-            TTI::TCK_RecipThroughput, LI);
-      } else if (CP) {
-        // Contiguous masked load
-        Cost = getMaskedMemoryOpCostFromTTI(TTI, Instruction::Load, VecTy,
-                                            LI->getAlign(), 0,
-                                            TTI::TCK_RecipThroughput);
-      } else {
-        Cost = getMemoryOpCostFromTTI(TTI, Instruction::Load, VecTy, LI->getAlign(), 0,
-                                    TTI::TCK_RecipThroughput, LI);
-      }
-      break;
+  case General:
+    Cost = Producer->getCost(TTI, VPCtx->getFunction()->getContext());
+    break;
+  case Load: {
+    auto *LI = Loads[0];
+    auto *VecTy = FixedVectorType::get(LI->getType(), Loads.size());
+    if (IsGatherScatter) {
+      Cost = getGatherScatterOpCostFromTTI(
+          TTI, Instruction::Load, VecTy, LI->getPointerOperand(),
+          (bool)CP /*variable mask*/, getCommonAlignment(Loads),
+          TTI::TCK_RecipThroughput, LI);
+    } else if (CP) {
+      // Contiguous masked load
+      Cost = getMaskedMemoryOpCostFromTTI(TTI, Instruction::Load, VecTy,
+                                          LI->getAlign(), 0,
+                                          TTI::TCK_RecipThroughput);
+    } else {
+      Cost =
+          getMemoryOpCostFromTTI(TTI, Instruction::Load, VecTy, LI->getAlign(),
+                                 0, TTI::TCK_RecipThroughput, LI);
     }
-    case Store: {
-      auto *SI = Stores[0];
-      auto *VecTy =
-          FixedVectorType::get(SI->getValueOperand()->getType(), Stores.size());
-      if (IsGatherScatter) {
-        Cost = getGatherScatterOpCostFromTTI(TTI,
-            Instruction::Store, VecTy, SI->getPointerOperand(),
-            (bool)CP /*variable mask*/, getCommonAlignment(Stores),
-            TTI::TCK_RecipThroughput, SI);
-      } else if (CP) {
-        // Contiguous masked store
-        Cost = getMaskedMemoryOpCostFromTTI(TTI, Instruction::Store, VecTy,
+    break;
+  }
+  case Store: {
+    auto *SI = Stores[0];
+    auto *VecTy =
+        FixedVectorType::get(SI->getValueOperand()->getType(), Stores.size());
+    if (IsGatherScatter) {
+      Cost = getGatherScatterOpCostFromTTI(
+          TTI, Instruction::Store, VecTy, SI->getPointerOperand(),
+          (bool)CP /*variable mask*/, getCommonAlignment(Stores),
+          TTI::TCK_RecipThroughput, SI);
+    } else if (CP) {
+      // Contiguous masked store
+      Cost = getMaskedMemoryOpCostFromTTI(TTI, Instruction::Store, VecTy,
                                           SI->getAlign(), 0,
                                           TTI::TCK_RecipThroughput);
-      } else {
-        Cost = getMemoryOpCostFromTTI(TTI, Instruction::Store, VecTy, SI->getAlign(),
-                                    0, TTI::TCK_RecipThroughput, SI);
-      }
-      break;
+    } else {
+      Cost =
+          getMemoryOpCostFromTTI(TTI, Instruction::Store, VecTy, SI->getAlign(),
+                                 0, TTI::TCK_RecipThroughput, SI);
     }
-    case Cmp:
-      // FIXME: call TTI
+    break;
+  }
+  case Cmp:
+    // FIXME: call TTI
+    Cost = 1;
+    break;
+  case Phi:
+    Cost = 0;
+    break;
+  case Reduction:
+    if (isLoopFreeReduction())
+      Cost = getReductionCost(getReductionInfo(), RdxLen, TTI);
+    else
       Cost = 1;
-      break;
-    case Phi:
-      Cost = 0;
-      break;
-    case Reduction:
-      if (isLoopFreeReduction())
-        Cost = getReductionCost(getReductionInfo(), RdxLen, TTI);
-      else
-        Cost = 1;
-      break;
-    case GEP:
-      Cost = 0;
-      break;
-    case Gamma:
-      // FIXME call TTI
-      Cost = 1;
-      break;
+    break;
+  case GEP:
+    Cost = 0;
+    break;
+  case Gamma:
+    // FIXME call TTI
+    Cost = 1;
+    break;
   }
 
   ProducingCost = Cost;
@@ -463,31 +488,32 @@ void VectorPack::computeCost(TargetTransformInfo *TTI) {
 
 void VectorPack::computeOrderedValues() {
   switch (Kind) {
-    case General:
-      transform(Matches, std::back_inserter(OrderedValues),
-                [](auto *M) { return M ? M->Output : nullptr; });
-      break;
-    case Load:
-      OrderedValues.assign(Loads.begin(), Loads.end());
-      break;
-    case Store:
-      OrderedValues.assign(Stores.begin(), Stores.end());
-      break;
-    case Phi:
-      OrderedValues.assign(PHIs.begin(), PHIs.end());
-      break;
-    case Reduction:
-      OrderedValues.push_back(Rdx->Ops.front());
-      break;
-    case GEP:
-      OrderedValues.assign(GEPs.begin(), GEPs.end());
-      break;
-    case Cmp:
-      OrderedValues.assign(Cmps.begin(), Cmps.end());
-      break;
-    case Gamma:
-      for (auto *G : Gammas) OrderedValues.push_back(G->PN);
-      break;
+  case General:
+    transform(Matches, std::back_inserter(OrderedValues),
+              [](auto *M) { return M ? M->Output : nullptr; });
+    break;
+  case Load:
+    OrderedValues.assign(Loads.begin(), Loads.end());
+    break;
+  case Store:
+    OrderedValues.assign(Stores.begin(), Stores.end());
+    break;
+  case Phi:
+    OrderedValues.assign(PHIs.begin(), PHIs.end());
+    break;
+  case Reduction:
+    OrderedValues.push_back(Rdx->Ops.front());
+    break;
+  case GEP:
+    OrderedValues.assign(GEPs.begin(), GEPs.end());
+    break;
+  case Cmp:
+    OrderedValues.assign(Cmps.begin(), Cmps.end());
+    break;
+  case Gamma:
+    for (auto *G : Gammas)
+      OrderedValues.push_back(G->PN);
+    break;
   }
 }
 
@@ -538,7 +564,8 @@ raw_ostream &operator<<(raw_ostream &OS, const OperandPack &OP) {
 }
 
 FixedVectorType *getVectorType(const OperandPack &OP) {
-  if (OP.Ty) return OP.Ty;
+  if (OP.Ty)
+    return OP.Ty;
   Type *ScalarTy = nullptr;
   for (auto *V : OP)
     if (V) {
@@ -557,7 +584,8 @@ FixedVectorType *getVectorType(const VectorPack &VP) {
 
 bool isConstantPack(const OperandPack &OP) {
   for (auto *V : OP)
-    if (V && !isa<Constant>(V)) return false;
+    if (V && !isa<Constant>(V))
+      return false;
   return true;
 }
 
@@ -569,27 +597,32 @@ void VectorPack::getPackedInstructions(
   }
 
   if (Kind != General) {
-    for (auto *V : elementValues()) Insts.insert(cast<Instruction>(V));
+    for (auto *V : elementValues())
+      Insts.insert(cast<Instruction>(V));
     return;
   }
 
   SmallPtrSet<Value *, 32> LiveIns;
   SmallVector<Value *> Worklist;
   for (auto *M : Matches) {
-    if (!M) continue;
+    if (!M)
+      continue;
     LiveIns.insert(M->Inputs.begin(), M->Inputs.end());
     Worklist.push_back(M->Output);
   }
   while (!Worklist.empty()) {
     auto *I = dyn_cast<Instruction>(Worklist.pop_back_val());
-    if (!I || LiveIns.count(I)) continue;
-    if (!Insts.insert(I).second) continue;
+    if (!I || LiveIns.count(I))
+      continue;
+    if (!Insts.insert(I).second)
+      continue;
     Worklist.append(I->value_op_begin(), I->value_op_end());
   }
 }
 
 Value *VectorPack::getLoadStorePointer() const {
-  if (IsGatherScatter) return nullptr;
+  if (IsGatherScatter)
+    return nullptr;
   if (isLoad())
     return Loads.front()->getPointerOperand();
   else if (isStore())

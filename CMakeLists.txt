@@ -8,6 +8,7 @@ project(GSLP)
 # uncommented this if debugging
 #set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-epi)
 set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git)
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug)
 
 find_package(LLVM REQUIRED CONFIG)
 

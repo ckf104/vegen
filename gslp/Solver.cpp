@@ -7,6 +7,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
+#include <cassert>
 
 using namespace llvm;
 
@@ -53,6 +54,10 @@ VectorPack *createMemPack(Packer *Pkr, ArrayRef<LoadInst *> Loads,
                                            Elements, Depended, TTI);
 }
 
+// checks: load inst must be in the same depth of loop with
+// the same trip count of each other, access adjacent memory.
+// and the loops/load-inst should have no dependence with each other(coiterate).
+
 template <typename AccessType>
 std::vector<VectorPack *>
 getSeedMemPacks(Packer *Pkr, AccessType *Access, unsigned VL,
@@ -79,7 +84,7 @@ getSeedMemPacks(Packer *Pkr, AccessType *Access, unsigned VL,
           if (AddrComp &&
               !Pkr->canSpeculateAt(
                   AddrComp, Pkr->findSpeculationCond(AddrComp, AccessInsts))) {
-            return;
+            assert(false && "Why can't speculate address computation?");
           }
 
           Seeds.push_back(createMemPack<AccessType>(Pkr, Accesses, Elements,

@@ -3,8 +3,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
 using namespace llvm;
 
@@ -189,6 +189,7 @@ ControlDependenceAnalysis::getConditionForBranch(BranchInst *Br, bool Taken,
   }
 
   // Ignore backedges
+  // Why inogre back edge condition?
   auto *L = LI.getLoopFor(Src);
   if (Br->isUnconditional() || (L && L->isLoopLatch(Src))) {
     return SrcCond;
@@ -205,6 +206,9 @@ ControlDependenceAnalysis::getConditionForEdge(BasicBlock *Src,
                                LI.getLoopFor(Dst));
 }
 
+// concat(A, B) == A /\ B, but parameter A, B is not symmetric,
+// i.e., assume Block B1 with cond B in the loop L1 with cond A,
+// then the complete cond for B1 is concat(A, B), instead of concat(B, A)
 const ControlCondition *
 ControlDependenceAnalysis::concat(const ControlCondition *CondA,
                                   const ControlCondition *CondB) {
@@ -267,7 +271,8 @@ ControlDependenceAnalysis::getConditionForBlock(BasicBlock *BB) {
   // Use this rule to propagate conditions for exit-block/edge
   if (auto *Pred = BB->getUniquePredecessor()) {
     auto *C = getConditionForEdge(Pred, BB);
-    LLVM_DEBUG(dbgs() << "Condition for " << BB->getName() << " is " << *C << '\n');
+    LLVM_DEBUG(dbgs() << "Condition for " << BB->getName() << " is " << *C
+                      << '\n');
     return C;
   }
 
@@ -285,6 +290,16 @@ ControlDependenceAnalysis::getConditionForBlock(BasicBlock *BB) {
 
   SmallVector<const ControlCondition *> CondsToJoin;
   // FIXME: this is broken is BB2 and BB are not in the same loop
+  // we hope maintain the loop excution condition separately and
+  // block condition only contains condition in the loop, so we need
+  // that the BB2 and BB are in the same loop
+  // Actually, if BB is in some loop, BB2 must be in the same loop,
+  // otherwise, BB will post-dominate some successor U(not Header) of BB2,
+  // So control flow must pass through Header if it passes U, it can then
+  // exist without passing BB, contradiction!(But BB2 may in some inner loop,
+  // and BB is a exit block for that inner loop)
+  // And `getConditionForBranch` has additional code for exiting edge, so
+  // I think the following is correct
   for (auto *BB2 : getControlDependentBlocks(BB)) {
     auto *Br = cast<BranchInst>(BB2->getTerminator());
     assert(Br->isConditional());
@@ -295,7 +310,8 @@ ControlDependenceAnalysis::getConditionForBlock(BasicBlock *BB) {
 
   sort(CondsToJoin);
   auto *C = getOr(CondsToJoin);
-  LLVM_DEBUG(dbgs() << "Condition for " << BB->getName() << " is " << *C << '\n');
+  LLVM_DEBUG(dbgs() << "Condition for " << BB->getName() << " is " << *C
+                    << '\n');
   return BlockConditions[BB] = C;
 }
 

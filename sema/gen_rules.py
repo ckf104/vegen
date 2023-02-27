@@ -273,7 +273,7 @@ def codegen(bundles, inst_features, costs, binding_vector_name='Insts'):
 
       bound_liveins = [emit_slice(bundle.sema.inputs, x) for x in op.get_bound_liveins()]
       bound_ops.append(
-          f'\n    BoundOperation(&{op_name}, {{ { ", ".join(bound_liveins) } }})')
+          f'\n    LegacyBoundOperation(&{op_name}, {{ { ", ".join(bound_liveins) } }})')
     sig = emit_sig(bundle.sig)
     cost = costs[inst]
     inst_defs[inst] = f'  InstBinding("{inst}", {{ {feature_list} }}, {sig}, {{ {", ".join(bound_ops)} }}, {cost})'
