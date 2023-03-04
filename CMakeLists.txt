@@ -7,8 +7,8 @@ cmake_minimum_required(VERSION 3.4)
 project(GSLP)
 # uncommented this if debugging
 #set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-epi)
-set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git)
-#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug)
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git)
+set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug)
 
 find_package(LLVM REQUIRED CONFIG)
 
@@ -29,6 +29,9 @@ set(LLVM_BUILD_TOOLS ON)
 add_definitions(${LLVM_DEFINITIONS})
 if(LLVM_PACKAGE_VERSION VERSION_GREATER_EQUAL 17.0.0)
   add_definitions(-DLLVM_17)
+endif()
+if(LLVM_BUILD_TYPE STREQUAL "Debug")
+  add_definitions(-DBUILD_WITH_DEBUG_LLVM)
 endif()
   
 include_directories(${LLVM_INCLUDE_DIRS})

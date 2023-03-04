@@ -84,10 +84,9 @@ Packer::Packer(ArrayRef<const InstBinding *> Insts, Function &F,
       continue;
     for (auto *Pred : predecessors(&BB))
       EdgeConditions[{Pred, &BB}] = CDA.getConditionForEdge(Pred, &BB);
-    //errs() << "BLOCK: "; BB.printAsOperand(errs()); errs() << "\n";
-    //errs() << *BlockConditions[&BB] << "\n"; 
+    // errs() << "BLOCK: "; BB.printAsOperand(errs()); errs() << "\n";
+    // errs() << *BlockConditions[&BB] << "\n";
   }
-  
 
   std::vector<Instruction *> Loads, Stores;
   for (auto &I : instructions(&F)) {
@@ -259,6 +258,8 @@ static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
   for (auto *V : OP) {
     if (!V)
       continue;
+    // may emit extra shuffle when load operand pack is not perfect
+    // consecutive access? Yes, shuffle is emitted in `gatherOperandPack`
     if (auto *I = dyn_cast<Instruction>(V)) {
       LoadInsts.push_back(I);
       LoadSet.insert(I);
@@ -298,8 +299,10 @@ static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
         CurLoad = cast<LoadInst>(*It->second.begin());
         continue;
       }
-      if (!checkIndependence(DA, *VPCtx, NextLI, Elements, Depended))
-        break;
+      if (!checkIndependence(DA, *VPCtx, NextLI, Elements, Depended)) {
+        assert(false && "this check has been done in `getProducerInfo`?");
+        // break;
+      }
       Loads.push_back(NextLI);
       Elements.set(VPCtx->getScalarId(NextLI));
       Depended |= DA.getDepended(NextLI);
@@ -311,9 +314,11 @@ static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
       SmallVector<const ControlCondition *, 8> Conds;
       auto *AddrComp =
           dyn_cast<Instruction>(Loads.front()->getPointerOperand());
-      if (AddrComp && !Pkr->canSpeculateAt(AddrComp, Pkr->findSpeculationCond(
-                                                         AddrComp, LoadInsts)))
-        return;
+      if (AddrComp &&
+          !Pkr->canSpeculateAt(AddrComp,
+                               Pkr->findSpeculationCond(AddrComp, LoadInsts))) {
+        assert(false && "Why can't speculate address computation?");
+      }
 
       // Pad
       while (Loads.size() < PowerOf2Ceil(OP.size()))
@@ -401,6 +406,17 @@ const Operation::Match *Packer::findMatches(const Operation *O, Value *V) {
   return nullptr;
 }
 
+// We need to check indepedence of `OperandPack`, call `checkIndependece`
+// and `isCompatible` can guarantee these values are independent each other
+// and loops where values lie are safe to coiterate(loops are independent
+// and have the same nested level).
+// For seed packs, store insts(recall vegen only process simple load and store)
+// have more strong requirements such that all loops have equal trip count
+// (because we don't want to introduce additional store due to loop
+// co-iteration, it's may be prohibited?), reduction seeds may
+// independent due to use count requirement? I don't think this carefully
+// Note, even though, we may have circular dependence(test/dependence)
+// between packs, `findDepCycle` is called to avoid this
 const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
   if (OP->OPIValid)
     return OP->OPI;

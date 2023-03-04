@@ -3,10 +3,11 @@
 #include "ControlDependence.h"
 #include "DependenceAnalysis.h"
 #include "VectorPackContext.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/IR/Dominators.h"
+#include <cassert>
 
 using namespace llvm;
 
@@ -80,7 +81,7 @@ VLoop::VLoop(LoopInfo &LI, Loop *L, VectorPackContext *VPCtx,
     auto *SubVL = new VLoop(LI, SubL, VPCtx, DA, CDA, VLI);
     SubLoops.emplace_back(SubVL);
     SubVL->Parent = this;
-    Depended |= SubVL->getDepended(); 
+    Depended |= SubVL->getDepended();
     Insts |= SubVL->Insts;
   }
 
@@ -178,7 +179,8 @@ bool haveIdenticalTripCounts(const Loop *L1, const Loop *L2,
          Expr1->getOperand(1) == Expr2->getOperand(1);
 }
 
-bool VLoop::isSafeToFuse(VLoop *VL1, VLoop *VL2, ControlDependenceAnalysis &CDA, ScalarEvolution &SE) {
+bool VLoop::isSafeToFuse(VLoop *VL1, VLoop *VL2, ControlDependenceAnalysis &CDA,
+                         ScalarEvolution &SE) {
   if (VL1 == VL2)
     return true;
 
@@ -347,6 +349,8 @@ void VLoopInfo::doCoiteration(LLVMContext &Ctx, const VectorPackContext &VPCtx,
           C = CDA.concat(Active, C);
 
       // Guard the live-outs
+      // FIXME: I think we only need to guard the live-outs which has been
+      // packed? Unpacked scalar has been guarded by the Active cond
       SmallVector<Instruction *> InstsToGuard;
       for (auto *I : CoVL->TopLevelInsts)
         if (!I->getType()->isVoidTy() && I != ActiveMu)
@@ -437,6 +441,7 @@ Instruction *VLoop::createOneHotPhi(const ControlCondition *C, Value *IfTrue,
   return PN;
 }
 
+// QUESTION: Why not call Insts.set?
 void VLoop::addInstruction(Instruction *I, const ControlCondition *C) {
   TopLevelInsts.push_back(I);
   InstConds.insert({I, C});

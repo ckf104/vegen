@@ -23,6 +23,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include <cassert>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -37,6 +38,8 @@ static cl::opt<bool> DumpAfterErasingOldBlocks("dump-after-erasing-old-blocks",
 static cl::opt<bool>
     DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks",
                                cl::init(false));
+static cl::opt<bool> DisableSecondaryMatch("disable-secondary-match",
+                                           cl::init(false));
 #else
 extern OptionItem<bool, false> TestCodeGen;
 
@@ -47,6 +50,10 @@ static OptionItem<bool, false>
 // dump-before-erasing-old-blocks
 static OptionItem<bool, false>
     DumpBeforeErasingOldBlocks("dump-before-erasing-old-blocks", false);
+
+// disable secondary match
+static OptionItem<bool, false> DisableSecondaryMatch("disable-secondary-match",
+                                                     false);
 #endif
 static bool shouldSkip(const VectorPack *VP) {
 #if 0
@@ -318,6 +325,8 @@ void VectorPackSet::add(const VectorPack *VP) {
 bool VectorPackSet::isCompatibleWith(const VectorPack &VP) const {
   // Abort if one of the value we want to produce is produced by another pack
   if (PackedValues.anyCommon(VP.getElements())) {
+    // FIXME: test why predicate broken? -> Because secondary match will add
+    // pack in the first match again
     return false;
   }
 
@@ -442,6 +451,7 @@ schedule(VLoop &VL, ControlReifier &Reifier,
           for (unsigned i = 0; i < PN->getNumIncomingValues(); i++)
             Schedule(VL.getIncomingPhiCondition(PN, i));
         } else if (auto OneHot = VL.getOneHotPhi(PN)) {
+          // FIXME: this for loop is useless?
           for (unsigned i = 0; i < PN->getNumIncomingValues(); i++)
             Schedule(OneHot->C);
         }
@@ -452,6 +462,8 @@ schedule(VLoop &VL, ControlReifier &Reifier,
     } else if (VP) {
       // Make sure the control conditions are scheduled before the pack
       for (auto *V : VP->elementValues()) {
+        // FIXME: test vegen can handle VP that has control dependence between
+        // elements(i.e., one element conrtol dependent another one) correctly
         Schedule(VL.getInstCond(cast<Instruction>(V)));
         auto *PN = dyn_cast<PHINode>(V);
         if (!PN)
@@ -460,6 +472,7 @@ schedule(VLoop &VL, ControlReifier &Reifier,
           for (unsigned i = 0; i < PN->getNumIncomingValues(); i++)
             Schedule(VL.getIncomingPhiCondition(PN, i));
         } else if (auto OneHot = VL.getOneHotPhi(PN)) {
+          // FIXME: this for loop is useless?
           for (unsigned i = 0; i < PN->getNumIncomingValues(); i++)
             Schedule(OneHot->C);
         }
@@ -648,6 +661,94 @@ static AllocaInst *createAlloca(Type *Ty, const Twine &Name, BasicBlock *BB) {
   return new AllocaInst(Ty, 0, Name, BB);
 }
 
+// Some notes about the core idea
+// 1. Handle vector packs with different control conditions
+// except load and store Inst which will access memory, all other Inst(if,
+// without side effect) can be excecuted speculatively. We just satisfy operand
+// def-use chain and put the vector pack in condition `greatestcommon(conds)`,
+// which guarantees that If condition is true in original cfg then the vector
+// pack must be executed.
+//
+// 2. Handle phi node.
+// phi nodes need special treatment because its operand contains info of cfg
+// structure. But the structure of reconstructed cfg may be greatly different
+// with original one. Generally speaking, not only value operand and control
+// condition, we also need to maintain control condition of incoming edge of a
+// phi node to reconstruct this inst in new cfg. Actually, it's difficult to
+// generate phi node directly(because it's rare that two `active` blocks with
+// desired condition both exists under the construction of new cfg, at least, if
+// using vegen's reconstruction algorithm).
+// Actually, vegen classify three types of phi nodes: mu phi, gated phi and
+// one-hot phi. Mu phi is phi node whose incoming block is preheader and latch.
+// they are always present in the process of reconstruction. So we can
+// regenerate mu phi easily. Gated phi is other phi nodes in original cfg, which
+// can't regenerate easily. Therefore, vegen will maintain their incoming block
+// conditions, then using store-load method to mimic effects of gated phi.
+// One-hot phi is generated to reify control condition, whose value is true if
+// corresponding control condition is value A otherwise value B(two incoming
+// values). Vegen deals with it using similar store-load method. Handling of
+// vector phi pack is similar
+//
+// 3. Multiple exiting blocks of loop.
+// In fact, regenerated loops in vegen will have only one exit which correspond
+// to latch exit in original loop. Vegen implement this from two aspects:
+// backedge condition is `latch block cond && loop cond` and each inst has own
+// control condition. Consider following code example:
+//
+// int i = 0;
+// do {
+//   h++;
+//   if(i > M) break;
+//   i++;
+// } while(i < N);
+//
+// Which will be translated into:
+//
+// int i = 0;
+// do {
+//   h++;
+//   bool cond = i <= M;
+//   if(cond) i++;
+// } while(cond && i < N);
+//
+// As for original multiple exit blocks of loop, vegen has special treatment
+// towards exiting edge in `getConditionForBranch` function. The final effect is
+// that the exit block has additional control condition to check whether the
+// loop exits from corresponding exiting block. For example:
+//
+// int i = 0;
+// do {
+//   if(i > 2) goto sig;
+//   c++;
+//   i++;
+// } while(i < b);
+//  a = 2;
+// sig:
+//  return 0;
+//
+// It should be translated something like:
+//
+// int i = 0;
+// bool cond;
+// do {
+//   cond = i <= 2;
+//   if(cond) { c++; i++; }
+// } while(cond && i < b);
+// if(cond) a = 2;
+// return 0;
+//
+// Another observation from this example is that i1 cond may have implicit usage
+// outside loop, the reason why VLoop co-iteration will guard i1 type variable.
+//
+// 4. ConditionPack and reifier
+// in a nutshell, Condition Pack is used to pack i1 conditional variable(so we
+// can calculate these variables parallelly), and reifier is used to translate
+// control condition into a mask value used in mask operation(if exists, which
+// includes load/store, gamma, one-hot) or backage branch jump. In secondary
+// match, reified cond values of one-hot phis will also be added into new
+// operandPack work list. If reified cond values is also one-hot phis(when conds
+// are `AND` type), one of whose operands is i1 conds which may have been packed
+// by ConditionPack, perfect! The case where conds are all `OR` type is similar.
 std::pair<BasicBlock *, BasicBlock *>
 VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
   BasicBlock *Header = nullptr;
@@ -685,6 +786,9 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
   auto Schedule = schedule(VL, Reifier, ValueToPackMap, Pkr);
 
   // Pick out the reduction packs, which we will emit last
+  // QUESTION: Why emit last? will it cause broken dependence?
+  // ANSWER: Only loop reduction(reduction using phi node) will be emitted last,
+  // which only has uses outside loop(checked in reduction match)
   SmallPtrSet<const VectorPack *, 4> RdxPacks;
   // Also keep track of the reduction phis
   SmallPtrSet<PHINode *, 4> RdxPhis;
@@ -700,6 +804,8 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       RdxPhis.insert(RI.Phi);
       OldRdxOps.insert(RI.Ops.begin(), RI.Ops.end());
       if (RecurrenceDescriptor::isMinMaxRecurrenceKind(RI.Kind)) {
+        // FIXME: cast<SelectInst> will abort if MinMax match get a MinMax
+        // intrinsic instead of `Icmp + Select`
         for (auto *I : RI.Ops)
           OldRdxOps.insert(cast<SelectInst>(I)->getCondition());
       }
@@ -802,6 +908,12 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
 
     Value *VecInst;
     if (VP->isGamma()) {
+      // FIXME: is it really safe to insert phi pack here? may use some of
+      // dependent var before defined?
+      // Maybe the rationale is that incoming conds will be scheduled before
+      // this VP(recall `schedule` function), and even simple condition will map
+      // into a block at the relative back of cfg due to the method used to
+      // reconstruct cfg(recall `BlockBuilder` class)
       Builder.SetInsertPoint(GetBlock(getGreatestCommonCondition(Conds)));
 
       // Special case to emit gamma pack
@@ -897,6 +1009,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
           auto *Cond = VL.getIncomingPhiCondition(PN, i);
           auto *BB = GetBlock(Cond);
           if (auto *Terminator = BB->getTerminator())
+            // FIXME: remove this if statement, it will not happen
             Builder.SetInsertPoint(Terminator);
           else
             Builder.SetInsertPoint(BB);
@@ -960,7 +1073,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         }
       } else {
         // It's possible that the ir builder constant-folds it into a constant
-        auto *CV = cast<ConstantVector>(VecInst);
+        auto *CV = cast<Constant>(VecInst);
         for (auto &Item : enumerate(VP->getOrderedValues())) {
           if (auto *V = Item.value()) {
             unsigned i = Item.index();
@@ -1105,7 +1218,9 @@ void VectorCodeGen::run() {
     else
       ReturnInst::Create(F->getContext(), Constant::getNullValue(RetTy), &BB);
   }
-
+#ifdef BUILD_WITH_DEBUG_LLVM
+  F->dump();
+#endif
   // Restore SSA
   DominatorTree DT(*F);
   PromoteMemToReg(Allocas, DT);
@@ -1216,6 +1331,7 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
   auto &LI = Pkr.getLoopInfo();
   auto &VLI = Pkr.getVLoopInfo();
 
+  // FIXME: Possible segmentation fault(add new elements in iteration)?
   auto ReifyOneHots = [&Reifier](VLoop *VL) {
     for (auto *I : VL->getInstructions()) {
       auto *PN = dyn_cast<PHINode>(I);
@@ -1277,6 +1393,8 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
     OperandPack OP;
     for (auto *V : Vals) {
       auto *I = cast<Instruction>(V);
+      // QUESTION: Why we can assert this? can we have a pack with part of
+      // values having outside use?
       assert(Guarded.count(I));
       assert(VL->getOneHotPhi(cast<PHINode>(Guarded.lookup(I))));
       OP.push_back(Guarded.lookup(I));
@@ -1312,16 +1430,17 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
   };
 
   // Do secondary packing
-  Heuristic H(&Pkr, nullptr);
-  Plan P(&Pkr);
-  for (auto *VP : AllPacks)
-    P.add(VP);
-  for (auto *OP : Seeds)
-    runBottomUpFromOperand(OP, P, H, false /*don't override existing packs*/,
-                           GetExtraOperands);
-  for (auto *VP : P)
-    tryAdd(VP);
-
+  if (!DisableSecondaryMatch) {
+    Heuristic H(&Pkr, nullptr);
+    Plan P(&Pkr);
+    for (auto *VP : AllPacks)
+      P.add(VP);
+    for (auto *OP : Seeds)
+      runBottomUpFromOperand(OP, P, H, false /*don't override existing packs*/,
+                             GetExtraOperands);
+    for (auto *VP : P)
+      tryAdd(VP);
+  }
   // Look of consecutive loads/stores and speculatively compute their pointers
   // if necessary
   for (auto *VP : AllPacks) {
@@ -1336,8 +1455,11 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
       Insts.push_back(cast<Instruction>(V));
     auto *C = Pkr.findSpeculationCond(AddrComp, Insts);
     auto *VL = Pkr.getVLoopFor(AddrComp);
-    if (!isImplied(VL->getInstCond(AddrComp), C))
+    if (!isImplied(VL->getInstCond(AddrComp), C)) {
+      // FIXME: test if false
+      // assert(false && "Why speculation cond of ptr is not original cond?");
       VL->setInstCond(AddrComp, C);
+    }
   }
 
   // Lower everything

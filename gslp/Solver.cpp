@@ -454,6 +454,9 @@ static void improvePlan(Packer *Pkr, Plan &P,
   };
 
   for (auto *VP : Seeds) {
+    // FIXME: following if statement contradicts with spirit of trying multiple
+    // VF(in seeds, we have store pack with length 2, 4...)? So if longer VF is
+    // acceptable, we don't try smaller VF, even though which may do better
     if (any_of(VP->elementValues(), IsPacked))
       continue;
 

@@ -102,6 +102,9 @@ static cl::opt<bool>
 // ckf: enable of scalarize, worse result for dot-product
 static cl::opt<bool> ScalarizeEnable("vegen-scalarize-enable", cl::init(false),
                                      cl::Hidden);
+// Only add gslp pass
+cl::opt<bool> GSLPOnly("gslp-only", cl::init(false));
+
 #else
 // test lowering from vloop without vectorization
 OptionItem<bool, false> TestCodeGen("test-codegen", false);
@@ -126,6 +129,9 @@ OptionItem<bool, false> DisableReductionBalancing("no-balance-rdx", false);
 
 // ckf: enable of scalarize, worse result for dot-product
 OptionItem<bool, false> ScalarizeEnable("vegen-scalarize-enable", false);
+
+// Only add gslp pass
+OptionItem<bool, false> GSLPOnly("gslp-only", false);
 #endif
 
 namespace llvm {
@@ -145,7 +151,7 @@ class GSLP : public PassInfoMixin<GSLP> {
   Triple::ArchType Arch = Triple::ArchType::UnknownArch;
 
   std::vector<InstBinding> &getInsts() const {
-    auto& DEbug = X86Insts[75];
+    auto &DEbug = X86Insts[75];
     switch (Arch) {
     case Triple::x86_64:
       return X86Insts;
@@ -337,10 +343,14 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
     return PreservedAnalyses::all();
 
   // We don't deal with things like switches or invoke
-  for (auto &BB : F)
+  uint32_t retInstCnt = 0;
+  for (auto &BB : F) {
     if (!isa<ReturnInst>(BB.getTerminator()) &&
         !isa<BranchInst>(BB.getTerminator()))
       return PreservedAnalyses::all();
+    retInstCnt += isa<ReturnInst>(BB.getTerminator());
+  }
+  assert(retInstCnt == 1 && "Function has multiple return instruction?");
 
   // Don't deal with infinite loops
   for (auto *L : LI->getLoopsInPreorder())
@@ -389,9 +399,11 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
     unrollLoops(&F, *SE, *LI, AC, *DT, TTI, UFs, DupToOrigLoopMap,
                 &UnrolledIterations);
   }
-
   PostDominatorTree PDT(F); // recompute PDT after unrolling
   Packer Pkr(SupportedIntrinsics, F, AA, LI, SE, DT, &PDT, DI, LVI, TTI, BFI);
+#ifdef BUILD_WITH_DEBUG_LLVM
+  F.getParent()->dump();
+#endif
 
   // Forward the seeds from the unroller
   std::vector<const OperandPack *> SeedOperands;
@@ -434,6 +446,10 @@ static void registerGSLP(FunctionPassManager &FPM) {
 #endif
   // MPM.add(createStructurizeCFGPass(false));
   // MPM.add(createCFGSimplificationPass());
+  if (GSLPOnly) {
+    FPM.addPass(GSLP());
+    return;
+  }
   FPM.addPass(GVNHoistPass());
   FPM.addPass(UnifyFunctionExitNodesPass());
   FPM.addPass(LoopSimplifyPass());

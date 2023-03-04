@@ -189,7 +189,8 @@ ControlDependenceAnalysis::getConditionForBranch(BranchInst *Br, bool Taken,
   }
 
   // Ignore backedges
-  // Why inogre back edge condition?
+  // We usually ignore backedges to avoid circular dependence. Here
+  // loop must progress and exit finally.
   auto *L = LI.getLoopFor(Src);
   if (Br->isUnconditional() || (L && L->isLoopLatch(Src))) {
     return SrcCond;

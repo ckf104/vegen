@@ -108,6 +108,39 @@ emitDisjunction(BasicBlock *BB, const ControlCondition *Common,
 }
 #endif
 
+// The basic conclusion is that if each inst in two acyclic control flow graph
+// have the same control dependence, then the two cfg should be equal(ok, the
+// statement is a bit vague). To understand this, we can define control
+// condition of each inst as `path1 || path2 || path3...`, the path_i represent
+// a possible path from the entry to the inst in cfg1 and is a
+// expression like (c1 && !c2 && c3...), where c_i is branch condition in this
+// path. As long as the Inst I will be executed in cfg1, the result of bool
+// expression is true, we know Inst I must be also executed in cfg2. Or Inst I
+// isn't executed in cfg1, bool expression result is false. we know Inst I will
+// not be executed in cfg2, even though some condition c_i is not defined in
+// cfg1 or cfg2.
+// So a more essential statement is that an inst in an acyclic control flow
+// graph will be executed if and only if its control condition is true?
+// Based on above conclusion, we can think of a brutal method to reconstruct cfg
+// by control condition. We insert insts into a new cfg with respect to control
+// dependence and data dependence(i.e., if Inst I has operand J and condition
+// c1, then Inst J and c1 should be inserted into cfg before I). We mark a
+// current active block, whose control condition should be nullptr(always
+// execute). First, create a new cfg with a empty entry block marked as current
+// active block. For each new Inst to be inserted, we generate logic insts(and,
+// or, not) to calculate it's control condition in current active block, then
+// insert a branch whose cond variable is the calculated result of control
+// condition in current active block. Then we create a true branch block and
+// false branch block for jump of branch inst. Now we can insert new Inst in
+// true branch block! After that, generate a unconditional branch in true/false
+// branch block, create a new block E, set the two branches jump to E. Block E
+// is the new current active Block, whose control condition is nullptr.
+// Following code is an optimized implementation of above method, broken
+// dominance will be fixed(because some conditions c_i are undef) in
+// `fixDefUseDominance`
+// In the following code, active block is the block without inserted terminator
+// Inst and semi-active block is the block whose control condition is the
+// greatest common of conditions of all reachable active block.
 BasicBlock *BlockBuilder::getBlockFor(const ControlCondition *C) {
   if (auto *BB = ActiveConds.lookup(C))
     return BB;

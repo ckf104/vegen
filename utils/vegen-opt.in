@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-exec opt -load @CMAKE_BINARY_DIR@/gslp/libGSLP.so\
+exec @LLVM_TOOLS_BINARY_DIR@/opt -load-pass-plugin=@CMAKE_BINARY_DIR@/gslp/libGSLP_opt.so\
        --wrappers-dir=@CMAKE_BINARY_DIR@\
        $@
