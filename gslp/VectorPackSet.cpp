@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include <cassert>
+#include <vector>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -574,7 +575,7 @@ static void moveToEnd(Instruction *I, BasicBlock *BB) {
   if (I->getParent())
     I->removeFromParent();
 #ifndef LLVM_17
-// BB->getInstList().push_back(I);
+  BB->getInstList().push_back(I);
 #else
   I->insertInto(BB, BB->end());
 #endif
@@ -1333,12 +1334,15 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
 
   // FIXME: Possible segmentation fault(add new elements in iteration)?
   auto ReifyOneHots = [&Reifier](VLoop *VL) {
+    std::vector<PHINode *> oneHotPhis;
     for (auto *I : VL->getInstructions()) {
       auto *PN = dyn_cast<PHINode>(I);
       if (PN && VL->getOneHotPhi(PN)) {
-        Reifier.reify(VL->getOneHotPhi(PN)->C, VL);
+        oneHotPhis.push_back(PN);
       }
     }
+    for (auto *PN : oneHotPhis)
+      Reifier.reify(VL->getOneHotPhi(PN)->C, VL);
   };
 
   for (auto *L : LI.getLoopsInPreorder()) {
@@ -1438,8 +1442,13 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
     for (auto *OP : Seeds)
       runBottomUpFromOperand(OP, P, H, false /*don't override existing packs*/,
                              GetExtraOperands);
-    for (auto *VP : P)
-      tryAdd(VP);
+    std::vector<const VectorPack *> packs(P.begin(), P.end());
+    if (findDepCycle(packs, &Pkr)) {
+      errs() << "find dependence cycle in secondary match\n";
+    } else {
+      for (auto *VP : P)
+        tryAdd(VP);
+    }
   }
   // Look of consecutive loads/stores and speculatively compute their pointers
   // if necessary

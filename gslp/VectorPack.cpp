@@ -37,7 +37,10 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
     unsigned ElementSize = 0;
     // Find output lanes that uses input `i` and record those uses
     for (unsigned j = 0; j < NumLanes; j++) {
-      auto BoundSlices = Producer->getLaneOps(j).getBoundSlices();
+      // Warning! we can't call Producer->getLaneOps(j).getBoundSlices()
+      // directly, returned arrayRef is a dangling reference!
+      const auto &BoundOp = Producer->getLaneOps(j);
+      auto BoundSlices = BoundOp.getBoundSlices();
       for (unsigned k = 0; k < BoundSlices.size(); k++) {
         auto &BS = BoundSlices[k];
         if (BS.vecId != i)

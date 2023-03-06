@@ -610,6 +610,7 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
 }
 
 float Packer::getScalarCost(Instruction *I) {
+  //return 10.0f;
   if (auto *LI = dyn_cast<LoadInst>(I)) {
     return getMemoryOpCostFromTTI(TTI, Instruction::Load, LI->getType(),
                                   LI->getAlign(), 0, TTI::TCK_RecipThroughput,

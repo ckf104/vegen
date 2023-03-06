@@ -643,6 +643,7 @@ static bool findDepCycleInLoop(
     FusedLoops.assign(LoopsToFuse.member_begin(It), LoopsToFuse.member_end());
   else
     FusedLoops.push_back(VL);
+  assert(!FusedLoops.empty() && "parameter VL is not Leader VLoop?");
 
   std::function<bool(NodeTy)> FindCycle = [&](NodeTy Node) -> bool {
     if (!Processing.insert(Node).second)
@@ -737,6 +738,7 @@ static bool findDepCycleInLoop(
         if (FindCycle(CoVL->getLoopCond()) ||
             any_of(VPCtx->iter_values(CoVL->getDepended()), FindCycle))
           return true;
+      return false;
     }
 
     assert(Node.is<const ControlCondition *>());
@@ -749,19 +751,40 @@ static bool findDepCycleInLoop(
     return any_of(Or->Conds, FindCycle);
   };
 
-  for (auto &SubVL : VL->getSubLoops())
-    if (FindCycle(GetLeaderVL(SubVL.get())))
-      return true;
-
-  for (auto *CoVL : FusedLoops)
+  for (auto *CoVL : FusedLoops) {
+    for (auto &SubVL : CoVL->getSubLoops())
+      if (FindCycle(GetLeaderVL(SubVL.get())))
+        return true;
     if (any_of(CoVL->getInstructions(), FindCycle))
       return true;
+  }
   return false;
 }
 
-// FIXME: also make sure we the loops that we want to fuse/co-iterate do not
-// have dep cycle Make sure a set of packs have neither data nor control
-// dependence
+// Fix original fixme bug(at least I think)
+// First, We need to clarify which dependence we need to consider. Any inst have
+// data and control dependence and we hope the inst will only be emitted after
+// its operands and controlto dependent variable has been emitted(under
+// reconstruction of cfg, `getBlock(cond)` will use control dependent variable).
+// For any inst, its data dependence is clear. And for most inst, its control
+// dependence is also clear(for vector pack, it's control dependence is
+// `getOr(conds)`). But two cases are special, one of them is phi node, which
+// contains block operands. So phi nodes have implicit edge-taken control
+// dependence(i.e., phi nodes is dependent on variables influencing which phi's
+// incoming edge will be taken). Another special case is speculatively executing
+// vectorPack(not phi, load/store pack), whose actual control condition is
+// `getGreatestCommon(conds)`, But vegen now set vectorPack's control condition
+// to `getOr(conds)`. 
+// FIXME: relax control condition of vectorPack
+//
+// After clarifying what variables an Inst is dependent on, the second problem
+// is how to check cycles. The high level idea is we will see a loop as a whole,
+// Any loop has two kinds of child: top-level inst and subloop. The control
+// condition of loop is the control condition of its preheader and its data
+// dependence is the union of out-of-loop data dependence of its all insts. For
+// co-iterated loops, we see these loops as a whole. First we find cycles by
+// depth-first search in top-level loop, then apply the same method to subloops
+// recursively
 bool findDepCycle(ArrayRef<const VectorPack *> Packs, Packer *Pkr,
                   ArrayRef<std::pair<Instruction *, Instruction *>> ExtraDeps) {
   GlobalDependenceAnalysis &DA = Pkr->getDA();
@@ -786,10 +809,10 @@ bool findDepCycle(ArrayRef<const VectorPack *> Packs, Packer *Pkr,
   EquivalenceClasses<VLoop *> LoopsToFuse;
   std::function<void(VLoop *, VLoop *)> MarkLoopsToFuse = [&](VLoop *VL1,
                                                               VLoop *VL2) {
-    if (VL1 || VL1 == VL2)
+    if (VL1 == VL2)
       return;
 
-    assert(VL1 == VL2 &&
+    assert(VL1 && VL2 &&
            "attempting to fuse loops with different nesting level");
     LoopsToFuse.unionSets(VL1, VL2);
     MarkLoopsToFuse(VL1->getParent(), VL2->getParent());

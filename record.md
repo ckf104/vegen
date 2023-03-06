@@ -26,6 +26,13 @@ llvm vector type
 * https://llvm.org/docs/LangRef.html#t-vector
 * bitcast from vector to int, first consider that the vector is concatenated into a big int. in little endianness, elements with higher index(right side) are put into more significant bits. so \<i4 1, i4, 2, i4, 3, i4 5\> -> 0x5321
 
+llvm shuffle support for scalable vector
+
+* llvm.experimental.vector.reverse
+* llvm.experimental.vector.deinterleave2
+* llvm.experimental.vector.interleave2
+* llvm.experimental.vector.splice
+
 **idea of VW-SLP?**
 
 编译流程

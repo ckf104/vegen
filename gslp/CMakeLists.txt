@@ -54,6 +54,9 @@ endif()
 
 add_library(GSLP MODULE ${LIB_GSLP_SRC} SimpleParser.cpp)
 add_library(GSLP_opt MODULE ${LIB_GSLP_SRC})
+# address sanitizer if needed
+#target_compile_options(GSLP PRIVATE ${CMAKE_CXX_FLAGS_ASAN})
+#target_compile_options(GSLP_opt PRIVATE ${CMAKE_CXX_FLAGS_ASAN})
 target_compile_definitions(GSLP_opt PRIVATE OPT_PASS)
 
 llvm_map_components_to_libnames(LLVM_LIBRARIES support core transformutils irreader analysis scalaropts)
