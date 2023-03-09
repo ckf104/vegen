@@ -6,6 +6,9 @@
 #include "MatchManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/TargetParser/Triple.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 
@@ -80,9 +83,10 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
 
     // Compute the type of don't care vector as special cases
     if (!OP.front() && is_splat(OP)) {
-      OP.Ty = FixedVectorType::get(
+      assert(false && "Is it possible that the whole OP we don't care?");
+      /*OP.Ty = FixedVectorType::get(
           IntegerType::get(VPCtx->getFunction()->getContext(), ElementSize),
-          OP.size());
+          OP.size());*/
     }
   }
 
@@ -157,9 +161,21 @@ static Type *getScalarTy(ArrayRef<const Operation::Match *> Matches) {
 
 Value *VectorPack::emitVectorGeneral(ArrayRef<Value *> Operands,
                                      IntrinsicBuilder &Builder) const {
-  auto *VecInst = Producer->emit(Operands, Builder);
+  auto retV = std::find_if(OrderedValues.begin(), OrderedValues.end(),
+                           [](const Value *V) { return V != nullptr; });
+  assert(retV != OrderedValues.end() && "No non-null return value?");
+  auto *VecInst = Producer->emit(Operands, Builder, (*retV)->getType(),
+                                 OrderedValues.size());
   // Fix the output type
-  auto *VecType = FixedVectorType::get(getScalarTy(Matches), Matches.size());
+  // There is no vector layout info In X86 intrinsic wrapper(e.g.,
+  // `_mm256_add_epi32` adds two <8 x i32>, but only __m256i showed in wrapper).
+  // So generated llvm wrapper function may have argument type and return type
+  // different with real type(although with the same bits). But I think riscv
+  // should have no such problem?
+  auto *VecType = VPCtx->getVectorType(getScalarTy(Matches), Matches.size());
+  assert((VPCtx->getTarget() != Triple::riscv64 ||
+          VecInst->getType() == VecType) &&
+         "Instrinsic return type mismatch?");
   return Builder.CreateBitCast(VecInst, VecType);
 }
 
@@ -182,23 +198,20 @@ Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
   // Figure out type of the vector that we are loading
   auto *ScalarPtr = FirstLoad->getPointerOperand();
   auto *ScalarTy = getLoadStoreType(FirstLoad);
-  auto *VecTy = FixedVectorType::get(ScalarTy, Loads.size());
+  auto *VecTy = VPCtx->getVectorType(ScalarTy, Loads.size());
 
   // Emit the load
   Instruction *VecLoad;
   if (IsGatherScatter) {
-    VecLoad = Builder.CreateMaskedGather(VecTy, Operands.front(),
-                                         getCommonAlignment(Loads), Mask);
+    VecLoad = Builder.CreateMaskedGather(
+        VecTy, Operands.front(), getCommonAlignment(Loads), Mask, Loads.size());
   } else {
-    // Cast the scalar pointer to a vector pointer
-    unsigned AS = FirstLoad->getPointerAddressSpace();
-    Value *VecPtr =
-        Builder.CreateBitCast(GetScalar(ScalarPtr), VecTy->getPointerTo(AS));
     if (Mask)
-      VecLoad =
-          Builder.CreateMaskedLoad(VecTy, VecPtr, FirstLoad->getAlign(), Mask);
+      VecLoad = Builder.CreateMaskedLoad(
+          VecTy, ScalarPtr, FirstLoad->getAlign(), Mask, Loads.size());
     else
-      VecLoad = Builder.CreateAlignedLoad(VecTy, VecPtr, FirstLoad->getAlign());
+      VecLoad = Builder.CreateAlignedLoad(VecTy, ScalarPtr,
+                                          FirstLoad->getAlign(), Loads.size());
   }
 
   std::vector<Value *> Values;
@@ -216,8 +229,8 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
   if (IsGatherScatter) {
     auto *Ptrs = Operands[0];
     auto *Values = Operands[1];
-    VecStore = Builder.CreateMaskedScatter(Values, Ptrs,
-                                           getCommonAlignment(Stores), Mask);
+    VecStore = Builder.CreateMaskedScatter(
+        Values, Ptrs, getCommonAlignment(Stores), Mask, Stores.size());
   } else {
     Value *VecValue = Operands.front();
     auto *FirstStore = Stores.front();
@@ -229,17 +242,14 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
     if (!Alignment)
       Alignment =
           DL.getABITypeAlign(FirstStore->getValueOperand()->getType()).value();
-
-    // Cast the scalar pointer to vector pointer
-    Value *ScalarPtr = GetScalar(FirstStore->getPointerOperand());
-    Value *VecPtr =
-        Builder.CreateBitCast(ScalarPtr, VecValue->getType()->getPointerTo(AS));
+    Value *Ptr = GetScalar(FirstStore->getPointerOperand());
 
     if (!Mask)
-      VecStore = Builder.CreateAlignedStore(VecValue, VecPtr, Align(Alignment));
+      VecStore = Builder.CreateAlignedStore(VecValue, Ptr, Align(Alignment),
+                                            Stores.size());
     else
-      VecStore =
-          Builder.CreateMaskedStore(VecValue, VecPtr, Align(Alignment), Mask);
+      VecStore = Builder.CreateMaskedStore(VecValue, Ptr, Align(Alignment),
+                                           Mask, Stores.size());
   }
 
   SmallVector<Value *, 4> Stores_(Stores.begin(), Stores.end());
@@ -564,25 +574,6 @@ raw_ostream &operator<<(raw_ostream &OS, const OperandPack &OP) {
       errs() << "undef\n";
   OS << "\n]";
   return OS;
-}
-
-FixedVectorType *getVectorType(const OperandPack &OP) {
-  if (OP.Ty)
-    return OP.Ty;
-  Type *ScalarTy = nullptr;
-  for (auto *V : OP)
-    if (V) {
-      ScalarTy = V->getType();
-      break;
-    }
-  assert(ScalarTy && "Operand pack can't be all empty");
-  return OP.Ty = FixedVectorType::get(ScalarTy, OP.size());
-}
-
-FixedVectorType *getVectorType(const VectorPack &VP) {
-  unsigned NumLanes = VP.getOrderedValues().size();
-  auto *FirstLane = *VP.elementValues().begin();
-  return FixedVectorType::get(FirstLane->getType(), NumLanes);
 }
 
 bool isConstantPack(const OperandPack &OP) {

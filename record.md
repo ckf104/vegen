@@ -43,6 +43,15 @@ $ riscv64-unknown-linux-gnu-gcc -march=rv64gcv out/rvv_saxpy.s -o out/rvv_saxpy
 $ qemu-riscv64 -cpu rv64,v=on out/rvv_saxpy
 ```
 
+opt pass debug option
+
+```shell
+-print-after-all  # print IR after each pass
+-debug-pass-manager  # show pass running order
+```
+
+
+
 11.29, vegen drawback:
 ~~inherent drawback because of generating from xml? unnecessarily complicated llvm expression.~~
 eg: _mm256_sra_epi32
@@ -184,20 +193,21 @@ fingerprintSCEV这个函数是干嘛的
 
 
 
-**emitloop函数疑问**
+向量参数的Call Convention?
 
-* ~~emit one-hot pack? emit loop reduction pack?~~
+Mask相关处理
 
-* ~~how to emit loop exit block when having multiple exits?~~
+ Vector mask-register logical operations operate on mask registers. Each element in a mask register is a single bit, so these instructions all operate on single vector registers regardless of the setting of the vlmul eld in vtype. They do not change the value of vlmul
 
-* ~~how to calculate control dependence of vector pack?~~
+TODO:
 
-* ~~how to schedule phi node?~~ 
+* ~~修改getVectorType函数，mask...ptr等等不太对~~
+* ~~riscv的load，store使用vp版本~~
+* 更新reduction, 使用vp版本
+* 更新IntrinsicBuilder::Create函数
+* 完成 getIntrinsicName 函数
+* 更新match函数（考虑output lanes之间使用重复标量时....）
 
-* ~~ConditionPack vs reified condition value?~~
 
-* ~~Why reify one-hot cond?~~
 
-* 如何处理operand之间存在control dependence 依赖？
-
-* ~~gatherOperandPack function~~
+idea: 用C语言来写operation, 然后自动生成pattern match?(便于处理vfirst这样的数组？)

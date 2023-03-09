@@ -3,6 +3,7 @@
 #include "Compatible.h"
 #include "ConsecutiveCheck.h"
 #include "MatchManager.h"
+#include "TargetPlatformInfo.h"
 #include "VectorPack.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -10,6 +11,7 @@
 #include "llvm/Analysis/ValueTracking.h" // isSafeToSpeculativelyExecute
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetParser/Triple.h"
 #include <cassert>
 #include <optional>
 
@@ -68,11 +70,11 @@ Packer::Packer(ArrayRef<const InstBinding *> Insts, Function &F,
                AliasAnalysis *AA, LoopInfo *LI, ScalarEvolution *SE,
                DominatorTree *DT, PostDominatorTree *PDT, DependenceInfo *DI,
                LazyValueInfo *LVI, TargetTransformInfo *TTI,
-               BlockFrequencyInfo *BFI,
+               BlockFrequencyInfo *BFI, TargetInfo target,
                EquivalenceClasses<BasicBlock *> *UnrolledBlocks,
                bool Preplanning)
-    : F(&F), VPCtx(&F), DA(*AA, *SE, *LI, *LVI, &F, &VPCtx, Preplanning),
-      CDA(*LI, *DT, *PDT),
+    : F(&F), VPCtx(&F, target),
+      DA(*AA, *SE, *LI, *LVI, &F, &VPCtx, Preplanning), CDA(*LI, *DT, *PDT),
 
       TopVL(*LI, *DT, &VPCtx, DA, CDA, VLI),
 
@@ -321,8 +323,19 @@ static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
       }
 
       // Pad
-      while (Loads.size() < PowerOf2Ceil(OP.size()))
-        Loads.push_back(nullptr);
+      if (VPCtx->getTarget() == Triple::riscv64) {
+        // FIXME: I assume that we don't change operands size when we search
+        // from bottom to up. And riscv can't support variable-length shuffle
+        // effectively(shuffle + set new vl)? This restriction may be relaxed
+        // later
+        if (Loads.size() > OP.size())
+          return;
+        while (Loads.size() < OP.size())
+          Loads.push_back(nullptr);
+      } else {
+        while (Loads.size() < PowerOf2Ceil(OP.size()))
+          Loads.push_back(nullptr);
+      }
       Extensions.push_back(
           VPCtx->createLoadPack(Loads, Pkr->getConditionPack(Loads), Elements,
                                 Depended, Pkr->getTTI()));

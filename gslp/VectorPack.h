@@ -254,10 +254,6 @@ public:
   getPackedInstructions(llvm::SmallPtrSetImpl<llvm::Instruction *> &) const;
 };
 
-llvm::FixedVectorType *getVectorType(const OperandPack &OpndPack);
-
-llvm::FixedVectorType *getVectorType(const VectorPack &VP);
-
 bool isConstantPack(const OperandPack &OpndPack);
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &, const OperandPack &);

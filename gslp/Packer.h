@@ -5,8 +5,8 @@
 #include "DependenceAnalysis.h"
 #include "InstSema.h"
 #include "MatchManager.h"
-#include "VectorPackContext.h"
 #include "VLoop.h"
+#include "VectorPackContext.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -15,6 +15,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Function.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
 class ScalarEvolution;
@@ -24,6 +25,8 @@ class PostDominatorTree;
 class TargetTransformInfo;
 class LoopInfo;
 } // namespace llvm
+
+struct TargetInfo;
 
 using ConsecutiveAccessDAG =
     llvm::DenseMap<llvm::Instruction *,
@@ -118,6 +121,7 @@ public:
          llvm::DominatorTree *DT, llvm::PostDominatorTree *PDT,
          llvm::DependenceInfo *DI, llvm::LazyValueInfo *LVI,
          llvm::TargetTransformInfo *TTI, llvm::BlockFrequencyInfo *BFI,
+         struct TargetInfo target,
          llvm::EquivalenceClasses<llvm::BasicBlock *> *UnrolledBlocks = nullptr,
          bool Preplanning = false);
 
@@ -144,7 +148,7 @@ public:
   llvm::LazyValueInfo &getLVI() const { return *LVI; }
   ControlDependenceAnalysis &getCDA() { return CDA; }
 
-  const Operation::Match* findMatches(const Operation *, llvm::Value *);
+  const Operation::Match *findMatches(const Operation *, llvm::Value *);
 
   const llvm::DataLayout *getDataLayout() const {
     return &F->getParent()->getDataLayout();
@@ -180,7 +184,9 @@ public:
 
   // Given an instruction I and some users of I,
   // find a relaxed control condition for I so that the users can safely use I
-  const ControlCondition *findSpeculationCond(llvm::Instruction *I, llvm::ArrayRef<llvm::Instruction *> Users);
+  const ControlCondition *
+  findSpeculationCond(llvm::Instruction *I,
+                      llvm::ArrayRef<llvm::Instruction *> Users);
 
   void matchSecondaryInsts(llvm::ArrayRef<llvm::Instruction *> SecondaryInsts) {
     assert(!SecondaryMM);

@@ -18,8 +18,9 @@ class DominatorTree;
 class TargetTransformInfo;
 class LazyValueInfo;
 class BlockFrequencyInfo;
-}  // namespace llvm
+} // namespace llvm
 
+class TargetInfo;
 class InstBinding;
 
 // Mapping duplicated (inner) loops to the original loops
@@ -37,7 +38,8 @@ void computeUnrollFactor(llvm::ArrayRef<const InstBinding *> Insts,
                          llvm::TargetTransformInfo *TTI,
                          llvm::BlockFrequencyInfo *BFI, llvm::Function *F,
                          const llvm::LoopInfo &LI,
-                         llvm::DenseMap<llvm::Loop *, unsigned> &UFs);
+                         llvm::DenseMap<llvm::Loop *, unsigned> &UFs,
+                         TargetInfo target);
 
 struct UnrolledInstruction {
   const llvm::Instruction *OrigI;
@@ -58,9 +60,10 @@ void unrollLoops(
 
 class OperandPack;
 class Packer;
-std::vector<const OperandPack *> getSeeds(
-    Packer &, llvm::DenseMap<llvm::Loop *, UnrolledLoopTy> &DupToOrigLoopMap,
-    llvm::DenseMap<llvm::Instruction *, UnrolledInstruction>
-        &UnrolledIterations);
+std::vector<const OperandPack *>
+getSeeds(Packer &,
+         llvm::DenseMap<llvm::Loop *, UnrolledLoopTy> &DupToOrigLoopMap,
+         llvm::DenseMap<llvm::Instruction *, UnrolledInstruction>
+             &UnrolledIterations);
 
-#endif  // UNROLL_FACTOR_H
+#endif // UNROLL_FACTOR_H

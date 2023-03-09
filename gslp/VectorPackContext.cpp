@@ -1,8 +1,17 @@
 #include "VectorPackContext.h"
 #include "ControlDependence.h"
 #include "Reduction.h"
+#include "TargetPlatformInfo.h"
 #include "VectorPack.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Use.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/TargetParser/Triple.h"
+#include <cassert>
+#include <cstdint>
+#include <limits>
+#include <tuple>
 
 using namespace llvm;
 
@@ -29,8 +38,8 @@ struct VectorPackCache {
 
 VectorPackContext::~VectorPackContext() = default;
 
-VectorPackContext::VectorPackContext(Function *F)
-    : F(F), PackCache(std::make_unique<VectorPackCache>()) {
+VectorPackContext::VectorPackContext(Function *F, TargetInfo target_)
+    : F(F), PackCache(std::make_unique<VectorPackCache>()), target(target_) {
   for (Instruction &I : instructions(F))
     addInstruction(&I);
   // FIXME: return a tigher bound
@@ -126,9 +135,8 @@ VectorPack *VectorPackContext::createGEPPack(ArrayRef<GetElementPtrInst *> GEPs,
   return VP.get();
 }
 
-VectorPack *VectorPackContext::createLoopReduction(const ReductionInfo &Rdx,
-                                               unsigned RdxLen,
-                                               TargetTransformInfo *TTI) const {
+VectorPack *VectorPackContext::createLoopReduction(
+    const ReductionInfo &Rdx, unsigned RdxLen, TargetTransformInfo *TTI) const {
   auto *Root = Rdx.Ops.front();
   auto &VP = PackCache->ReductionPacks[Root];
   if (!VP) {
@@ -140,9 +148,10 @@ VectorPack *VectorPackContext::createLoopReduction(const ReductionInfo &Rdx,
   return VP.get();
 }
 
-VectorPack *VectorPackContext::createLoopFreeReduction(const ReductionInfo &Rdx,
-                                               unsigned RdxLen, BitVector Depended,
-                                               TargetTransformInfo *TTI) const {
+VectorPack *
+VectorPackContext::createLoopFreeReduction(const ReductionInfo &Rdx,
+                                           unsigned RdxLen, BitVector Depended,
+                                           TargetTransformInfo *TTI) const {
   auto *Root = Rdx.Ops.front();
   auto &VP = PackCache->ReductionPacks[Root];
   if (!VP) {
@@ -154,6 +163,11 @@ VectorPack *VectorPackContext::createLoopFreeReduction(const ReductionInfo &Rdx,
 }
 
 const OperandPack *VectorPackContext::dedup(const OperandPack *OP) const {
+  // FIXME: In current implementation, I don't want to shuffle a random riscv
+  // vector, whose cost is uncertained. This restriction may be relaxed later
+  if (getTarget() == Triple::riscv64)
+    return OP;
+
   SmallPtrSet<Value *, 4> Seen;
   OperandPack Deduped;
   for (auto *V : *OP) {
@@ -189,7 +203,7 @@ const OperandPack *VectorPackContext::odd(const OperandPack *OP) const {
 OperandPack *VectorPackContext::getCanonicalOperandPack(OperandPack OP) const {
   // Look for equivalent values in OP,
   // and replace them with a single, arbitrary value.
-  //for (unsigned i = 0; i < OP.size(); i++)
+  // for (unsigned i = 0; i < OP.size(); i++)
   //  for (unsigned j = i + 1; j < OP.size(); j++)
   //    if (EquivalentValues.isEquivalent(OP[i], OP[j]))
   //      OP[j] = OP[i];
@@ -271,4 +285,95 @@ ConditionPack *VectorPackContext::getConditionPack(
 
   NewCP->Kind = ConditionPack::CP_Or;
   return NewCP;
+}
+
+uint32_t VectorPackContext::getMaxOperandSize() const {
+  if (target.Arch == Triple::riscv64) {
+    // RISCV have some widening instructions, which result in wider element
+    // without changing vector length, here is a conservative approximation to
+    // guarantee LMUL <= 8 even though operands have been widen into 64bits
+    // FIXME: Get better approximation by using gathered VectorPack info?
+    return target.MinVLEN / 8;
+  }
+  return std::numeric_limits<uint32_t>::max();
+}
+
+std::pair<uint32_t, uint32_t>
+VectorPackContext::getProperLMUL(uint64_t eleWidth, uint64_t length) const {
+  auto vecWidth = eleWidth * length;
+  if (vecWidth > target.MinVLEN) {
+    auto LMUL = PowerOf2Ceil((vecWidth - 1) / target.MinVLEN + 1);
+    assert(LMUL <= 8 &&
+           "We should have control OperandPack size to fit LMUL limit?");
+    return {LMUL, 1};
+  } else if (vecWidth > target.MinVLEN / 2 || eleWidth == 64) {
+    return {1, 1};
+  } else if (vecWidth > target.MinVLEN / 4 || eleWidth == 32) {
+    return {1, 2};
+  } else if (vecWidth > target.MinVLEN / 8 || eleWidth == 16) {
+    return {1, 4};
+  }
+  return {1, 8};
+}
+
+std::pair<uint32_t, uint32_t>
+VectorPackContext::getProperLMUL(llvm::Type *Ty, uint64_t length) const {
+  const auto &DL = F->getParent()->getDataLayout();
+  auto eleWidth = DL.getTypeStoreSizeInBits(Ty).getFixedValue();
+  assert(isPowerOf2_64(eleWidth) && eleWidth <= 64 &&
+         "Vector element size should be power of 2?");
+  // RVV spec[7.4] said: Additional unit-stride mask load and store instructions
+  // are provided to transfer mask values to/from memory. These operate
+  // similarly to unmasked byte loads or stores (EEW=8), except that the
+  // effective vector length is evl=ceil(vl/8) (i.e. EMUL=1), and the
+  // destination register is always written with a tail-agnostic policy.
+  // RVV sepc[15.1] said: Vector mask-register logical operations operate on
+  // mask registers. Each element in a mask register is a single bit, so these
+  // instructions all operate on single vector registers regardless of the
+  // setting of the vlmul eld in vtype. They do not change the value of vlmul.
+  // The destination vector register may be the same as either source vector
+  // register.
+  //  So we should use 8bits as element size for mask load/store and
+  //  calculation.
+  if (eleWidth == 1)
+    eleWidth = 8;
+  return getProperLMUL(eleWidth, length);
+}
+
+uint32_t VectorPackContext::getProperVScale(Type *scalarType,
+                                            uint64_t length) const {
+  const auto &DL = F->getParent()->getDataLayout();
+  auto eleWidth = DL.getTypeStoreSizeInBits(scalarType).getFixedValue();
+  if (eleWidth == 1)
+    eleWidth = 8;
+  uint32_t numerator, denominator;
+  std::tie(numerator, denominator) = getProperLMUL(eleWidth, length);
+  return RVVBitsPerBlock * numerator / denominator / eleWidth;
+}
+
+VectorType *VectorPackContext::getVectorType(Type *scalarType,
+                                             uint64_t length) const {
+  bool isScalable = target.Arch == Triple::riscv64;
+  if (isScalable)
+    return ScalableVectorType::get(scalarType,
+                                   getProperVScale(scalarType, length));
+  else
+    return FixedVectorType::get(scalarType, length);
+}
+
+VectorType *VectorPackContext::getVectorType(const OperandPack &OP) const {
+  bool isScalable = target.Arch == Triple::riscv64;
+  if (OP.Ty) {
+    assert(isa<ScalableVectorType>(OP.Ty) == isScalable &&
+           "OP's vector type should keep the same?");
+    return OP.Ty;
+  }
+  Type *ScalarTy = OP.getFirstNonNull()->getType();
+  return getVectorType(ScalarTy, OP.size());
+}
+
+VectorType *VectorPackContext::getVectorType(const VectorPack &VP) const {
+  auto NumLanes = VP.getOrderedValues().size();
+  auto *scalarType = (*VP.elementValues().begin())->getType();
+  return getVectorType(scalarType, NumLanes);
 }

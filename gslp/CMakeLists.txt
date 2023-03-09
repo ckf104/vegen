@@ -3,6 +3,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # The main "lib packing"
 set(LIB_PACKING_SRC
   target-sema/x86.cpp target-sema/arm.cpp
+  target-sema/riscv64.cpp
 )
 
 set(LIB_GSLP_SRC  Plan.cpp

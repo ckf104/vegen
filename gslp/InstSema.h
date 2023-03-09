@@ -8,12 +8,16 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <string>
 #include <sys/types.h>
 #include <vector>
 
@@ -26,14 +30,8 @@ class InstSignature;
 class BoundOperation;
 
 class OperandType {
-  enum Type : uint32_t { FixedVec, ScalableVec, Scalar, None };
-  Type type = None;
-  std::optional<uint32_t> eleWidth;
-  std::optional<uint32_t> vecWidth;
-  friend class InstBinding;
-  friend class InstSignature;
-
 public:
+  enum Type : uint32_t { FixedVec, ScalableVec, Scalar, None };
   OperandType() = default;
   explicit OperandType(Type t, uint32_t vecwidth = 0, uint32_t elewidth = 0)
       : type(t) {
@@ -61,6 +59,13 @@ public:
   bool isFixedVec() const { return type == FixedVec; }
   bool isScalar() const { return type == Scalar; }
   bool isScalableVec() const { return type == ScalableVec; }
+
+private:
+  Type type = None;
+  std::optional<uint32_t> eleWidth;
+  std::optional<uint32_t> vecWidth;
+  friend class InstBinding;
+  friend class InstSignature;
 };
 
 // Some important assumption about inst signature
@@ -74,6 +79,14 @@ struct InstSignature {
                          uint32_t inputVec)>
       eleNumMap;
   unsigned numInputs() const { return inputSig.size(); }
+  InstSignature(
+      std::vector<OperandType> inputsig_, OperandType outputsig_,
+      std::function<uint32_t(const InstSignature *sig, uint32_t, uint32_t)>
+          eleNumMap_)
+      : inputSig(std::move(inputsig_)), outputSig(outputsig_),
+        eleNumMap(std::move(eleNumMap_)) {}
+  InstSignature(InstSignature &&) = default;
+  InstSignature(const InstSignature &) = default;
   InstSignature(const std::vector<unsigned> &I, const std::vector<unsigned> &O,
                 bool hasImm)
       : outputSig(OperandType::FixedVec, O[0]) {
@@ -115,12 +128,12 @@ struct InputId {
     assert(low % (high - low) == 0);
     eleId = low / (high - low);
   }
+  InputId(uint32_t vecId_, uint32_t eleId_) : vecId(vecId_), eleId(eleId_) {}
 };
-
 
 // Interface that abstractly defines an operation
 struct Operation {
-  virtual ~Operation() {}
+  virtual ~Operation() = default;
   struct Match {
     bool Commutative; // applies when the operation is binary
     std::vector<llvm::Value *> Inputs;
@@ -164,6 +177,8 @@ public:
     for (auto slice : lbo.BoundSlices)
       boundSlices.emplace_back(slice.InputId, slice.Lo, slice.Hi);
   }
+  BoundOperation(const Operation *op, llvm::ArrayRef<InputId> boundSlices_)
+      : op(op), boundSlices(boundSlices_.begin(), boundSlices_.end()) {}
   const Operation *getOperation() const { return op; }
   llvm::ArrayRef<InputId> getBoundSlices() const { return boundSlices; }
 };
@@ -178,7 +193,23 @@ class InstBinding {
   std::function<BoundOperation(uint32_t outId)> BoundMap;
   llvm::Optional<float> Cost;
 
+  float getCost(uint32_t base) const {
+    // FIXME: I don't know a proper cost model for riscv, may LLVM TTI can help?
+    return Cost.value() * std::pow(1.8f, (float)llvm::Log2_32(base));
+  }
+
 public:
+  InstBinding(std::string Name, std::vector<std::string> featrues,
+              InstSignature Sig_,
+              llvm::SmallPtrSet<const Operation *, 4> uniqueOps_,
+              std::function<BoundOperation(uint32_t outId)> BoundMap_,
+              llvm::Optional<float> Cost = llvm::None)
+      : Sig(std::move(Sig_)), Name(std::move(Name)),
+        uniqueOps(std::move(uniqueOps_)), TargetFeatures(std::move(featrues)),
+        BoundMap(std::move(BoundMap_)), Cost(Cost) {}
+  InstBinding(InstBinding &&) = default;
+  InstBinding(const InstBinding &) = default;
+
   // Compatible with X86 and arm
   InstBinding(std::string Name, std::vector<std::string> TargetFeatures,
               InstSignature Sig_, std::vector<LegacyBoundOperation> LaneOps_,
@@ -215,10 +246,11 @@ public:
     };
   }
   virtual ~InstBinding() = default;
-  virtual float getCost(llvm::TargetTransformInfo *,
-                        llvm::LLVMContext &) const {
-    assert(Cost.value());
-    return Cost.value();
+  virtual float getCost(llvm::TargetTransformInfo *, llvm::LLVMContext &,
+                        uint32_t scale = 1) const {
+    assert(Cost.has_value());
+    assert(llvm::isPowerOf2_32(scale));
+    return getCost(scale);
   }
   llvm::ArrayRef<std::string> getTargetFeatures() const {
     return TargetFeatures;
@@ -238,24 +270,32 @@ public:
   }
 
   virtual llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                            IntrinsicBuilder &Builder) const {
-    return Builder.Create(Name, Operands);
+                            IntrinsicBuilder &Builder,
+                            llvm::Type *retTy = nullptr,
+                            uint32_t length = 0) const {
+    return Builder.Create(Name, Operands, retTy, length);
   }
   llvm::StringRef getName() const { return Name; }
 };
 
-static inline bool hasBitWidth(const llvm::Value *V, unsigned BitWidth) {
+inline std::optional<uint32_t> getBitWidth(const llvm::Value *V) {
   auto *Ty = V->getType();
   if (Ty->isIntegerTy())
-    return Ty->getIntegerBitWidth() == BitWidth;
-  if (Ty->isFloatTy())
-    return BitWidth == 32;
-  if (Ty->isDoubleTy())
-    return BitWidth == 64;
-  return false;
+    return Ty->getIntegerBitWidth();
+  else if (Ty->isFloatTy())
+    return 32;
+  else if (Ty->isDoubleTy())
+    return 64;
+  return std::nullopt;
+}
+
+inline bool hasBitWidth(const llvm::Value *V, unsigned BitWidth) {
+  auto v = getBitWidth(V);
+  return v && v.value() == BitWidth;
 }
 
 extern std::vector<InstBinding> X86Insts;
 extern std::vector<InstBinding> ArmInsts;
+extern std::vector<InstBinding> Riscv64Insts;
 
 #endif // end INST_SEMA_H

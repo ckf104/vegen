@@ -6,6 +6,7 @@
 
 namespace llvm {
 class TargetTransformInfo;
+class Type;
 } // namespace llvm
 
 class BinaryIROperation : public Operation {
@@ -51,9 +52,10 @@ public:
   static IRVectorBinding Create(const BinaryIROperation *Op,
                                 unsigned VectorWidth);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
   bool isSupported(llvm::TargetTransformInfo *) const;
 };
 
@@ -61,7 +63,8 @@ class UnaryIRVectorBinding : public InstBinding {
   const UnaryIROperation *Op;
 
   UnaryIRVectorBinding(const UnaryIROperation *Op, std::string Name,
-                       InstSignature Sig, std::vector<LegacyBoundOperation> LaneOps)
+                       InstSignature Sig,
+                       std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
@@ -69,9 +72,10 @@ public:
   static UnaryIRVectorBinding Create(const UnaryIROperation *Op,
                                      unsigned VectorWidth);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
   bool isSupported(llvm::TargetTransformInfo *) const;
 };
 
@@ -93,9 +97,10 @@ class VectorTruncate : public InstBinding {
 public:
   static VectorTruncate Create(const Truncate *TruncOp, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 struct IntToFloat : public Operation {
@@ -119,31 +124,33 @@ struct FloatToInt : public Operation {
 class VectorIntToFloat : public InstBinding {
   const IntToFloat *Op;
   VectorIntToFloat(const IntToFloat *Op, std::string Name, InstSignature Sig,
-                 std::vector<LegacyBoundOperation> LaneOps)
+                   std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
 public:
   static VectorIntToFloat Create(const IntToFloat *Op, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 class VectorFloatToInt : public InstBinding {
   const FloatToInt *Op;
-  VectorFloatToInt (const FloatToInt *Op, std::string Name, InstSignature Sig,
-                 std::vector<LegacyBoundOperation> LaneOps)
+  VectorFloatToInt(const FloatToInt *Op, std::string Name, InstSignature Sig,
+                   std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         Op(Op) {}
 
 public:
   static VectorFloatToInt Create(const FloatToInt *Op, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 struct Extension : public Operation {
@@ -158,16 +165,17 @@ struct Extension : public Operation {
 class VectorExtension : public InstBinding {
   const Extension *ExtOp;
   VectorExtension(const Extension *ExtOp, std::string Name, InstSignature Sig,
-                 std::vector<LegacyBoundOperation> LaneOps)
+                  std::vector<LegacyBoundOperation> LaneOps)
       : InstBinding(Name, {} /* no target features required*/, Sig, LaneOps),
         ExtOp(ExtOp) {}
 
 public:
   static VectorExtension Create(const Extension *ExtOp, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 struct Select : Operation {
@@ -187,9 +195,10 @@ class VectorSelect : public InstBinding {
 public:
   static VectorSelect Create(const Select *SelOp, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 struct UnaryMath : public Operation {
@@ -213,9 +222,10 @@ class VectorUnaryMath : public InstBinding {
 public:
   static VectorUnaryMath Create(const UnaryMath *Op, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 struct BinaryMath : public Operation {
@@ -238,9 +248,10 @@ class VectorBinaryMath : public InstBinding {
 public:
   static VectorBinaryMath Create(const BinaryMath *Op, unsigned VecLen);
   llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
-                    IntrinsicBuilder &Builder) const override;
+                    IntrinsicBuilder &Builder, llvm::Type *retTy = nullptr,
+                    uint32_t length = 0) const override;
   float getCost(llvm::TargetTransformInfo *TTI,
-                llvm::LLVMContext &Ctx) const override;
+                llvm::LLVMContext &Ctx, uint32_t scale=1) const override;
 };
 
 // Aux class enumerating vector ir that we can emit
@@ -280,7 +291,9 @@ public:
     return UnaryVectorInsts;
   }
   llvm::ArrayRef<VectorTruncate> getTruncates() const { return VectorTruncs; }
-  llvm::ArrayRef<VectorExtension> getExtensions() const { return VectorExtensions; }
+  llvm::ArrayRef<VectorExtension> getExtensions() const {
+    return VectorExtensions;
+  }
   llvm::ArrayRef<VectorSelect> getSelects() const { return VectorSelects; }
   llvm::ArrayRef<VectorUnaryMath> getUnaryMathFuncs() const {
     return VectorUnaryMathFuncs;

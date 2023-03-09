@@ -6,6 +6,7 @@
 #include "Scalarizer.h"
 #include "SimpleParser.h"
 #include "Solver.h"
+#include "TargetPlatformInfo.h"
 #include "UnrollFactor.h"
 #include "VectorPackSet.h"
 #include "llvm/ADT/StringRef.h"
@@ -148,28 +149,29 @@ bool hasFeature(const llvm::Function &F, std::string Feature) {
 
 class GSLP : public PassInfoMixin<GSLP> {
   std::unique_ptr<Module> InstWrappers;
-  Triple::ArchType Arch = Triple::ArchType::UnknownArch;
+  TargetInfo target;
 
   std::vector<InstBinding> &getInsts() const {
-    auto &DEbug = X86Insts[75];
-    switch (Arch) {
+    switch (target.Arch) {
     case Triple::x86_64:
       return X86Insts;
     case Triple::aarch64:
       return ArmInsts;
     case Triple::riscv64:
-      return X86Insts;
+      return Riscv64Insts;
     default:
       llvm_unreachable("unsupported target architecture");
     }
   }
 
 public:
+  GSLP() { target.Arch = Triple::UnknownArch; }
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
   bool isSupported(InstBinding *Inst, const llvm::Function &F,
                    TargetTransformInfo *TTI) {
-    if (Arch == Triple::x86_64 || Arch == Triple::aarch64) {
-      unsigned PreferVectorWidth = TTI->getLoadStoreVecRegBitWidth(0);
+    if (target.Arch == Triple::x86_64 || target.Arch == Triple::aarch64) {
+      unsigned PreferVectorWidth =
+          TTI->getLoadStoreVecRegBitWidth(/*AddrSpace=*/0);
       if (Inst->getName().contains("cvtepi32_epi64"))
         return true;
       if (Inst->getName().contains("hadd"))
@@ -186,19 +188,20 @@ public:
                 PreferVectorWidth)
           return false;
       return true;
-    } else if (Arch == Triple::riscv64) {
-      // FIXME: filter insts by feature, get right LMUL value
+    } else if (target.Arch == Triple::riscv64) {
+      // FIXME: filter insts by feature using RISCVSubTarget::hasVInstructions*
+      return true;
     }
     return false;
   }
 
   bool doInitialization(Module &M, TargetTransformInfo *TTI) {
-    if (Arch != Triple::ArchType::UnknownArch)
+    if (target.Arch != Triple::ArchType::UnknownArch)
       return true;
-    Arch = Triple(M.getTargetTriple()).getArch();
+    target.Arch = Triple(M.getTargetTriple()).getArch();
     SMDiagnostic Err;
     std::string Wrapper;
-    switch (Arch) {
+    switch (target.Arch) {
     case Triple::x86_64:
       Wrapper = "/x86.bc";
       break;
@@ -223,7 +226,15 @@ public:
                          Err.getMessage());
     }
     // vscale should can set to be at least TTI->getVScaleForTuning()
-    return Arch != Triple::riscv64 || !TTI->getVScaleForTuning();
+    if (target.Arch == Triple::riscv64) {
+      auto vscale = TTI->getVScaleForTuning();
+      if (!vscale || vscale.value() == 0)
+        return false;
+      // FIXME: Great hacking! TuningVScale = MinVLEN / 64, we use MinVLEN
+      // conservatively
+      target.MinVLEN = vscale.value() * 64;
+    }
+    return true;
   }
 };
 
@@ -363,7 +374,7 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
       SupportedIntrinsics.push_back(&Inst);
 
   // disable llvm's vector inst temporarily for riscv64
-  if (Arch == Triple::x86_64 || Arch == Triple::riscv64) {
+  if (target.Arch != Triple::riscv64) {
     for (auto &Inst : VecBindingTable.getBindings()) {
       // if (Inst.isSupported(TTI))
       SupportedIntrinsics.push_back(&Inst);
@@ -395,12 +406,14 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   if (!DisableUnrolling && !TestCodeGen) {
     AssumptionCache AC(F);
     DenseMap<Loop *, unsigned> UFs;
-    computeUnrollFactor(SupportedIntrinsics, LVI, TTI, BFI, &F, *LI, UFs);
+    computeUnrollFactor(SupportedIntrinsics, LVI, TTI, BFI, &F, *LI, UFs,
+                        target);
     unrollLoops(&F, *SE, *LI, AC, *DT, TTI, UFs, DupToOrigLoopMap,
                 &UnrolledIterations);
   }
   PostDominatorTree PDT(F); // recompute PDT after unrolling
-  Packer Pkr(SupportedIntrinsics, F, AA, LI, SE, DT, &PDT, DI, LVI, TTI, BFI);
+  Packer Pkr(SupportedIntrinsics, F, AA, LI, SE, DT, &PDT, DI, LVI, TTI, BFI,
+             target);
 #ifdef BUILD_WITH_DEBUG_LLVM
   F.getParent()->dump();
 #endif
@@ -414,7 +427,7 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   if (!TestCodeGen)
     optimizeBottomUp(Packs, &Pkr, SeedOperands);
 
-  IntrinsicBuilder Builder(*InstWrappers);
+  IntrinsicBuilder Builder(*InstWrappers, Pkr.getContext());
   errs() << "Generating vector code\n";
   Packs.codegen(Builder, Pkr);
 

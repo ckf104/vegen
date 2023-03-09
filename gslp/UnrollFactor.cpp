@@ -3,6 +3,7 @@
 #include "Packer.h"
 #include "SimpleParser.h"
 #include "Solver.h"
+#include "TargetPlatformInfo.h"
 #include "VectorPack.h"
 #include "VectorPackContext.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -66,8 +67,7 @@ public:
                    AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI)
       : GetTLI(GetTLI),
 #ifndef LLVM_17
-        PV(F),
-        BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV),
+        PV(F), BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT, &PV),
 #else
         BasicResult(M.getDataLayout(), F, GetTLI(F), AC, &DT),
 #endif
@@ -283,7 +283,7 @@ static void refineUnrollFactors(Function *F, DominatorTree &DT, LoopInfo &LI,
                                 LazyValueInfo *LVI, TargetTransformInfo *TTI,
                                 BlockFrequencyInfo *BFI,
                                 DenseMap<Loop *, unsigned> &UFs,
-                                unsigned MaxUF = 8) {
+                                TargetInfo target, unsigned MaxUF = 8) {
   // Compute some analysis for the unroller
   Module *M = F->getParent();
   AssumptionCache AC(*F);
@@ -320,7 +320,7 @@ static void refineUnrollFactors(Function *F, DominatorTree &DT, LoopInfo &LI,
 
   // Wrap all the analysis in the packer
   PostDominatorTree PDT(*F);
-  Packer Pkr(Insts, *F, &AA, &LI, &SE, &DT, &PDT, &DI, LVI, TTI, BFI,
+  Packer Pkr(Insts, *F, &AA, &LI, &SE, &DT, &PDT, &DI, LVI, TTI, BFI, target,
              &UnrolledBlocks, false /*preplanning*/);
 
   auto SeedOperands = getSeeds(Pkr, DupToOrigLoopMap, UnrolledIterations);
@@ -391,7 +391,8 @@ void computeUnrollFactorImpl(ArrayRef<const InstBinding *> Insts,
                              LazyValueInfo *LVI, TargetTransformInfo *TTI,
                              BlockFrequencyInfo *BFI, Function *OrigF,
                              const LoopInfo &OrigLI,
-                             DenseMap<Loop *, unsigned> &UFs) {
+                             DenseMap<Loop *, unsigned> &UFs,
+                             TargetInfo target) {
   ValueToValueMapTy VMap;
   Function *F = CloneFunction(OrigF, VMap);
   DominatorTree DT(*F);
@@ -419,7 +420,8 @@ void computeUnrollFactorImpl(ArrayRef<const InstBinding *> Insts,
       RefinedUnrollFactors.try_emplace(L, UF);
   }
 
-  refineUnrollFactors(F, DT, LI, Insts, LVI, TTI, BFI, RefinedUnrollFactors);
+  refineUnrollFactors(F, DT, LI, Insts, LVI, TTI, BFI, RefinedUnrollFactors,
+                      target);
 
   UFs.clear();
   for (auto KV : RefinedUnrollFactors) {
@@ -436,7 +438,8 @@ void computeUnrollFactorImpl(ArrayRef<const InstBinding *> Insts,
 void computeUnrollFactor(ArrayRef<const InstBinding *> Insts,
                          LazyValueInfo *LVI, TargetTransformInfo *TTI,
                          BlockFrequencyInfo *BFI, Function *F,
-                         const LoopInfo &LI, DenseMap<Loop *, unsigned> &UFs) {
+                         const LoopInfo &LI, DenseMap<Loop *, unsigned> &UFs,
+                         TargetInfo target) {
   DenseSet<Loop *> UnrolledLoops;
   for (auto *L : const_cast<LoopInfo &>(LI).getLoopsInPreorder()) {
     if (any_of(UnrolledLoops,
@@ -445,7 +448,7 @@ void computeUnrollFactor(ArrayRef<const InstBinding *> Insts,
       continue;
     }
     UFs[L] = 8;
-    computeUnrollFactorImpl(Insts, LVI, TTI, BFI, F, LI, UFs);
+    computeUnrollFactorImpl(Insts, LVI, TTI, BFI, F, LI, UFs, target);
     errs() << "Unroll factor for loop " << L << "(depth=" << L->getLoopDepth()
            << ')' << " " << UFs.lookup(L) << '\n';
     if (UFs[L] > 1) {

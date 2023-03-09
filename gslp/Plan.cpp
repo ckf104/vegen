@@ -1,6 +1,6 @@
-#include "Compatible.h"
 #include "Plan.h"
 #include "CastIntoFloat.h"
+#include "Compatible.h"
 #include "Heuristic.h"
 #include "Packer.h"
 #include "SimpleParser.h"
@@ -13,9 +13,10 @@
 using namespace llvm;
 
 #ifdef OPT_PASS
-static cl::opt<bool> EnableCostVerification(
-    "verify-costs", cl::desc("verify cost during vector planning"),
-    cl::init(false));
+static cl::opt<bool>
+    EnableCostVerification("verify-costs",
+                           cl::desc("verify cost during vector planning"),
+                           cl::init(false));
 #else
 // verify cost during vector planning
 static OptionItem<bool, false> EnableCostVerification("verify-costs", false);
@@ -36,7 +37,7 @@ void Plan::incScalarUses(Instruction *I) {
       !It->second.VP->isReduction()) {
     assert(!ExtractCosts.count(I));
     const VectorPackSlot &Slot = It->second;
-    auto *VecTy = getVectorType(*Slot.VP);
+    auto *VecTy = Pkr->getContext()->getVectorType(*Slot.VP);
     float ExtractCost = getVectorInstrCostFromTTI(
         Pkr->getTTI(), Instruction::ExtractElement, VecTy, Slot.i);
     ExtractCosts[I] = ExtractCost;
@@ -50,7 +51,7 @@ void Plan::incScalarUses(Instruction *I) {
 
 float Plan::computeShuffleCost(const OperandPack *OP) const {
   constexpr float C_Shuffle = 2;
-  auto *VecTy = getVectorType(*OP);
+  auto *VecTy = Pkr->getContext()->getVectorType(*OP);
   auto *TTI = Pkr->getTTI();
 
   // Fast path: OP is produced exactly
@@ -249,7 +250,7 @@ void Plan::addImpl(const VectorPack *VP) {
   updateCostOfVectorUses(Values);
 
   auto *TTI = Pkr->getTTI();
-  auto *VecTy = !VP->isStore() ? getVectorType(*VP) : nullptr;
+  auto *VecTy = !VP->isStore() ? Pkr->getContext()->getVectorType(*VP) : nullptr;
   for (unsigned i = 0, N = Values.size(); i < N; i++)
     if (auto *I = dyn_cast_or_null<Instruction>(Values[i])) {
       if (!VP->isReduction() && NumScalarUses.lookup(I)) {
@@ -283,7 +284,8 @@ void Plan::removeImpl(const VectorPack *VP) {
 
   updateCostOfVectorUses(Values);
 
-  auto *VecTy = !VP->isStore() ? getVectorType(*VP) : nullptr;
+  auto *VecTy =
+      !VP->isStore() ? Pkr->getContext()->getVectorType(*VP) : nullptr;
   auto *TTI = Pkr->getTTI();
   for (unsigned i = 0, N = Values.size(); i < N; i++) {
     if (auto *I = dyn_cast_or_null<Instruction>(Values[i])) {

@@ -151,6 +151,13 @@ public:
         Builder(Builder), Reifier(Reifier), ValueToPackMap(ValueToPackMap) {}
 
   void run();
+
+  void dumpValueIndex(){
+    for(auto& p: ValueIndex){
+      p.first->dump();
+      errs() << p.second.VP << "\n";
+    }  
+  }
 };
 } // namespace
 
@@ -190,6 +197,7 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
 
   DenseMap<const VectorPack *, SmallVector<GatherEdge, 4>> SrcPacks;
   DenseMap<Value *, SmallVector<unsigned, 4>> SrcScalars;
+  dumpValueIndex();
 
   // Figure out sources of the values in `OP`
   const unsigned NumValues = OP.size();
@@ -212,6 +220,16 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
       // Remember that we need to insert `V` as the `i`th element
       SrcScalars[useScalar(V)].push_back(i);
     }
+  }
+  if (VPCtx->getTarget() == llvm::Triple::riscv64) {
+    assert(SrcPacks.size() <= 1 &&
+           "I should have not enabled variable-length match for riscv?");
+    if (!SrcPacks.empty())
+      assert(all_of(SrcPacks.begin()->second,
+                    [](const GatherEdge &E) {
+                      return E.SrcIndex == E.DestIndex;
+                    }) &&
+             "I should have not enabled shuffle match for riscv?");
   }
 
   using ShuffleMaskTy = SmallVector<Constant *, 8>;
@@ -262,10 +280,12 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
     if (SrcVP->getOrderedValues().size() == NumValues &&
         ShuffleVectorInst::isIdentityMask(Mask))
       Gather = Src;
-    else
+    else {
+      assert(VPCtx->getTarget() != llvm::Triple::riscv64 &&
+             "riscv64 should not have variable-length match now?");
       Gather = Builder.CreateShuffleVector(Src, UndefValue::get(Src->getType()),
                                            Mask);
-
+    }
     PartialGathers.push_back({DefinedBits, Gather});
   }
 
@@ -290,7 +310,7 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
       DefinedBits |= PG.DefinedBits;
     }
   } else {
-    auto *VecTy = getVectorType(OP);
+    auto *VecTy = VPCtx->getVectorType(OP);
     Acc = UndefValue::get(VecTy);
   }
 
@@ -909,12 +929,6 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
 
     Value *VecInst;
     if (VP->isGamma()) {
-      // FIXME: is it really safe to insert phi pack here? may use some of
-      // dependent var before defined?
-      // Maybe the rationale is that incoming conds will be scheduled before
-      // this VP(recall `schedule` function), and even simple condition will map
-      // into a block at the relative back of cfg due to the method used to
-      // reconstruct cfg(recall `BlockBuilder` class)
       Builder.SetInsertPoint(GetBlock(getGreatestCommonCondition(Conds)));
 
       // Special case to emit gamma pack
@@ -962,7 +976,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         Builder.SetInsertPoint(Preheader->getTerminator());
         auto *InitVec = gatherOperandPack(InitOP);
         assert(Latch);
-        auto *Mu = emitMu(InitVec, UndefValue::get(getVectorType(*VP)),
+        auto *Mu = emitMu(InitVec, UndefValue::get(VPCtx->getVectorType(*VP)),
                           Preheader, Header, Latch);
         MusToPatch.emplace_back(Mu, IterOP);
         VecInst = Mu;
@@ -981,7 +995,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         }
         if (is_splat(Conds)) {
           auto *PN = cast<PHINode>(*VP->elementValues().begin());
-          auto *VecTy = getVectorType(*VP);
+          auto *VecTy = VPCtx->getVectorType(*VP);
           auto *Alloca = createAlloca(VecTy, PN->getName() + ".vector", Entry);
           Allocas.push_back(Alloca);
           Builder.SetInsertPoint(GetBlock(nullptr));
@@ -999,7 +1013,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         VecInst->setName(SomePhi->getName());
       } else {
         auto *PN = cast<PHINode>(*VP->elementValues().begin());
-        auto *VecTy = getVectorType(*VP);
+        auto *VecTy = VPCtx->getVectorType(*VP);
         auto *Alloca = createAlloca(VecTy, PN->getName() + ".vector", Entry);
         // Track the alloca so we can promote it back to phi later
         Allocas.push_back(Alloca);
@@ -1096,7 +1110,7 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
   assert(RdxPacks.empty() || VL.isLoop());
   for (auto *VP : RdxPacks) {
     ArrayRef<const OperandPack *> OPs = VP->getOperandPacks();
-    auto *VecTy = getVectorType(*OPs.front());
+    auto *VecTy = VPCtx->getVectorType(*OPs.front());
     auto &RI = VP->getReductionInfo();
 
     SmallVector<PHINode *, 4> VecPhis;

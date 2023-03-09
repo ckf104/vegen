@@ -2,10 +2,17 @@
 #define VECTOR_PACK_CONTEXT_H
 
 #include "InstSema.h"
+#include "TargetPlatformInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Use.h"
+#include "llvm/Support/ErrorHandling.h"
+#include <cassert>
+#include <cstdint>
 #include <vector>
 
 class ReductionInfo;
@@ -28,7 +35,15 @@ struct OperandProducerInfo {
 struct OperandPack : public llvm::SmallVector<llvm::Value *, 8> {
   mutable bool OPIValid = false;
   mutable OperandProducerInfo OPI;
-  mutable llvm::FixedVectorType *Ty = nullptr;
+  mutable llvm::VectorType *Ty = nullptr;
+
+  const llvm::Value *getFirstNonNull() const {
+    for (auto *V : *this) {
+      if (V)
+        return V;
+    }
+    llvm_unreachable("OperandPack should have at least one element?");
+  }
 };
 
 class ControlCondition;
@@ -69,13 +84,33 @@ class VectorPackContext {
 
   unsigned NumValues;
 
+  TargetInfo target;
+
+  // FIXME: Remove this hacking to LLVM-RVV
+  static constexpr uint64_t RVVBitsPerBlock = 64;
+
 public:
-  VectorPackContext(llvm::Function *F);
+  VectorPackContext(llvm::Function *F, TargetInfo target_);
   ~VectorPackContext();
 
   void registerEquivalentValues(llvm::EquivalenceClasses<llvm::Value *> &&EC) {
     EquivalentValues = EC;
   }
+
+  llvm::Triple::ArchType getTarget() const {
+    assert(target.Arch != llvm::Triple::UnknownArch);
+    return target.Arch;
+  }
+  llvm::VectorType *getVectorType(const OperandPack &OP) const;
+  llvm::VectorType *getVectorType(const VectorPack &VP) const;
+  llvm::VectorType *getVectorType(llvm::Type *Ty, uint64_t length) const;
+  // LMUL: numerator / denominator
+  std::pair<uint32_t, uint32_t> getProperLMUL(llvm::Type *Ty,
+                                              uint64_t length) const;
+  std::pair<uint32_t, uint32_t> getProperLMUL(uint64_t eleWidth,
+                                              uint64_t length) const;
+  uint32_t getProperVScale(llvm::Type *scalarType, uint64_t length) const;
+  uint32_t getMaxOperandSize() const;
 
   // Create a "General" vector pack
   VectorPack *createVectorPack(std::vector<const Operation::Match *> Matches,
@@ -122,14 +157,13 @@ public:
   // Create a loop reduction pack
   VectorPack *
   createLoopReduction(const ReductionInfo &,
-                  unsigned RdxLen /*vector length of the reduction*/,
-                  llvm::TargetTransformInfo *TTI) const;
+                      unsigned RdxLen /*vector length of the reduction*/,
+                      llvm::TargetTransformInfo *TTI) const;
 
   // Create a loop free reduction
-  VectorPack *
-  createLoopFreeReduction(const ReductionInfo &, unsigned RdxLen,
-      llvm::BitVector Depended,
-      llvm::TargetTransformInfo *TTI) const;
+  VectorPack *createLoopFreeReduction(const ReductionInfo &, unsigned RdxLen,
+                                      llvm::BitVector Depended,
+                                      llvm::TargetTransformInfo *TTI) const;
 
   OperandPack *getCanonicalOperandPack(OperandPack OP) const;
   ConditionPack *getConditionPack(
@@ -163,7 +197,8 @@ public:
   llvm::Function *getFunction() const { return F; }
 
   // Fixme : templatize this to decouple use of bitvector
-  class value_iterator : public std::iterator<std::forward_iterator_tag, typename llvm::Value *> {
+  class value_iterator : public std::iterator<std::forward_iterator_tag,
+                                              typename llvm::Value *> {
     const VectorPackContext *VPCtx;
     llvm::BitVector::const_set_bits_iterator Handle;
 
