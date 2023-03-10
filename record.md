@@ -203,11 +203,28 @@ TODO:
 
 * ~~修改getVectorType函数，mask...ptr等等不太对~~
 * ~~riscv的load，store使用vp版本~~
+* 限制seed operand size
+* **紧急：当循环展开次数为8时，生成代码与预期不符**（reduce从哪来的？）
 * 更新reduction, 使用vp版本
 * 更新IntrinsicBuilder::Create函数
 * 完成 getIntrinsicName 函数
 * 更新match函数（考虑output lanes之间使用重复标量时....）
+* 添加新的Intrinsic, 然后添加新的V指令
 
+已知
 
+* 在**IntrinsicsRISCV.td**文件中定义了RVV相关的Intrinsic，这个文件被包含在**Intrinsics.td**中，
+
+```shell
+~/tmp/install/llvm-git/bin/llvm-tblgen -I ~/tmp/llvm-git/llvm/include --gen-intrinsic-impl  Intrinsics.td -o a.cpp # 生成build目录中的IntrinsicImpl.inc文件
+~/tmp/install/llvm-git/bin/llvm-tblgen -I ~/tmp/llvm-git/llvm/include --gen-intrinsic-enums --intrinsic-prefix=riscv Intrinsics.td # 生成build目录中的IntrinsicsRISCV.h
+```
+
+* 在`lib/Target/RISCV/RISCVInstrInfoVPseudos.td`文件中定义了`RISCVVIntrinsicsTable : GenericTable`，利用**SearchTable**后端生成**RISCVVIntrinsicInfo**结构体，有`IntrinsicID, VLOperand, ScalarOperand`三个成员
+* `lib/Target/RISCV/RISCVInstrInfoV.td`描述V拓展指令结构
+* 为什么**RISCVBinaryABShiftUnMasked**没有**ScalarOperand**?
+* `IITDescriptor`
 
 idea: 用C语言来写operation, 然后自动生成pattern match?(便于处理vfirst这样的数组？)
+
+3 7 7 8 17

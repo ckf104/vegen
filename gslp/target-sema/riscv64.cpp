@@ -60,7 +60,7 @@ uint32_t eleNumMapFunction0(const InstSignature *, uint32_t outLanes,
 }
 
 std::vector<InstBinding> Riscv64Insts = {
-    InstBinding{"vsaddu.vv",
+    InstBinding{"vsaddu",
                 {},
                 InstSignature{{OperandType(OperandType::ScalableVec),
                                OperandType(OperandType::ScalableVec)},
@@ -69,7 +69,7 @@ std::vector<InstBinding> Riscv64Insts = {
                 {&Operation0},
                 boundMapFunction0,
                 1},
-    InstBinding{"vwaddu.vv",
+    InstBinding{"vwaddu",
                 {},
                 InstSignature{{OperandType(OperandType::ScalableVec),
                                OperandType(OperandType::ScalableVec)},

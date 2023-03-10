@@ -37,9 +37,13 @@ using namespace llvm;
 static cl::opt<bool> ForwardSeeds("forward-seeds",
                                   cl::desc("Forward seeds from the unroller"),
                                   cl::init(false));
+static cl::opt<uint32_t> UnrollFactor("gslp-unroll-factor",
+                                      cl::desc("Unroll factor for the unroller"),
+                                      cl::init(8));
 #else
 // Forward seeds from the unroller
 static OptionItem<bool, false> ForwardSeeds("forward-seeds", false);
+static OptionItem<uint32_t, false> UnrollFactor("gslp-unroll-factor", 8);
 #endif
 namespace {
 class AAResultsBuilder {
@@ -447,7 +451,7 @@ void computeUnrollFactor(ArrayRef<const InstBinding *> Insts,
       UFs[L] = 0;
       continue;
     }
-    UFs[L] = 8;
+    UFs[L] = UnrollFactor;
     computeUnrollFactorImpl(Insts, LVI, TTI, BFI, F, LI, UFs, target);
     errs() << "Unroll factor for loop " << L << "(depth=" << L->getLoopDepth()
            << ')' << " " << UFs.lookup(L) << '\n';

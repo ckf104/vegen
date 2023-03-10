@@ -80,13 +80,14 @@ add_custom_command(OUTPUT ${X86_WRAPPERS}
 
 # zfh1p0 -> zfh extension with version 1.0, zvfh0p1 -> zvfh extension with version 0.1
 # required by vector fp16 operation
-
+#[[
 set(RISCV64_WRAPPERS "${CMAKE_BINARY_DIR}/riscv64.bc")
 set(RISCV64_FLAGS --target=riscv64-unknown-linux-gnu -march=rv64gcv_zfh1p0_zvfh0p1 -menable-experimental-extensions --sysroot=/home/ckf104/install/riscv/sysroot)
 add_custom_command(OUTPUT ${RISCV64_WRAPPERS} COMMAND ${CMAKE_C_COMPILER}
   -O3 -emit-llvm ${RISCV64_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/riscv64.c -c -o ${RISCV64_WRAPPERS}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/riscv64.c 
   VERBATIM)
+]]
 
 #[[
 set(ARM_WRAPPERS "${CMAKE_BINARY_DIR}/arm.bc")

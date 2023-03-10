@@ -1,11 +1,14 @@
 #include "IntrinsicBuilder.h"
 #include "VectorPackContext.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Use.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/TargetParser/Triple.h"
@@ -17,9 +20,21 @@
 
 using namespace llvm;
 
+LLVMContext &IntrinsicBuilder::getContext() {
+  return VPCtx->getFunction()->getParent()->getContext();
+}
+
+IntrinsicBuilder::IntrinsicBuilder(Module *InstWrappers,
+                                   const VectorPackContext *VPCtx_)
+    : llvm::IRBuilder<>(VPCtx_->getFunction()->getParent()->getContext()),
+      VPCtx(VPCtx_), InstWrappers(InstWrappers) {}
+
 Value *IntrinsicBuilder::Create(StringRef Name, ArrayRef<Value *> Operands,
                                 Type *retTy, uint32_t length,
                                 unsigned char Imm8) {
+  if (VPCtx->getTarget() == Triple::riscv64) {
+    return CreateRISCVIntrinsic(Name, retTy, length, Operands);
+  }
   auto *F = getIntrinsic(Name, retTy, length, Operands);
   assert(F && "Intrinsic wrapper undefined.");
 
@@ -28,7 +43,7 @@ Value *IntrinsicBuilder::Create(StringRef Name, ArrayRef<Value *> Operands,
   auto &BB = *F->begin();
 
   unsigned NumArgs = std::distance(F->arg_begin(), F->arg_end());
-  assert(Operands.size() + (VPCtx->getTarget() == Triple::riscv64) == NumArgs);
+  assert(Operands.size() == NumArgs);
 
   // map wrapper arg to operands
   ValueToValueMapTy VMap;
@@ -42,11 +57,6 @@ Value *IntrinsicBuilder::Create(StringRef Name, ArrayRef<Value *> Operands,
            "Argument type mismatch?");
     Value *Operand = CreateBitCast(Operands[i], Arg->getType());
     VMap[Arg] = Operand;
-  }
-  if (VPCtx->getTarget() == Triple::riscv64) {
-    VMap[F->getArg(Operands.size())] = ConstantInt::getIntegerValue(
-        Type::getInt64Ty(InstWrappers.getContext()),
-        APInt(/*numBits=*/64, Operands.size()));
   }
 
   Value *RetVal = nullptr;
@@ -80,25 +90,34 @@ Value *IntrinsicBuilder::Create(StringRef Name, ArrayRef<Value *> Operands,
   return Output;
 }
 
+Value *IntrinsicBuilder::CreateRISCVIntrinsic(StringRef Name, Type *retTy,
+                                              uint32_t length,
+                                              ArrayRef<Value *> Operands) {
+  std::string intrinsicName = ("llvm.riscv." + Name).str();
+  auto id = Function::lookupIntrinsicID(intrinsicName);
+  assert(id != Intrinsic::not_intrinsic && "Intrinsic not found?");
+
+  // FIXME: this will be broken if VL is not last argument or passthrough is not
+  // first argument or return type is not vector
+  auto vscale = VPCtx->getProperVScale(retTy, length);
+  auto vecRetTy = ScalableVectorType::get(retTy, vscale);
+  auto poisonVec = PoisonValue::get(vecRetTy);
+  SmallVector<Value *, 6> args;
+  args.push_back(poisonVec);
+  args.append(Operands.begin(), Operands.end());
+  args.push_back(ConstantInt::getIntegerValue(Type::getInt64Ty(getContext()),
+                                              APInt(/*numBits=*/64, length)));
+  return IRBuiler::CreateIntrinsic(vecRetTy, id, args);
+}
+
 Function *IntrinsicBuilder::getIntrinsic(StringRef Name, Type *retTy,
                                          uint32_t length,
                                          ArrayRef<Value *> Operands,
                                          unsigned char Imm8) {
   std::string name;
   Function *intrinsic;
-  if (VPCtx->getTarget() != Triple::riscv64) {
-    name = getNonScalableIntrinsicName(Name, Imm8);
-    intrinsic = InstWrappers.getFunction(name);
-  } else {
-    name = getScalableIntrinsicName(Name, retTy, length, Operands,
-                                    /*retry=*/false);
-    intrinsic = InstWrappers.getFunction(name);
-    if (!intrinsic) {
-      name = getScalableIntrinsicName(Name, retTy, length, Operands,
-                                      /*retry=*/true);
-      intrinsic = InstWrappers.getFunction(name);
-    }
-  }
+  name = getNonScalableIntrinsicName(Name, Imm8);
+  intrinsic = InstWrappers->getFunction(name);
   assert(intrinsic && "Intrinsic wrapper undefined.");
   return intrinsic;
 }
@@ -106,36 +125,6 @@ Function *IntrinsicBuilder::getIntrinsic(StringRef Name, Type *retTy,
 std::string IntrinsicBuilder::getNonScalableIntrinsicName(StringRef Name,
                                                           uint32_t Imm8) {
   return formatv("intrinsic_wrapper_{0}_{1}", Name, Imm8);
-}
-
-// RVV Intrinsic name rules:
-// https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/master/rvv-intrinsic-rfc.md#naming-rules
-// FIXME: Support complete name rules
-std::string IntrinsicBuilder::getScalableIntrinsicName(
-    StringRef Name, Type *retTy, uint32_t length, ArrayRef<Value *> Operands,
-    bool retry) {
-  std::string name = Name.str(), typeStr, lmulStr;
-  std::replace(name.begin(), name.end(), '.', '_');
-  uint32_t numerator, denominator;
-  std::tie(numerator, denominator) = VPCtx->getProperLMUL(retTy, length);
-  if (denominator > 1) {
-    lmulStr = "mf" + std::to_string(denominator);
-  } else {
-    lmulStr = "m" + std::to_string(numerator);
-  }
-  const auto &DL = VPCtx->getFunction()->getParent()->getDataLayout();
-  if (retTy->isIEEELikeFPTy()) {
-    typeStr = "f" + std::to_string(DL.getTypeStoreSizeInBits(retTy));
-  } else if (retTy->isIntOrPtrTy()) {
-    // We can't easily know argument/return type is signed or unsigned(Though it
-    // may be possible by enumerating all vector insts). A better way is to
-    // embed this info in `InstSignature`?
-    const char *t = retry ? "u" : "i";
-    typeStr = t + std::to_string(DL.getTypeStoreSizeInBits(retTy));
-  } else {
-    llvm_unreachable("Unsupported return type");
-  }
-  return "test_" + name + "_" + typeStr + lmulStr;
 }
 
 void IntrinsicBuilder::checkLoadStoreType(Type *retTy, Type *ptrTy,

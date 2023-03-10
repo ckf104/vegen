@@ -209,21 +209,10 @@ public:
       Wrapper = "/arm.bc";
       break;
     case Triple::riscv64:
-      Wrapper = "/riscv64.bc";
       break;
 
     default:
       llvm_unreachable("architecture not supported");
-    }
-    if (WrappersDir.empty())
-      WrappersDir =
-          (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build")
-              .str();
-    errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
-    InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
-    if (!InstWrappers) {
-      report_fatal_error(std::string("Error parsing Inst Wrappers") +
-                         Err.getMessage());
     }
     // vscale should can set to be at least TTI->getVScaleForTuning()
     if (target.Arch == Triple::riscv64) {
@@ -233,7 +222,20 @@ public:
       // FIXME: Great hacking! TuningVScale = MinVLEN / 64, we use MinVLEN
       // conservatively
       target.MinVLEN = vscale.value() * 64;
+
+    } else {
+      if (WrappersDir.empty())
+        WrappersDir =
+            (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build")
+                .str();
+      errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
+      InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
+      if (!InstWrappers) {
+        report_fatal_error(std::string("Error parsing Inst Wrappers") +
+                           Err.getMessage());
+      }
     }
+
     return true;
   }
 };
@@ -427,7 +429,7 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   if (!TestCodeGen)
     optimizeBottomUp(Packs, &Pkr, SeedOperands);
 
-  IntrinsicBuilder Builder(*InstWrappers, Pkr.getContext());
+  IntrinsicBuilder Builder(InstWrappers.get(), Pkr.getContext());
   errs() << "Generating vector code\n";
   Packs.codegen(Builder, Pkr);
 

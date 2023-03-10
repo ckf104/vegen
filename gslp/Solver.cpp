@@ -7,6 +7,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/TargetParser/Triple.h"
 #include <cassert>
 
 using namespace llvm;
@@ -254,6 +255,10 @@ static BasicBlock *getBlockForPack(const VectorPack *VP) {
 static SmallVector<const VectorPack *>
 decomposeStorePacks(Packer *Pkr, const VectorPack *VP) {
   assert(VP->isStore());
+  // We will limit Operand size in seeds generation to avoid shuffle for riscv
+  if (Pkr->getContext()->getTarget() == Triple::riscv64) {
+    return {VP};
+  }
   auto *BB = getBlockForPack(VP);
   auto *VPCtx = Pkr->getContext();
   ArrayRef<Value *> Values = VP->getOrderedValues();
@@ -372,6 +377,7 @@ static void findLoopFreeReductions(SmallVectorImpl<const VectorPack *> &Seeds,
   }
 }
 
+// FIXME: limit seed operands size to avoid shuffle for riscv 
 static void improvePlan(Packer *Pkr, Plan &P,
                         ArrayRef<const OperandPack *> SeedOperands,
                         CandidatePackSet *Candidates,
@@ -774,7 +780,7 @@ static bool findDepCycleInLoop(
 // incoming edge will be taken). Another special case is speculatively executing
 // vectorPack(not phi, load/store pack), whose actual control condition is
 // `getGreatestCommon(conds)`, But vegen now set vectorPack's control condition
-// to `getOr(conds)`. 
+// to `getOr(conds)`.
 // FIXME: relax control condition of vectorPack
 //
 // After clarifying what variables an Inst is dependent on, the second problem

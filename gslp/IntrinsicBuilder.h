@@ -17,31 +17,29 @@ class Function;
 class VectorPackContext;
 
 class IntrinsicBuilder : public llvm::IRBuilder<> {
-  llvm::Module &InstWrappers;
+  llvm::Module* InstWrappers;
   const VectorPackContext *VPCtx;
   using IRBuiler = llvm::IRBuilder<>;
 
   void checkLoadStoreType(llvm::Type *retTy, llvm::Type *ptrTy, bool isGather);
   std::string getNonScalableIntrinsicName(llvm::StringRef Name,
                                           uint32_t Imm8 = 0);
-  std::string getScalableIntrinsicName(llvm::StringRef Name, llvm::Type *retTy,
-                                       uint32_t length,
-                                       llvm::ArrayRef<llvm::Value *> Operands, bool retry);
   llvm::Function *getIntrinsic(llvm::StringRef Name, llvm::Type *retTy,
                                uint32_t length,
                                llvm::ArrayRef<llvm::Value *> Operands,
                                unsigned char Imm8 = 0);
 
 public:
-  llvm::LLVMContext &getContext() { return InstWrappers.getContext(); }
+  llvm::LLVMContext &getContext(); 
   using InsertPoint = llvm::IRBuilderBase::InsertPoint;
-  IntrinsicBuilder(llvm::Module &InstWrappers, const VectorPackContext *VPCtx_)
-      : llvm::IRBuilder<>(InstWrappers.getContext()), VPCtx(VPCtx_),
-        InstWrappers(InstWrappers) {}
+  IntrinsicBuilder(llvm::Module* InstWrappers, const VectorPackContext *VPCtx_);
 
   llvm::Value *Create(llvm::StringRef Name,
                       llvm::ArrayRef<llvm::Value *> Operands, llvm::Type *retTy,
                       uint32_t length, unsigned char Imm8 = 0);
+  llvm::Value* CreateRISCVIntrinsic(llvm::StringRef Name, llvm::Type *retTy,
+                                    uint32_t length,
+                                    llvm::ArrayRef<llvm::Value *> Operands);
 
   // override IRBuilder's CreateMaskGather
   llvm::Instruction *CreateMaskedGather(llvm::Type *Ty, llvm::Value *Ptrs,

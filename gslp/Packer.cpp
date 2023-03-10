@@ -3,6 +3,7 @@
 #include "Compatible.h"
 #include "ConsecutiveCheck.h"
 #include "MatchManager.h"
+#include "SimpleParser.h"
 #include "TargetPlatformInfo.h"
 #include "VectorPack.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -16,6 +17,12 @@
 #include <optional>
 
 using namespace llvm;
+
+#ifdef OPT_PASS
+static cl::opt<bool> HackingCost("hack-cost", cl::init(false));
+#else
+static OptionItem<bool, false> HackingCost("hack-cost", false);
+#endif
 
 namespace {
 
@@ -623,7 +630,8 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
 }
 
 float Packer::getScalarCost(Instruction *I) {
-  //return 10.0f;
+  if (HackingCost)
+    return 10.0f;
   if (auto *LI = dyn_cast<LoadInst>(I)) {
     return getMemoryOpCostFromTTI(TTI, Instruction::Load, LI->getType(),
                                   LI->getAlign(), 0, TTI::TCK_RecipThroughput,

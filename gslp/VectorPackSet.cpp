@@ -151,13 +151,6 @@ public:
         Builder(Builder), Reifier(Reifier), ValueToPackMap(ValueToPackMap) {}
 
   void run();
-
-  void dumpValueIndex(){
-    for(auto& p: ValueIndex){
-      p.first->dump();
-      errs() << p.second.VP << "\n";
-    }  
-  }
 };
 } // namespace
 
@@ -197,7 +190,6 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
 
   DenseMap<const VectorPack *, SmallVector<GatherEdge, 4>> SrcPacks;
   DenseMap<Value *, SmallVector<unsigned, 4>> SrcScalars;
-  dumpValueIndex();
 
   // Figure out sources of the values in `OP`
   const unsigned NumValues = OP.size();

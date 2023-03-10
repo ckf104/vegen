@@ -41,7 +41,7 @@ struct OptionItemBase : public ConvertType<Type, IsList> {
   OptionItemBase() = default;
 
   void setValue(const ConvertType &t) { ConvertType::operator=(t); }
-  ConvertType& getValue() { return *this;}
+  ConvertType &getValue() { return *this; }
   void reset() {
     ConvertType::~ConvertType();
     ConvertType::ConvertType();
@@ -51,7 +51,7 @@ struct OptionItemBase : public ConvertType<Type, IsList> {
 template <class Type, bool IsClass>
 struct OptionItemBase<Type, true, IsClass> : public std::vector<Type> {
   void setValue(const std::vector<Type> &t) { std::vector<Type>::operator=(t); }
-  std::vector<Type>& getValue() { return *this;}
+  std::vector<Type> &getValue() { return *this; }
   void addValue(const Type &t) { this->push_back(t); }
   void reset() { this->clear(); }
 };
@@ -59,7 +59,7 @@ struct OptionItemBase<Type, true, IsClass> : public std::vector<Type> {
 template <class Type> struct OptionItemBase<Type, false, false> {
   operator Type() const { return data; }
   void setValue(const Type &t) { data = t; }
-  Type& getValue() { return data;}
+  Type &getValue() { return data; }
   void reset() { data = Type(); }
 
 private:
@@ -80,13 +80,13 @@ struct OptionItem
 
   friend bool Parser<Type, IsList, IsRequired>(OptionItem &item,
                                                llvm::StringRef arg);
-  
-  OptionItem& operator=(const OptionItem& other) = delete;
-  OptionItem(const OptionItem& other) = delete;
-  ConvertType operator=(const ConvertType& v){
+
+  OptionItem &operator=(const OptionItem &other) = delete;
+  OptionItem(const OptionItem &other) = delete;
+  ConvertType operator=(const ConvertType &v) {
     this->setValue(v);
     return this->getValue();
-  }  
+  }
 
   explicit OptionItem(const char *name, ConvertType initValue = ConvertType())
       : name(name) {
@@ -116,6 +116,14 @@ inline bool Parser(llvm::StringRef name, llvm::StringRef arg, bool &data) {
     data = true;
   } else
     data = false;
+  return true;
+}
+
+inline bool Parser(llvm::StringRef name, llvm::StringRef arg, uint32_t &data) {
+  if (arg.size() <= name.size() || arg[name.size()] != '=')
+    return false;
+  auto sub = arg.substr(name.size() + 1);
+  data = std::stoul(sub.data(), nullptr);
   return true;
 }
 
