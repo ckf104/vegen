@@ -6,11 +6,14 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Use.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/TargetParser/Triple.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <tuple>
 
 using namespace llvm;
@@ -124,14 +127,15 @@ VectorPackContext::createGammaPack(ArrayRef<const GammaNode *> Gammas,
   return VP.get();
 }
 
-VectorPack *VectorPackContext::createGEPPack(ArrayRef<GetElementPtrInst *> GEPs,
+VectorPack *VectorPackContext::createGEPPack(ArrayRef<Value *> GEPs,
                                              BitVector Elements,
                                              BitVector Depended,
                                              TargetTransformInfo *TTI) const {
   VectorPackCache::GEPPackKey Key(GEPs.begin(), GEPs.end());
   auto &VP = PackCache->GEPPacks[Key];
   if (!VP)
-    VP.reset(new VectorPack(this, GEPs, Elements, Depended, TTI));
+    VP.reset(
+        new VectorPack(this, GEPs, Elements, Depended, TTI, VectorPack::GEP));
   return VP.get();
 }
 

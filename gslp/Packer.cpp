@@ -10,10 +10,13 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h" // isSafeToSpeculativelyExecute
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cassert>
+#include <cstdint>
 #include <optional>
 
 using namespace llvm;
@@ -369,18 +372,36 @@ static bool matchPackableCmps(ArrayRef<Value *> Values,
   });
 }
 
-static bool matchPackableGEPs(ArrayRef<Value *> Values,
-                              SmallVectorImpl<GetElementPtrInst *> &GEPs) {
-  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Values.front());
-  if (!GEP)
+static bool matchPackableGEPs(ArrayRef<Value *> Values) {
+  assert(Values.size() >= 2 && "Pack single value?");
+  GetElementPtrInst *GEP = nullptr;
+  uint32_t cnt = 0;
+  for (auto *V : Values) {
+    // do not deal with `don't care value`
+    if (!V)
+      return false;
+    if (isa<GetElementPtrInst>(V)) {
+      if (!GEP)
+        GEP = cast<GetElementPtrInst>(V);
+    } else if (V->getType()->isPointerTy())
+      cnt++;
+    else
+      return false;
+  }
+  if (!GEP || cnt > 1)
     return false;
-  GEPs.push_back(GEP);
+
   unsigned NumOperands = GEP->getNumOperands();
   Type *Ty = GEP->getSourceElementType();
 
-  SmallVector<ConstantInt *> StructOffsets;
+  SmallVector<ConstantInt *> StructOffsets, GEP3Offsets;
+  Value *idx0 = *GEP->idx_begin();
+  GEP3Offsets.push_back(
+      cast<ConstantInt>(ConstantInt::get(idx0->getType(), /*V=*/0)));
   auto *CurTy = Ty;
   for (Value *Idx : drop_begin(GEP->indices())) {
+    GEP3Offsets.push_back(
+        cast<ConstantInt>(ConstantInt::get(Idx->getType(), /*V=*/0)));
     if (isa<StructType>(CurTy))
       StructOffsets.push_back(cast<ConstantInt>(Idx));
     else
@@ -389,21 +410,31 @@ static bool matchPackableGEPs(ArrayRef<Value *> Values,
     if (!CurTy)
       return false;
   }
-
-  for (auto *V : drop_begin(Values)) {
-    auto *GEP2 = dyn_cast<GetElementPtrInst>(V);
-    if (!GEP2 || GEP2->getNumOperands() != NumOperands ||
-        GEP2->getSourceElementType() != Ty)
-      return false;
-    GEPs.push_back(GEP2);
-    auto *CurTy = Ty;
-    for (auto Item : enumerate(drop_begin(GEP2->indices()))) {
+  auto helperCheck = [&StructOffsets, Ty](auto range) {
+    auto CurTy = Ty;
+    for (auto Item : enumerate(drop_begin(range))) {
       unsigned i = Item.index();
       Value *Idx = Item.value();
       if (isa<StructType>(CurTy) && StructOffsets[i] != cast<ConstantInt>(Idx))
         return false;
       CurTy = GetElementPtrInst::getTypeAtIndex(CurTy, Idx);
       if (!CurTy)
+        return false;
+    }
+    return true;
+  };
+
+  for (auto *V : Values) {
+    auto *GEP2 = dyn_cast<GetElementPtrInst>(V);
+    if (GEP2 && (GEP2->getNumOperands() != NumOperands ||
+                 GEP2->getSourceElementType() != Ty))
+      return false;
+    auto *CurTy = Ty;
+    if (GEP2) {
+      if (!helperCheck(GEP2->indices()))
+        return false;
+    } else {
+      if (!helperCheck(GEP3Offsets))
         return false;
     }
   }
@@ -581,10 +612,9 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
     return OPI;
   }
 
-  SmallVector<GetElementPtrInst *, 4> GEPs;
-  if (matchPackableGEPs(*OP, GEPs)) {
+  if (matchPackableGEPs(*OP)) {
     OPI.Producers.push_back(
-        VPCtx.createGEPPack(GEPs, OPI.Elements, Depended, TTI));
+        VPCtx.createGEPPack(*OP, OPI.Elements, Depended, TTI));
     return OPI;
   }
 

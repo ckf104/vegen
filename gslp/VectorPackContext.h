@@ -150,7 +150,7 @@ public:
                             llvm::TargetTransformInfo *TTI) const;
 
   // Create a vectorized GEP
-  VectorPack *createGEPPack(llvm::ArrayRef<llvm::GetElementPtrInst *> GEPs,
+  VectorPack *createGEPPack(llvm::ArrayRef<llvm::Value *> GEPs,
                             llvm::BitVector Elements, llvm::BitVector Depended,
                             llvm::TargetTransformInfo *TTI) const;
 

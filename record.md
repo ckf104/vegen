@@ -222,8 +222,8 @@ TODO:
 
 * 在`lib/Target/RISCV/RISCVInstrInfoVPseudos.td`文件中定义了`RISCVVIntrinsicsTable : GenericTable`，利用**SearchTable**后端生成**RISCVVIntrinsicInfo**结构体，有`IntrinsicID, VLOperand, ScalarOperand`三个成员
 * `lib/Target/RISCV/RISCVInstrInfoV.td`描述V拓展指令结构
-* 为什么**RISCVBinaryABShiftUnMasked**没有**ScalarOperand**?
-* `IITDescriptor`
+* 为什么**RISCVBinaryABShiftUnMasked**没有**ScalarOperand**? RVV描述中的VS1, VS2, VMConstraints是在干嘛？
+* `IITDescriptor`中不知道啥的编码规则，后端的`IntrinsicEmitter.cpp`生成的`IIT_Table`中存储了每个`Intrinsic`的类型信息，`getIntrinsicInfoTableEntries`接受一个ID，查找`IIT_Table`，返回对应的`IITDescriptor`
 
 idea: 用C语言来写operation, 然后自动生成pattern match?(便于处理vfirst这样的数组？)
 

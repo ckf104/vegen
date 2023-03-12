@@ -9,6 +9,7 @@
 #include "SimpleParser.h"
 #include "Solver.h"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/IVDescriptors.h"
@@ -1286,8 +1287,8 @@ static void collectMasks(SmallVectorImpl<const OperandPack *> &Masks,
 
   for (auto *VP : Packs) {
     auto Vals = VP->getOrderedValues();
-    auto *I = cast<Instruction>(Vals.front());
-    auto *VL = Pkr.getVLoopFor(I);
+    auto someInst = VP->getFirstInst();
+    auto *VL = Pkr.getVLoopFor(someInst);
     if (VP->isLoad() || VP->isStore()) {
       CondVector Conds;
       getLoadStoreConds(Conds, Vals, VL);
@@ -1307,7 +1308,7 @@ static void collectMasks(SmallVectorImpl<const OperandPack *> &Masks,
           Conds.push_back(VL->getIncomingPhiCondition(G->PN, i));
         ProcessConds(Conds, VL);
       }
-    } else if (VP->isPHI() && VL->getOneHotPhi(cast<PHINode>(I))) {
+    } else if (VP->isPHI() && VL->getOneHotPhi(cast<PHINode>(someInst))) {
       assert(false);
     }
   }
@@ -1360,8 +1361,7 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
 
   for (auto *VP : AllPacks) {
     auto Vals = VP->getOrderedValues();
-    auto *SomeInst = cast<Instruction>(Vals.front());
-    auto *VL = Pkr.getVLoopFor(SomeInst);
+    auto *VL = Pkr.getVLoopFor(VP->getFirstInst());
 
     // Reify divergent load/stores conditions
     if (VP->isLoad() || VP->isStore()) {
@@ -1395,10 +1395,10 @@ void VectorPackSet::codegen(IntrinsicBuilder &Builder, Packer &Pkr) {
   auto *VPCtx = Pkr.getContext();
   for (auto *VP : AllPacks) {
     auto Vals = VP->getOrderedValues();
-    auto *I = cast<Instruction>(Vals.front());
-    auto *VL = Pkr.getVLoopFor(I);
+    auto *someInst = VP->getFirstInst();
+    auto *VL = Pkr.getVLoopFor(someInst);
     auto &Guarded = VL->getGuardedLiveOuts();
-    if (!Guarded.count(I))
+    if (!Guarded.count(someInst))
       continue;
     OperandPack OP;
     for (auto *V : Vals) {

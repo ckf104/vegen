@@ -1,15 +1,19 @@
 #set(CMAKE_CXX_COMPILER /home/ckf104/install/llvm/bin/clang++)
 #set(CMAKE_C_COMPILER /home/ckf104/install/llvm/bin/clang)
-set(CMAKE_CXX_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang++)
-set(CMAKE_C_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang)
+#set(CMAKE_CXX_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang++)
+#set(CMAKE_C_COMPILER /home/ckf104/tmp/install/llvm-git/bin/clang)
+set(CMAKE_CXX_COMPILER /home/ckf104/tmp/install/llvm-git-ext/bin/clang++)
+set(CMAKE_C_COMPILER /home/ckf104/tmp/install/llvm-git-ext/bin/clang)
 
 cmake_minimum_required(VERSION 3.4)
 project(GSLP)
 # uncommented this if debugging
 #set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-epi)
 #set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git)
-set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug)
-
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug)
+set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-debug-ext)
+#set(CMAKE_PREFIX_PATH /home/ckf104/tmp/install/llvm-git-ext)
+	
 find_package(LLVM REQUIRED CONFIG)
 
 string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")

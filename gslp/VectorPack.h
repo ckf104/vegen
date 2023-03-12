@@ -50,7 +50,7 @@ private:
   llvm::Optional<ReductionInfo> Rdx;
   unsigned RdxLen;
   // GEP
-  llvm::SmallVector<llvm::GetElementPtrInst *, 4> GEPs;
+  llvm::SmallVector<llvm::Value *, 4> GEPs;
   llvm::SmallVector<llvm::CmpInst *, 4> Cmps;
   ///////////////
 
@@ -129,10 +129,9 @@ private:
   }
 
   // GEP Pack
-  VectorPack(const VectorPackContext *VPCtx,
-             llvm::ArrayRef<llvm::GetElementPtrInst *> GEPs,
+  VectorPack(const VectorPackContext *VPCtx, llvm::ArrayRef<llvm::Value *> GEPs,
              llvm::BitVector Elements, llvm::BitVector Depended,
-             llvm::TargetTransformInfo *TTI)
+             llvm::TargetTransformInfo *TTI, PackKind)
       : VPCtx(VPCtx), Elements(Elements), Depended(Depended),
         Kind(PackKind::GEP), GEPs(GEPs.begin(), GEPs.end()) {
     computeOperandPacks();
@@ -228,6 +227,13 @@ public:
 
   llvm::ArrayRef<llvm::Value *> getOrderedValues() const {
     return OrderedValues;
+  }
+  llvm::Instruction *getFirstInst() const {
+    auto iter = llvm::find_if(getOrderedValues(), [](llvm::Value *V) {
+      return V && llvm::isa<llvm::Instruction>(V);
+    });
+    assert(iter != getOrderedValues().end());
+    return llvm::cast<llvm::Instruction>(*iter);
   }
 
   unsigned numElements() const { return Elements.count(); }

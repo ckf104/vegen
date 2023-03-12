@@ -42,16 +42,58 @@ class : public Operation {
   }
 } Operation1;
 
-BoundOperation boundMapFunction0(uint32_t inputId) {
+class : public Operation {
+  bool match(Value *V, SmallVectorImpl<Match> &Matches) const override {
+    Value *tmp0;
+    Value *tmp1;
+    bool Matched =
+        PatternMatch::match(V, m_c_Add(m_Value(tmp0), m_Value(tmp1)));
+    if (Matched)
+      Matches.push_back({false,
+                         // matched live ins
+                         {tmp0, tmp1},
+                         // the matched value itself
+                         V});
+    return Matched;
+  }
+} Operation2;
+
+class : public Operation {
+  bool match(Value *V, SmallVectorImpl<Match> &Matches) const override {
+    Value *tmp0;
+    Value *tmp1;
+    bool Matched = PatternMatch::match(V, m_Sub(m_Value(tmp0), m_Value(tmp1)));
+    if (Matched)
+      Matches.push_back({false,
+                         // matched live ins
+                         {tmp0, tmp1},
+                         // the matched value itself
+                         V});
+    return Matched;
+  }
+} Operation3;
+
+BoundOperation boundMapFunction0(uint32_t outId) {
   return BoundOperation{
       &Operation0,
-      {InputId{/*vecId_=*/0, inputId}, InputId{/*vecId_=*/1, inputId}}};
+      {InputId{/*vecId_=*/0, outId}, InputId{/*vecId_=*/1, outId}}};
 }
 
-BoundOperation boundMapFunction1(uint32_t inputId) {
+BoundOperation boundMapFunction1(uint32_t outId) {
   return BoundOperation{
       &Operation1,
-      {InputId{/*vecId_=*/0, inputId}, InputId{/*vecId_=*/1, inputId}}};
+      {InputId{/*vecId_=*/0, outId}, InputId{/*vecId_=*/1, outId}}};
+}
+
+BoundOperation boundMapFunction2(uint32_t outId) {
+  if (outId % 2 == 0)
+    return BoundOperation{
+        &Operation2,
+        {InputId{/*vecId_=*/0, outId}, InputId{/*vecId_=*/1, outId}}};
+  else
+    return BoundOperation{
+        &Operation3,
+        {InputId{/*vecId_=*/0, outId}, InputId{/*vecId_=*/1, outId}}};
 }
 
 uint32_t eleNumMapFunction0(const InstSignature *, uint32_t outLanes,
@@ -77,5 +119,14 @@ std::vector<InstBinding> Riscv64Insts = {
                               eleNumMapFunction0},
                 {&Operation1},
                 boundMapFunction1,
+                1},
+    InstBinding{"vaddsub",
+                {},
+                InstSignature{{OperandType(OperandType::ScalableVec),
+                               OperandType(OperandType::ScalableVec)},
+                              OperandType(OperandType::ScalableVec),
+                              eleNumMapFunction0},
+                {&Operation2, &Operation3},
+                boundMapFunction2,
                 1},
 };

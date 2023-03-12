@@ -4,8 +4,11 @@
 #include "Plan.h"
 #include "SimpleParser.h"
 #include "VectorPackSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cassert>
@@ -17,9 +20,14 @@ static cl::opt<bool>
     RefinePlans("refine-plans",
                 cl::desc("Refine the initial vectorization plan"),
                 cl::init(false));
+static cl::opt<bool>
+    AllowReudctionSeeds("reduction-seeds",
+                        cl::desc("Allow reduction seeds in the initial plan"),
+                        cl::init(true));
 #else
 // Refine the initial vectorization plan
 static OptionItem<bool, false> RefinePlans("refine-plans", false);
+static OptionItem<bool, false> AllowReudctionSeeds("reduction-seeds", true);
 #endif
 unsigned getBitWidth(Value *V, const DataLayout *DL) {
   auto *Ty = V->getType();
@@ -292,6 +300,8 @@ static unsigned greatestPowerOfTwoDivisor(unsigned n) {
 }
 
 static bool haveIdenticalTripCountsAux(Value *A, Value *B, Packer *Pkr) {
+  if (!isa<Instruction>(B))
+    return true;
   auto *I1 = cast<Instruction>(A);
   auto *I2 = cast<Instruction>(B);
   auto *VL1 = Pkr->getVLoopFor(I1);
@@ -309,14 +319,14 @@ getBackEdgePacks(Packer *Pkr, const Plan &P,
   auto *VPCtx = Pkr->getContext();
   for (auto *VP : P) {
     auto Vals = VP->getOrderedValues();
-    if (all_of(drop_begin(Vals), [&](Value *V) {
-          return !V || haveIdenticalTripCountsAux(Vals.front(), V, Pkr);
+    auto someInst = VP->getFirstInst();
+    if (all_of(Vals, [&](Value *V) {
+          return !V || haveIdenticalTripCountsAux(someInst, V, Pkr);
         }))
       continue;
     SmallVector<const ControlCondition *, 8> Conds;
-    auto *SomeVal = *find_if(Vals, [](Value *V) { return V != nullptr; });
     for (auto *V : Vals)
-      Conds.push_back(Pkr->getVLoopFor(cast<Instruction>(V ? V : SomeVal))
+      Conds.push_back(Pkr->getVLoopFor(cast<Instruction>(V ? V : someInst))
                           ->getBackEdgeCond());
     BackEdgePacks.insert(VPCtx->getConditionPack(Conds));
   }
@@ -377,7 +387,7 @@ static void findLoopFreeReductions(SmallVectorImpl<const VectorPack *> &Seeds,
   }
 }
 
-// FIXME: limit seed operands size to avoid shuffle for riscv 
+// FIXME: limit seed operands size to avoid shuffle for riscv
 static void improvePlan(Packer *Pkr, Plan &P,
                         ArrayRef<const OperandPack *> SeedOperands,
                         CandidatePackSet *Candidates,
@@ -410,26 +420,28 @@ static void improvePlan(Packer *Pkr, Plan &P,
   auto *VPCtx = Pkr->getContext();
   unsigned MaxVecWidth = TTI->getLoadStoreVecRegBitWidth(0);
   // Add loop-reduction packs
-  for (auto &I : instructions(Pkr->getFunction())) {
-    auto *PN = dyn_cast<PHINode>(&I);
-    if (!PN)
-      continue;
-    if (BlocksToIgnore && BlocksToIgnore->count(PN->getParent()))
-      continue;
-    Optional<ReductionInfo> RI = matchLoopReduction(PN, LI);
-    auto *Ty = PN->getType();
-    if (!Ty->isIntegerTy() && !Ty->isFloatTy() && !Ty->isIntegerTy())
-      continue;
-    if (RI && RI->Elts.size() % 2 == 0) {
-      unsigned RdxLen = std::min<unsigned>(
-          greatestPowerOfTwoDivisor(RI->Elts.size()),
-          MaxVecWidth / getBitWidth(PN, Pkr->getDataLayout()));
-      Seeds.push_back(VPCtx->createLoopReduction(*RI, RdxLen, TTI));
+  // Hacking for loop unroll!
+  if (AllowReudctionSeeds || BlocksToIgnore) {
+    for (auto &I : instructions(Pkr->getFunction())) {
+      auto *PN = dyn_cast<PHINode>(&I);
+      if (!PN)
+        continue;
+      if (BlocksToIgnore && BlocksToIgnore->count(PN->getParent()))
+        continue;
+      Optional<ReductionInfo> RI = matchLoopReduction(PN, LI);
+      auto *Ty = PN->getType();
+      if (!Ty->isIntegerTy() && !Ty->isFloatTy() && !Ty->isIntegerTy())
+        continue;
+      if (RI && RI->Elts.size() % 2 == 0) {
+        unsigned RdxLen = std::min<unsigned>(
+            greatestPowerOfTwoDivisor(RI->Elts.size()),
+            MaxVecWidth / getBitWidth(PN, Pkr->getDataLayout()));
+        Seeds.push_back(VPCtx->createLoopReduction(*RI, RdxLen, TTI));
+      }
     }
+    findLoopFreeReductions(Seeds, MaxVecWidth, Pkr->getFunction(), Pkr->getDA(),
+                           VPCtx, Pkr->getDataLayout(), TTI);
   }
-  findLoopFreeReductions(Seeds, MaxVecWidth, Pkr->getFunction(), Pkr->getDA(),
-                         VPCtx, Pkr->getDataLayout(), TTI);
-
   if (Candidates)
     Seeds.append(Candidates->Packs.begin(), Candidates->Packs.end());
 

@@ -4,9 +4,11 @@
 #include "ControlDependence.h"
 #include "InstSema.h"
 #include "MatchManager.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/TargetParser/Triple.h"
 #include <algorithm>
 #include <cassert>
@@ -256,10 +258,29 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
   return propagateMetadata(VecStore, Stores_);
 }
 
-static void getGEPOperands(unsigned i, ArrayRef<GetElementPtrInst *> GEPs,
-                           SmallVectorImpl<Value *> &Operands) {
-  for (auto *GEP : GEPs)
-    Operands.push_back(GEP->getOperand(i));
+static GetElementPtrInst *getGEPOperands(unsigned i, ArrayRef<Value *> GEPs,
+                                         SmallVectorImpl<Value *> &Operands) {
+  Type *Ty = nullptr;
+  GetElementPtrInst *retPtr = nullptr;
+  for (auto *GEP : GEPs) {
+    if (isa<GetElementPtrInst>(GEP)) {
+      auto operand = cast<GetElementPtrInst>(GEP)->getOperand(i);
+      Operands.push_back(operand);
+      if (!Ty) {
+        Ty = operand->getType();
+        retPtr = cast<GetElementPtrInst>(GEP);
+      }
+    } else if (i == 0)
+      Operands.push_back(GEP);
+    else
+      Operands.push_back(/*Elt=*/nullptr);
+  }
+  assert(Ty && "No GEPs?");
+  for (auto &op : Operands) {
+    if (!op)
+      op = Constant::getNullValue(Ty);
+  }
+  return retPtr;
 }
 
 void VectorPack::computeOperandPacks() {
@@ -285,7 +306,11 @@ void VectorPack::computeOperandPacks() {
     canonicalizeOperandPacks(OPs);
   } break;
   case GEP: {
-    unsigned NumOperands = GEPs.front()->getNumOperands();
+    auto Iter =
+        find_if(GEPs, [](Value *V) { return isa<GetElementPtrInst>(V); });
+    assert(Iter != GEPs.end());
+    auto someGEP = cast<GetElementPtrInst>(*Iter);
+    unsigned NumOperands = someGEP->getNumOperands();
     SmallVector<OperandPack, 4> OPs;
     for (unsigned i = 0; i < NumOperands; i++) {
       SmallVector<Value *, 8> Operands;
@@ -329,11 +354,10 @@ void VectorPack::computeOperandPacks() {
     getOperandPacksFromCondition(CP, OperandPacks);
 }
 
-static Value *emitVectorGEP(ArrayRef<GetElementPtrInst *> GEPs,
-                            ArrayRef<Value *> Operands,
+static Value *emitVectorGEP(ArrayRef<Value *> GEPs, ArrayRef<Value *> Operands,
                             IRBuilderBase &Builder) {
   SmallVector<Value *, 4> Ptrs;
-  getGEPOperands(0, GEPs, Ptrs);
+  auto firstGEP = getGEPOperands(0, GEPs, Ptrs);
 
   Value *Ptr;
   bool BroadcastPtr = is_splat(Ptrs);
@@ -343,7 +367,7 @@ static Value *emitVectorGEP(ArrayRef<GetElementPtrInst *> GEPs,
   else
     Ptr = Operands[j++];
 
-  unsigned NumOperands = GEPs.front()->getNumOperands();
+  unsigned NumOperands = firstGEP->getNumOperands();
   SmallVector<Value *, 4> Idxs;
   for (unsigned i = 1; i < NumOperands; i++) {
     SmallVector<Value *, 4> Values;
@@ -353,8 +377,7 @@ static Value *emitVectorGEP(ArrayRef<GetElementPtrInst *> GEPs,
     else
       Idxs.push_back(Operands[j++]);
   }
-  auto *GEP =
-      Builder.CreateGEP(GEPs.front()->getSourceElementType(), Ptr, Idxs);
+  auto *GEP = Builder.CreateGEP(firstGEP->getSourceElementType(), Ptr, Idxs);
   if (GEP->getType()->isVectorTy())
     return GEP;
   // Sometimes we end up not needing to vectorize,

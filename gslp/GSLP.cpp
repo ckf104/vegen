@@ -141,6 +141,10 @@ void initializeGSLPPass(PassRegistry &);
 
 namespace {
 
+DenseSet<Function *> skippedFunc;
+// Table holding all IR vector instructions
+IRInstTable VecBindingTable;
+
 bool hasFeature(const llvm::Function &F, std::string Feature) {
   Attribute Features = F.getFnAttribute("target-features");
   return !Features.hasAttribute(Attribute::None) &&
@@ -167,77 +171,142 @@ class GSLP : public PassInfoMixin<GSLP> {
 public:
   GSLP() { target.Arch = Triple::UnknownArch; }
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
-  bool isSupported(InstBinding *Inst, const llvm::Function &F,
-                   TargetTransformInfo *TTI) {
-    if (target.Arch == Triple::x86_64 || target.Arch == Triple::aarch64) {
-      unsigned PreferVectorWidth =
-          TTI->getLoadStoreVecRegBitWidth(/*AddrSpace=*/0);
-      if (Inst->getName().contains("cvtepi32_epi64"))
-        return true;
-      if (Inst->getName().contains("hadd"))
-        return false;
-      if (Inst->getName().contains("hsub"))
-        return false;
-      if (Inst->getName().contains("broadcast"))
-        return false;
-      if (Inst->getName().contains("fmadd"))
-        return false;
-      for (auto &Feature : Inst->getTargetFeatures())
-        if (!hasFeature(F, Feature) ||
-            Inst->getSignature().outputSig.getVecWidth().value() >
-                PreferVectorWidth)
-          return false;
+
+  bool doInitialization(Module &M, TargetTransformInfo *TTI);
+};
+
+bool isSupported(InstBinding *Inst, const llvm::Function &F,
+                 TargetTransformInfo *TTI) {
+  auto arch = Triple(F.getParent()->getTargetTriple()).getArch();
+  if (arch == Triple::x86_64 || arch == Triple::aarch64) {
+    unsigned PreferVectorWidth =
+        TTI->getLoadStoreVecRegBitWidth(/*AddrSpace=*/0);
+    if (Inst->getName().contains("cvtepi32_epi64"))
       return true;
-    } else if (target.Arch == Triple::riscv64) {
-      // FIXME: filter insts by feature using RISCVSubTarget::hasVInstructions*
-      return true;
-    }
-    return false;
-  }
-
-  bool doInitialization(Module &M, TargetTransformInfo *TTI) {
-    if (target.Arch != Triple::ArchType::UnknownArch)
-      return true;
-    target.Arch = Triple(M.getTargetTriple()).getArch();
-    SMDiagnostic Err;
-    std::string Wrapper;
-    switch (target.Arch) {
-    case Triple::x86_64:
-      Wrapper = "/x86.bc";
-      break;
-    case Triple::aarch64:
-      Wrapper = "/arm.bc";
-      break;
-    case Triple::riscv64:
-      break;
-
-    default:
-      llvm_unreachable("architecture not supported");
-    }
-    // vscale should can set to be at least TTI->getVScaleForTuning()
-    if (target.Arch == Triple::riscv64) {
-      auto vscale = TTI->getVScaleForTuning();
-      if (!vscale || vscale.value() == 0)
+    if (Inst->getName().contains("hadd"))
+      return false;
+    if (Inst->getName().contains("hsub"))
+      return false;
+    if (Inst->getName().contains("broadcast"))
+      return false;
+    if (Inst->getName().contains("fmadd"))
+      return false;
+    for (auto &Feature : Inst->getTargetFeatures())
+      if (!hasFeature(F, Feature) ||
+          Inst->getSignature().outputSig.getVecWidth().value() >
+              PreferVectorWidth)
         return false;
-      // FIXME: Great hacking! TuningVScale = MinVLEN / 64, we use MinVLEN
-      // conservatively
-      target.MinVLEN = vscale.value() * 64;
-
-    } else {
-      if (WrappersDir.empty())
-        WrappersDir =
-            (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build")
-                .str();
-      errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
-      InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
-      if (!InstWrappers) {
-        report_fatal_error(std::string("Error parsing Inst Wrappers") +
-                           Err.getMessage());
-      }
-    }
-
+    return true;
+  } else if (arch == Triple::riscv64) {
+    // FIXME: filter insts by feature using RISCVSubTarget::hasVInstructions*
     return true;
   }
+  return false;
+}
+
+std::vector<InstBinding> &getInsts(Triple::ArchType arch) {
+  switch (arch) {
+  case Triple::x86_64:
+    return X86Insts;
+  case Triple::aarch64:
+    return ArmInsts;
+  case Triple::riscv64:
+    return Riscv64Insts;
+  default:
+    llvm_unreachable("unsupported target architecture");
+  }
+}
+
+bool getTarget(Module &M, TargetTransformInfo *TTI, TargetInfo &target) {
+  target.Arch = Triple(M.getTargetTriple()).getArch();
+  // vscale should can set to be at least TTI->getVScaleForTuning()
+  if (target.Arch == Triple::riscv64) {
+    auto vscale = TTI->getVScaleForTuning();
+    if (!vscale || vscale.value() == 0)
+      return false;
+    // FIXME: Great hacking! TuningVScale = MinVLEN / 64, we use MinVLEN
+    // conservatively
+    target.MinVLEN = vscale.value() * 64;
+  }
+  return true;
+}
+
+std::vector<const InstBinding *>
+getSupportedIntrinsics(Function &F, TargetTransformInfo *TTI) {
+  std::vector<const InstBinding *> SupportedIntrinsics;
+  auto arch = Triple(F.getParent()->getTargetTriple()).getArch();
+  for (InstBinding &Inst : getInsts(arch))
+    if (isSupported(&Inst, F, TTI))
+      SupportedIntrinsics.push_back(&Inst);
+
+  // disable llvm's vector inst temporarily for riscv64
+  if (arch != Triple::riscv64) {
+    for (auto &Inst : VecBindingTable.getBindings()) {
+      // if (Inst.isSupported(TTI))
+      SupportedIntrinsics.push_back(&Inst);
+    }
+    for (auto &Inst : VecBindingTable.getUnarys()) {
+      // if (Inst.isSupported(TTI))
+      SupportedIntrinsics.push_back(&Inst);
+    }
+    for (auto &Ext : VecBindingTable.getExtensions())
+      SupportedIntrinsics.push_back(&Ext);
+    for (auto &Trunc : VecBindingTable.getTruncates())
+      SupportedIntrinsics.push_back(&Trunc);
+    for (auto &Select : VecBindingTable.getSelects())
+      SupportedIntrinsics.push_back(&Select);
+    for (auto &UnaryMath : VecBindingTable.getUnaryMathFuncs())
+      SupportedIntrinsics.push_back(&UnaryMath);
+    for (auto &BinaryMath : VecBindingTable.getBinaryMathFuncs())
+      SupportedIntrinsics.push_back(&BinaryMath);
+    for (auto &FloatToInt : VecBindingTable.getFloatToInts())
+      SupportedIntrinsics.push_back(&FloatToInt);
+    for (auto &IntToFloat : VecBindingTable.getIntToFloats())
+      SupportedIntrinsics.push_back(&IntToFloat);
+  }
+  errs() << "~~~~ num supported intrinsics: " << SupportedIntrinsics.size()
+         << '\n';
+  return SupportedIntrinsics;
+}
+
+bool shouldSkip(Function &F, LoopInfo *LI) {
+  if (!VectorizeOnly.empty() &&
+      none_of(VectorizeOnly,
+              [&F](StringRef FuncName) { return F.getName() == FuncName; }))
+    return true;
+  if (F.getName() ==
+      "_ZN3pov17Check_And_EnqueueEPNS_21Priority_Queue_StructEPNS_16BBox_Tree_"
+      "StructEPNS_19Bounding_Box_StructEPNS_14Rayinfo_StructE")
+    return true;
+  if (!Filter.empty() && !F.getName().contains(Filter))
+    return true;
+
+  // Don't deal with irreducible CFG
+  if (mayContainIrreducibleControl(F, LI))
+    return true;
+
+  // Don't deal with infinite loops
+  for (auto *L : LI->getLoopsInPreorder())
+    if (!L->isRotatedForm() || L->hasNoExitBlocks()) {
+      assert(L->isLoopSimplifyForm());
+      return true;
+    }
+
+  // We don't deal with things like switches or invoke
+  uint32_t retInstCnt = 0;
+  for (auto &BB : F) {
+    if (!isa<ReturnInst>(BB.getTerminator()) &&
+        !isa<BranchInst>(BB.getTerminator()))
+      return true;
+    retInstCnt += isa<ReturnInst>(BB.getTerminator());
+  }
+  assert(retInstCnt == 1 && "Function has multiple return instruction?");
+  return false;
+}
+
+class GSLPUnrollPass : public PassInfoMixin<GSLPUnrollPass> {
+public:
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
 };
 
 } // namespace
@@ -323,7 +392,8 @@ static void balanceReductionTree(Function &F) {
   }
 }
 
-PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
+PreservedAnalyses GSLPUnrollPass::run(Function &F,
+                                      FunctionAnalysisManager &FAM) {
   auto *AA = &FAM.getResult<AAManager>(F);
   auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
   auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
@@ -332,76 +402,21 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   auto *LVI = &FAM.getResult<LazyValueAnalysis>(F);
   auto *TTI = &FAM.getResult<TargetIRAnalysis>(F);
   auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
+  auto *AC = &FAM.getResult<AssumptionAnalysis>(F);
+  TargetInfo target;
 
-  if (!doInitialization(*F.getParent(), TTI))
+  if (shouldSkip(F, LI)) {
+    skippedFunc.insert(&F);
     return PreservedAnalyses::all();
-  if (!VectorizeOnly.empty() &&
-      none_of(VectorizeOnly,
-              [&F](StringRef FuncName) { return F.getName() == FuncName; }))
+  }
+  if (!getTarget(*F.getParent(), TTI, target)) {
+    skippedFunc.insert(&F);
     return PreservedAnalyses::all();
-  if (F.getName() ==
-      "_ZN3pov17Check_And_EnqueueEPNS_21Priority_Queue_StructEPNS_16BBox_Tree_"
-      "StructEPNS_19Bounding_Box_StructEPNS_14Rayinfo_StructE")
-    return PreservedAnalyses::all();
-  if (!Filter.empty() && !F.getName().contains(Filter))
-    return PreservedAnalyses::all();
-  errs() << "Optimizing " << F.getName() << '\n';
+  }
   if (!DisableReductionBalancing)
     balanceReductionTree(F);
-  // Table holding all IR vector instructions
-  IRInstTable VecBindingTable;
 
-  // Don't deal with irreducible CFG
-  if (mayContainIrreducibleControl(F, LI))
-    return PreservedAnalyses::all();
-
-  // We don't deal with things like switches or invoke
-  uint32_t retInstCnt = 0;
-  for (auto &BB : F) {
-    if (!isa<ReturnInst>(BB.getTerminator()) &&
-        !isa<BranchInst>(BB.getTerminator()))
-      return PreservedAnalyses::all();
-    retInstCnt += isa<ReturnInst>(BB.getTerminator());
-  }
-  assert(retInstCnt == 1 && "Function has multiple return instruction?");
-
-  // Don't deal with infinite loops
-  for (auto *L : LI->getLoopsInPreorder())
-    if (!L->isRotatedForm() || L->hasNoExitBlocks())
-      return PreservedAnalyses::all();
-
-  std::vector<const InstBinding *> SupportedIntrinsics;
-  for (InstBinding &Inst : getInsts())
-    if (isSupported(&Inst, F, TTI))
-      SupportedIntrinsics.push_back(&Inst);
-
-  // disable llvm's vector inst temporarily for riscv64
-  if (target.Arch != Triple::riscv64) {
-    for (auto &Inst : VecBindingTable.getBindings()) {
-      // if (Inst.isSupported(TTI))
-      SupportedIntrinsics.push_back(&Inst);
-    }
-    for (auto &Inst : VecBindingTable.getUnarys()) {
-      // if (Inst.isSupported(TTI))
-      SupportedIntrinsics.push_back(&Inst);
-    }
-    for (auto &Ext : VecBindingTable.getExtensions())
-      SupportedIntrinsics.push_back(&Ext);
-    for (auto &Trunc : VecBindingTable.getTruncates())
-      SupportedIntrinsics.push_back(&Trunc);
-    for (auto &Select : VecBindingTable.getSelects())
-      SupportedIntrinsics.push_back(&Select);
-    for (auto &UnaryMath : VecBindingTable.getUnaryMathFuncs())
-      SupportedIntrinsics.push_back(&UnaryMath);
-    for (auto &BinaryMath : VecBindingTable.getBinaryMathFuncs())
-      SupportedIntrinsics.push_back(&BinaryMath);
-    for (auto &FloatToInt : VecBindingTable.getFloatToInts())
-      SupportedIntrinsics.push_back(&FloatToInt);
-    for (auto &IntToFloat : VecBindingTable.getIntToFloats())
-      SupportedIntrinsics.push_back(&IntToFloat);
-  }
-  errs() << "~~~~ num supported intrinsics: " << SupportedIntrinsics.size()
-         << '\n';
+  auto SupportedIntrinsics = getSupportedIntrinsics(F, TTI);
 
   DenseMap<Loop *, UnrolledLoopTy> DupToOrigLoopMap;
   DenseMap<Instruction *, UnrolledInstruction> UnrolledIterations;
@@ -412,18 +427,89 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
                         target);
     unrollLoops(&F, *SE, *LI, AC, *DT, TTI, UFs, DupToOrigLoopMap,
                 &UnrolledIterations);
+    // FIXME: figure out why SimplifyCFG removes preheader
+    assert(!verifyFunction(F, &errs()));
+    /*FAM.invalidate(F, PreservedAnalyses::none());
+    FAM.invalidate(F, SimplifyCFGPass().run(F, FAM));
+    FAM.invalidate(F, InstCombinePass().run(F, FAM));
+    AA = &FAM.getResult<AAManager>(F);
+    SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
+    DT = &FAM.getResult<DominatorTreeAnalysis>(F);
+    LI = &FAM.getResult<LoopAnalysis>(F);
+    DI = &FAM.getResult<DependenceAnalysis>(F);
+    LVI = &FAM.getResult<LazyValueAnalysis>(F);
+    TTI = &FAM.getResult<TargetIRAnalysis>(F);
+    BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);*/
   }
-  PostDominatorTree PDT(F); // recompute PDT after unrolling
-  Packer Pkr(SupportedIntrinsics, F, AA, LI, SE, DT, &PDT, DI, LVI, TTI, BFI,
-             target);
+  return PreservedAnalyses::none();
+}
+
+bool GSLP::doInitialization(Module &M, TargetTransformInfo *TTI) {
+  assert(getTarget(M, TTI, target));
+  SMDiagnostic Err;
+  std::string Wrapper;
+  switch (target.Arch) {
+  case Triple::x86_64:
+    Wrapper = "/x86.bc";
+    break;
+  case Triple::aarch64:
+    Wrapper = "/arm.bc";
+    break;
+  case Triple::riscv64:
+    break;
+
+  default:
+    llvm_unreachable("architecture not supported");
+  }
+  if (target.Arch != Triple::riscv64) {
+    if (WrappersDir.empty())
+      WrappersDir =
+          (StringRef(__FILE__).rsplit('/').first.rsplit('/').first + "/build")
+              .str();
+    errs() << "Loading inst wrappers: " << WrappersDir + Wrapper << '\n';
+    InstWrappers = parseIRFile(WrappersDir + Wrapper, Err, M.getContext());
+    if (!InstWrappers) {
+      report_fatal_error(std::string("Error parsing Inst Wrappers") +
+                         Err.getMessage());
+    }
+  }
+
+  return true;
+}
+
+PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
+  auto *AA = &FAM.getResult<AAManager>(F);
+  auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
+  auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
+  auto *LI = &FAM.getResult<LoopAnalysis>(F);
+  auto *DI = &FAM.getResult<DependenceAnalysis>(F);
+  auto *LVI = &FAM.getResult<LazyValueAnalysis>(F);
+  auto *TTI = &FAM.getResult<TargetIRAnalysis>(F);
+  auto *BFI = &FAM.getResult<BlockFrequencyAnalysis>(F);
+
+  if (skippedFunc.count(&F))
+    return PreservedAnalyses::all();
+  if (!doInitialization(*F.getParent(), TTI))
+    return PreservedAnalyses::all();
+  for (auto *L : LI->getLoopsInPreorder()){
+    assert(L->getLoopPreheader());
+  }
+
+  errs() << "Optimizing " << F.getName() << '\n';
 #ifdef BUILD_WITH_DEBUG_LLVM
   F.getParent()->dump();
 #endif
 
+  auto SupportedIntrinsics = getSupportedIntrinsics(F, TTI);
+  PostDominatorTree PDT(F); // recompute PDT after unrolling
+  Packer Pkr(SupportedIntrinsics, F, AA, LI, SE, DT, &PDT, DI, LVI, TTI, BFI,
+             target);
+
   // Forward the seeds from the unroller
   std::vector<const OperandPack *> SeedOperands;
-  if (!DisableUnrolling)
-    SeedOperands = getSeeds(Pkr, DupToOrigLoopMap, UnrolledIterations);
+  // disable getSeeds temporarily
+  // if (!DisableUnrolling)
+  //  SeedOperands = getSeeds(Pkr, DupToOrigLoopMap, UnrolledIterations);
 
   VectorPackSet Packs(&F);
   if (!TestCodeGen)
@@ -472,6 +558,10 @@ static void registerGSLP(FunctionPassManager &FPM) {
   FPM.addPass(createFunctionToLoopPassAdaptor(LoopRotatePass()));
   FPM.addPass(LCSSAPass());
 
+  FPM.addPass(GSLPUnrollPass());
+  FPM.addPass(SimplifyCFGPass());
+  FPM.addPass(InstCombinePass());
+  FPM.addPass(LoopSimplifyPass());
   FPM.addPass(GSLP());
 
   if (!DisableCleanup) {
