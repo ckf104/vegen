@@ -1,4 +1,4 @@
-11.25, z3 ref:
+uj11.25, z3 ref:
 
 1. https://ericpony.github.io/z3py-tutorial/advanced-examples.htm
 2. https://www.lri.fr/~conchon/TER/2013/2/SMTLIB2.pdf
@@ -204,7 +204,7 @@ TODO:
 * ~~修改getVectorType函数，mask...ptr等等不太对~~
 * ~~riscv的load，store使用vp版本~~
 * 限制seed operand size
-* **紧急：当循环展开次数为8时，生成代码与预期不符**（reduce从哪来的？）
+* ~~**紧急：当循环展开次数为8时，生成代码与预期不符**（reduce从哪来的？）~~
 * 更新reduction, 使用vp版本
 * 更新IntrinsicBuilder::Create函数
 * 完成 getIntrinsicName 函数
@@ -222,9 +222,66 @@ TODO:
 
 * 在`lib/Target/RISCV/RISCVInstrInfoVPseudos.td`文件中定义了`RISCVVIntrinsicsTable : GenericTable`，利用**SearchTable**后端生成**RISCVVIntrinsicInfo**结构体，有`IntrinsicID, VLOperand, ScalarOperand`三个成员
 * `lib/Target/RISCV/RISCVInstrInfoV.td`描述V拓展指令结构
-* 为什么**RISCVBinaryABShiftUnMasked**没有**ScalarOperand**? RVV描述中的VS1, VS2, VMConstraints是在干嘛？
-* `IITDescriptor`中不知道啥的编码规则，后端的`IntrinsicEmitter.cpp`生成的`IIT_Table`中存储了每个`Intrinsic`的类型信息，`getIntrinsicInfoTableEntries`接受一个ID，查找`IIT_Table`，返回对应的`IITDescriptor`
+* `RISCVRegisterInfo.td`描述了寄存器信息，生成`RISCVGenRegisterInfo.inc`，
+* 为什么**RISCVBinaryABShiftUnMasked**没有**ScalarOperand**?
+* `IITDescriptor`描述Intrinsic的特性
+
+```cpp
+class RISCVDAGToDAGISel : public SelectionDAGISel; // lowering 过程中的第一个machinefunctionPass
+
+// register related info
+class RISCVRegisterInfo -> RISCVGenRegisterInfo -> TargetRegisterInfo -> MCRegisterInfo;
+# 包含arch中的Register的信息，其中RISCVGenRegisterInfo由tablegen生成
+
+class MCRegisterClass; // -> RISCVMCRegisterClasses, 描述一组寄存器
+struct MCRegisterDesc; // -> RISCVRegDesc, 描述单个寄存器
+class MCRegister;    // 4 byte unsigned, 
+
+// instr related info
+class RISCVInstrInfo -> RISCVGenInStrInfo -> TargetInstrInfo -> MCInstrInfo;
+# 包含arch中的Instr信息，其中RISCVGenInStrInfo由tablegen生成
+
+class MCInstrDesc; // -> RISCVInsts, 描述一条指令（可能是伪指令，汇编伪指令或者llvm特有的一些，例如phi）
+
+// some detailed register related data info example
+Reg F1_D = 73 { 1538, 4354, 8, 0, 103937, 2 }, 103937 = 6496 * 16 + 1
+4354 -> {32,32,0}
+regUnit -> {65535, 0} 
+Reg F18_F  { 1833, 4355, 6461, 1, 103329, 2 },
+
+Name: RISCVRegStrings, SubReg, SuperReg: RISCVRegDiffLists;
+SubRegIndices: RISCVSubRegIdxLists; // index来源于sub_vrm1_0一类的枚举变量
+
+segment load?
+Reg V4M2_V6M2_V8M2_V10M2 { 285, 6366, 5098, 187, 722, 40 }: 
+SubDiff {65385, 65360, 1, 177, 65360, 1, 176, 65361, 1, 177, 65360, 1, 196, 53, 44, 65440, 53, 65484, 137, 28, 27, 26, 65414, 42, 28, 27, 65396, 44, 42, 28, 65370, 53, 44, 42, 65398, 53, 44, 65440, 53, 65484, 23, 52, 65485, 52, 65485, 0}
+
+Reg V8M2 { 608, 627, 3289, 6, 9090, 7 }: Subdiff {65361, 1} -> V8, V9;
+Superdiff: { 1, 1, 52, 1, 50, 1, 42, 65455, 40, 43, 65454, 79, 2, 0,} 
+-> V8M4, V8M8, V6M2_V8M2, V8M2_V10M2, V4M2_V6M2_V8M2, V6M2_V8M2_V10M2, V4M2_V6M2_V8M2_V10M2,
+V4M4_V8M4, V8M2_V10M2_V12M2, V8M2_V10M2_V12M2_V14M2, V8M4_V12M4, V2M2_V4M2_V6M2_V8M2, V6M2_V8M2_V10M2_V12M2;
+-> {4, 5, 0}
+
+subindex=9 -> 12, 4, 5, 13, 6, 7, 0 -> {}
+```
+
+读代码时的关注点：
+
+* 如何处理PHI节点？
+* Intrinsic在DAG中如何转化 -> 一般的Intrinsic有对应的ISD::opcode, 而后`LegalizeVectors`在被lowering为对应的向量指令而target specific Intrinsic使用`INTRINSIC_WO_CHAIN`等特殊的opcode, 并且在operand中加上IntrinsicID
+* **在RISCV指令选择的后端，针对`INTRINSIC_W_CHAIN`, `INTRINSIC_WO_CHAIN`, `INTRINSIC_VOID_CHAIN`三类节点对应的部分V指令有特殊处理，WHY**
+* 后端如何进行pattern match(尤其是针对V指令 ->生成waddu?)
+* RISCVTargetLowering::getTgtMemIntrinsic，表达Intrinsic的副作用，为啥只包含了一部分的内存指令？
+* RISCV后端是如何把Pseudo指令lower到真实指令的？
+
+**tablegen**后端接口
+
+```cpp
+class DAGOperand; // target.td，表示DAG的一个operand
+class RegisterClass : DAGOperand; 
+class Operand : DAGOperand;
+```
+
+
 
 idea: 用C语言来写operation, 然后自动生成pattern match?(便于处理vfirst这样的数组？)
-
-3 7 7 8 17
