@@ -78,7 +78,15 @@ struct InstSignature {
   std::function<uint32_t(const InstSignature *sig, uint32_t outLanes,
                          uint32_t inputVec)>
       eleNumMap;
-  unsigned numInputs() const { return inputSig.size(); }
+  uint32_t numInputs() const { return inputSig.size(); }
+  uint32_t numVecInputs() const {
+    uint32_t cnt = 0;
+    for (uint32_t i = 0, j = inputSig.size(); i < j; ++i) {
+      if (inputSig[i].isFixedVec() || inputSig[i].isScalableVec())
+        cnt++;
+    }
+    return cnt;
+  }
   InstSignature(
       std::vector<OperandType> inputsig_, OperandType outputsig_,
       std::function<uint32_t(const InstSignature *sig, uint32_t, uint32_t)>
@@ -99,6 +107,10 @@ struct InstSignature {
   }
   uint32_t getInputLanes(uint32_t outLanes, uint32_t inputVec) const {
     return eleNumMap(this, outLanes, inputVec);
+  }
+  OperandType::Type getOperandType(uint32_t id) const {
+    assert(id < inputSig.size());
+    return inputSig[id].type;
   }
 };
 

@@ -8,6 +8,7 @@
 #include "VectorPack.h"
 #include "VectorPackContext.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -235,8 +236,15 @@ bool Plan::verifyCost() const {
 void Plan::addImpl(const VectorPack *VP) {
   Packs.insert(VP);
   Cost += VP->getProducingCost();
-  for (auto *OP : VP->getOperandPacks())
-    incVectorUses(OP);
+  for (auto *OP : VP->getOperandPacks()) {
+    if (OP->isVector())
+      incVectorUses(OP);
+    else {
+      auto *v = OP->operator[](0);
+      if (isa<Instruction>(v))
+        incScalarUses(cast<Instruction>(v));
+    }
+  }
 
   ArrayRef<Value *> Values = VP->getOrderedValues();
   ValuesToPackMap[Values] = VP;
@@ -250,7 +258,8 @@ void Plan::addImpl(const VectorPack *VP) {
   updateCostOfVectorUses(Values);
 
   auto *TTI = Pkr->getTTI();
-  auto *VecTy = !VP->isStore() ? Pkr->getContext()->getVectorType(*VP) : nullptr;
+  auto *VecTy =
+      !VP->isStore() ? Pkr->getContext()->getVectorType(*VP) : nullptr;
   for (unsigned i = 0, N = Values.size(); i < N; i++)
     if (auto *I = dyn_cast_or_null<Instruction>(Values[i])) {
       if (!VP->isReduction() && NumScalarUses.lookup(I)) {
@@ -323,6 +332,13 @@ void Plan::removeImpl(const VectorPack *VP) {
   }
 
   // Update the uses
-  for (auto *OP : VP->getOperandPacks())
-    decVectorUses(OP);
+  for (auto *OP : VP->getOperandPacks()) {
+    if (OP->isVector())
+      decVectorUses(OP);
+    else {
+      auto *v = OP->operator[](0);
+      if (isa<Instruction>(v))
+        decScalarUses(cast<Instruction>(v));
+    }
+  }
 }

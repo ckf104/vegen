@@ -3,6 +3,7 @@
 
 #include "Reduction.h"
 #include "VectorPackContext.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/IRBuilder.h"

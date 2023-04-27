@@ -651,9 +651,30 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
       // we don't need while loop when "inst output lane == op lane" is required
       // while (Lanes.size() < LaneOps.size())
       //  Lanes.push_back(nullptr);
+      for (uint32_t i = 0, n = Inst->getSignature().numInputs(); i < n; ++i) {
+        if (Inst->getSignature().getOperandType(i) == OperandType::Scalar) {
+          Value *scalar = nullptr;
+          for (uint32_t j = 0; j < NumLanes; ++j) {
+            const auto &BoundOp = Inst->getLaneOps(j);
+            const auto &slice = BoundOp.getBoundSlices();
+            const auto &matches = Lanes[j];
+            for (uint32_t k = 0, numI = matches->Inputs.size(); k < numI; ++k) {
+              if (slice[k].vecId == i) {
+                if (scalar == nullptr) {
+                  scalar = matches->Inputs[k];
+                } else if (scalar != matches->Inputs[k]) {
+                  goto BAD;
+                }
+              }
+            }
+          }
+        }
+      }
       OPI.Producers.push_back(
           VPCtx.createVectorPack(Lanes, OPI.Elements, Depended, Inst, TTI));
     }
+  BAD:
+    continue;
   }
   OPI.Feasible = !OPI.Producers.empty();
   return OPI;

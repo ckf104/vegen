@@ -1,8 +1,9 @@
 #ifndef HEURISTIC_H
 #define HEURISTIC_H
 
-#include "llvm/ADT/DenseMap.h"
+#include "VectorPackContext.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
 #include <map>
@@ -51,7 +52,12 @@ private:
 public:
   Heuristic(Packer *Pkr, const CandidatePackSet *Candidates)
       : Pkr(Pkr), Candidates(Candidates) {}
-  float getCost(const OperandPack *OP) { return solve(OP).Cost; }
+  float getCost(const OperandPack *OP) {
+    if (OP->isVector())
+      return solve(OP).Cost;
+    else
+      return getCost(OP->operator[](0));
+  }
   float getCost(llvm::Value *);
   Solution solve(const OperandPack *OP);
 };

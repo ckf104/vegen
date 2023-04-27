@@ -457,6 +457,7 @@ void computeUnrollFactor(ArrayRef<const InstBinding *> Insts,
            << ')' << " " << UFs.lookup(L) << '\n';
     if (UFs[L] > 1) {
       UnrolledLoops.insert(L);
+      // here should be continue instead of break?
       break;
     }
   }

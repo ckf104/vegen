@@ -21,9 +21,9 @@ using namespace llvm;
 std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
   const auto &DL = VPCtx->getFunction()->getParent()->getDataLayout();
   auto &Sig = Producer->getSignature();
-  unsigned NumInputs = Sig.numInputs();
+  uint32_t NumInputs = Sig.numInputs();
   // auto LaneOps = Producer->getLaneOps();
-  unsigned NumLanes = Matches.size();
+  uint32_t NumLanes = Matches.size();
   std::vector<OperandPack> OperandPacks(NumInputs);
 
   struct BoundInput {
@@ -37,6 +37,7 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
 
   // Figure out which input packs we need
   for (unsigned i = 0; i < NumInputs; i++) {
+
     std::vector<BoundInput> InputValues;
     // Size of one element in this input vector
     unsigned ElementSize = 0;
@@ -67,6 +68,14 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
 
     uint32_t CurId = 0;
     auto &OP = OperandPacks[i];
+    if (Sig.inputSig[i].isScalar()) {
+      for (uint32_t y = 1, t = InputValues.size(); y < t; ++y)
+        assert(InputValues[y].V == InputValues[0].V &&
+               "scalar input should be splat");
+      OP.push_back(InputValues[0].V);
+      OP.Ty = InputValues[0].V->getType();
+      continue;
+    }
     for (const BoundInput &BV : InputValues) {
       while (CurId < BV.Slice.eleId) {
         OP.push_back(nullptr);

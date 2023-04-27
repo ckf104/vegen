@@ -32,6 +32,7 @@ float Heuristic::getCost(const VectorPack *VP) {
       continue;
     Cost += getCost(OP);
   }
+
   return Cost;
 }
 
@@ -53,6 +54,7 @@ const OperandPack *transpose(const VectorPackContext *VPCtx,
 }
 
 Heuristic::Solution Heuristic::solve(const OperandPack *OP) {
+  assert(OP->isVector() && "call solve with a scalar operand?"); 
   auto It = Solutions.find(OP);
   if (It != Solutions.end())
     return It->second;

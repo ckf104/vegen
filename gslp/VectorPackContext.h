@@ -35,7 +35,7 @@ struct OperandProducerInfo {
 struct OperandPack : public llvm::SmallVector<llvm::Value *, 8> {
   mutable bool OPIValid = false;
   mutable OperandProducerInfo OPI;
-  mutable llvm::VectorType *Ty = nullptr;
+  mutable llvm::Type *Ty = nullptr;
 
   const llvm::Value *getFirstNonNull() const {
     for (auto *V : *this) {
@@ -43,6 +43,9 @@ struct OperandPack : public llvm::SmallVector<llvm::Value *, 8> {
         return V;
     }
     llvm_unreachable("OperandPack should have at least one element?");
+  }
+  bool isVector() const{
+    return size() > 1;
   }
 };
 

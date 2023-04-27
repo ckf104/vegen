@@ -10,6 +10,9 @@
 #include "UnrollFactor.h"
 #include "VectorPackSet.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/InstVisitor.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #ifndef LLVM_17
 #include "llvm/ADT/Triple.h"
 #else
@@ -392,8 +395,11 @@ static void balanceReductionTree(Function &F) {
   }
 }
 
+void reduceIntrinsic(Function &F);
+
 PreservedAnalyses GSLPUnrollPass::run(Function &F,
                                       FunctionAnalysisManager &FAM) {
+  reduceIntrinsic(F);
   auto *AA = &FAM.getResult<AAManager>(F);
   auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
   auto *DT = &FAM.getResult<DominatorTreeAnalysis>(F);
@@ -407,11 +413,11 @@ PreservedAnalyses GSLPUnrollPass::run(Function &F,
 
   if (shouldSkip(F, LI)) {
     skippedFunc.insert(&F);
-    return PreservedAnalyses::all();
+    return PreservedAnalyses::none();
   }
   if (!getTarget(*F.getParent(), TTI, target)) {
     skippedFunc.insert(&F);
-    return PreservedAnalyses::all();
+    return PreservedAnalyses::none();
   }
   if (!DisableReductionBalancing)
     balanceReductionTree(F);
@@ -477,6 +483,30 @@ bool GSLP::doInitialization(Module &M, TargetTransformInfo *TTI) {
   return true;
 }
 
+class IntrinsicVisitor : public InstVisitor<IntrinsicVisitor> {
+public:
+  void visitIntrinsicInst(IntrinsicInst &i) {
+    if (i.getIntrinsicID() == Intrinsic::fmuladd) {
+      auto iter = i.operands().begin();
+      Value *v1 = *(iter++);
+      if (v1->getType()->isVectorTy())
+        return;
+      Value *v2 = *(iter++);
+      Value *v3 = *iter;
+      IRBuilder<> builder(&i);
+      auto *v4 = builder.CreateFMul(v1, v2);
+      auto *v5 = builder.CreateFAdd(v4, v3);
+      i.replaceAllUsesWith(v5);
+      i.eraseFromParent();
+    }
+  }
+};
+
+void reduceIntrinsic(Function &F) {
+  auto a = IntrinsicVisitor();
+  a.visit(F);
+}
+
 PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
   auto *AA = &FAM.getResult<AAManager>(F);
   auto *SE = &FAM.getResult<ScalarEvolutionAnalysis>(F);
@@ -491,7 +521,7 @@ PreservedAnalyses GSLP::run(Function &F, FunctionAnalysisManager &FAM) {
     return PreservedAnalyses::all();
   if (!doInitialization(*F.getParent(), TTI))
     return PreservedAnalyses::all();
-  for (auto *L : LI->getLoopsInPreorder()){
+  for (auto *L : LI->getLoopsInPreorder()) {
     assert(L->getLoopPreheader());
   }
 

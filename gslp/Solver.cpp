@@ -210,7 +210,8 @@ void runBottomUpFromOperand(
     for (const VectorPack *VP : NewPacks) {
       P.add(VP);
       ArrayRef<const OperandPack *> Operands = VP->getOperandPacks();
-      Worklist.append(Operands.begin(), Operands.end());
+      for(auto *OP : Operands)
+        if(OP->isVector())Worklist.push_back(OP);
       if (GetExtraOperands)
         GetExtraOperands(VP, Worklist);
     }

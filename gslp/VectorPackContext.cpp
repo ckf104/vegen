@@ -366,14 +366,16 @@ VectorType *VectorPackContext::getVectorType(Type *scalarType,
 }
 
 VectorType *VectorPackContext::getVectorType(const OperandPack &OP) const {
+  assert(OP.size() > 1 && "call this function with scalar operand?");
   bool isScalable = target.Arch == Triple::riscv64;
   if (OP.Ty) {
     assert(isa<ScalableVectorType>(OP.Ty) == isScalable &&
            "OP's vector type should keep the same?");
-    return OP.Ty;
+    return cast<VectorType>(OP.Ty);
   }
   Type *ScalarTy = OP.getFirstNonNull()->getType();
-  return getVectorType(ScalarTy, OP.size());
+  OP.Ty = getVectorType(ScalarTy, OP.size());
+  return cast<VectorType>(OP.Ty);
 }
 
 VectorType *VectorPackContext::getVectorType(const VectorPack &VP) const {

@@ -184,6 +184,7 @@ Value *VectorCodeGen::getLoadStoreMask(ArrayRef<Value *> Vals, VLoop *VL) {
 // If `OP` is not directly produced by another Pack,
 // we need to emit code to either swizzle it together.
 Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
+  if(!OP.isVector())return OP[0];
   struct GatherEdge {
     unsigned SrcIndex;
     unsigned DestIndex;
@@ -1227,7 +1228,7 @@ void VectorCodeGen::run() {
       ReturnInst::Create(F->getContext(), Constant::getNullValue(RetTy), &BB);
   }
 #ifdef BUILD_WITH_DEBUG_LLVM
-  F->dump();
+  //F->dump();
 #endif
   // Restore SSA
   DominatorTree DT(*F);
