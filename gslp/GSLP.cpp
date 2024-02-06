@@ -1,6 +1,5 @@
 #include "BlockBuilder.h"
 #include "ControlDependence.h"
-#include "IRVec.h"
 #include "InstSema.h"
 #include "Packer.h"
 #include "Scalarizer.h"
@@ -146,7 +145,6 @@ namespace {
 
 DenseSet<Function *> skippedFunc;
 // Table holding all IR vector instructions
-IRInstTable VecBindingTable;
 
 bool hasFeature(const llvm::Function &F, std::string Feature) {
   Attribute Features = F.getFnAttribute("target-features");
@@ -160,10 +158,6 @@ class GSLP : public PassInfoMixin<GSLP> {
 
   std::vector<InstBinding> &getInsts() const {
     switch (target.Arch) {
-    case Triple::x86_64:
-      return X86Insts;
-    case Triple::aarch64:
-      return ArmInsts;
     case Triple::riscv64:
       return Riscv64Insts;
     default:
@@ -181,26 +175,7 @@ public:
 bool isSupported(InstBinding *Inst, const llvm::Function &F,
                  TargetTransformInfo *TTI) {
   auto arch = Triple(F.getParent()->getTargetTriple()).getArch();
-  if (arch == Triple::x86_64 || arch == Triple::aarch64) {
-    unsigned PreferVectorWidth =
-        TTI->getLoadStoreVecRegBitWidth(/*AddrSpace=*/0);
-    if (Inst->getName().contains("cvtepi32_epi64"))
-      return true;
-    if (Inst->getName().contains("hadd"))
-      return false;
-    if (Inst->getName().contains("hsub"))
-      return false;
-    if (Inst->getName().contains("broadcast"))
-      return false;
-    if (Inst->getName().contains("fmadd"))
-      return false;
-    for (auto &Feature : Inst->getTargetFeatures())
-      if (!hasFeature(F, Feature) ||
-          Inst->getSignature().outputSig.getVecWidth().value() >
-              PreferVectorWidth)
-        return false;
-    return true;
-  } else if (arch == Triple::riscv64) {
+  if (arch == Triple::riscv64) {
     // FIXME: filter insts by feature using RISCVSubTarget::hasVInstructions*
     return true;
   }
@@ -209,10 +184,6 @@ bool isSupported(InstBinding *Inst, const llvm::Function &F,
 
 std::vector<InstBinding> &getInsts(Triple::ArchType arch) {
   switch (arch) {
-  case Triple::x86_64:
-    return X86Insts;
-  case Triple::aarch64:
-    return ArmInsts;
   case Triple::riscv64:
     return Riscv64Insts;
   default:
@@ -242,31 +213,6 @@ getSupportedIntrinsics(Function &F, TargetTransformInfo *TTI) {
     if (isSupported(&Inst, F, TTI))
       SupportedIntrinsics.push_back(&Inst);
 
-  // disable llvm's vector inst temporarily for riscv64
-  if (arch != Triple::riscv64) {
-    for (auto &Inst : VecBindingTable.getBindings()) {
-      // if (Inst.isSupported(TTI))
-      SupportedIntrinsics.push_back(&Inst);
-    }
-    for (auto &Inst : VecBindingTable.getUnarys()) {
-      // if (Inst.isSupported(TTI))
-      SupportedIntrinsics.push_back(&Inst);
-    }
-    for (auto &Ext : VecBindingTable.getExtensions())
-      SupportedIntrinsics.push_back(&Ext);
-    for (auto &Trunc : VecBindingTable.getTruncates())
-      SupportedIntrinsics.push_back(&Trunc);
-    for (auto &Select : VecBindingTable.getSelects())
-      SupportedIntrinsics.push_back(&Select);
-    for (auto &UnaryMath : VecBindingTable.getUnaryMathFuncs())
-      SupportedIntrinsics.push_back(&UnaryMath);
-    for (auto &BinaryMath : VecBindingTable.getBinaryMathFuncs())
-      SupportedIntrinsics.push_back(&BinaryMath);
-    for (auto &FloatToInt : VecBindingTable.getFloatToInts())
-      SupportedIntrinsics.push_back(&FloatToInt);
-    for (auto &IntToFloat : VecBindingTable.getIntToFloats())
-      SupportedIntrinsics.push_back(&IntToFloat);
-  }
   errs() << "~~~~ num supported intrinsics: " << SupportedIntrinsics.size()
          << '\n';
   return SupportedIntrinsics;

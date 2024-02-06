@@ -38,7 +38,7 @@ llvm shuffle support for scalable vector
 编译流程
 
 ```shel
-$ ~/tmp/install/llvm-epi/bin/clang --target=riscv64-unknown-linux-gnu -march=rv64gcv rvv_saxpy.c  -menable-experimental-extensions --riscv-v-vector-min-bits=512 --sysroot=/home/ckf104/install/riscv/sysroot -no-integrated-as -S -O3 -o out/rvv_saxpy.s
+$ ~/tmp/install/llvm-epi/bin/clang --target=riscv64-unknown-linux-gnu -march=rv64gcv rvv_saxpy.c  -menable-experimental-extensions -llvm --riscv-v-vector-bits-min=512 --sysroot=/home/ckf104/install/riscv/sysroot -no-integrated-as -S -O3 -o out/rvv_saxpy.s
 $ riscv64-unknown-linux-gnu-gcc -march=rv64gcv out/rvv_saxpy.s -o out/rvv_saxpy
 $ qemu-riscv64 -cpu rv64,v=on out/rvv_saxpy
 ```

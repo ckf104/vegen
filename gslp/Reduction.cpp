@@ -1,6 +1,8 @@
 #include "Reduction.h"
 #include "Compatible.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/PatternMatch.h"
 
 using namespace llvm;
@@ -65,8 +67,7 @@ static void matchReductionTreeWithKind(Value *Root,
     Value *A, *B;
     // Only the root is allowed to have more than one use
     if ((V != Root && V->getNumUses() > MaxNumUses) ||
-        cmpHasMoreThanOneUse(V) ||
-        !matchReduction(V, A, B, Kind)) {
+        cmpHasMoreThanOneUse(V) || !matchReduction(V, A, B, Kind)) {
       LeavesAndHeights.emplace_back(V, Height);
       continue;
     }
@@ -80,11 +81,11 @@ static void matchReductionTreeWithKind(Value *Root,
     Leaves.push_back(Pair.first);
 }
 
-static RecurKind RdxKinds[] = {RecurKind::Add,  RecurKind::Mul,  RecurKind::And,
-  RecurKind::Or,   RecurKind::Xor,  RecurKind::FAdd,
-  RecurKind::FMul, RecurKind::FMin, RecurKind::FMax,
-  RecurKind::SMin, RecurKind::SMax, RecurKind::UMin,
-  RecurKind::UMax};
+static RecurKind RdxKinds[] = {
+    RecurKind::Add,  RecurKind::Mul,  RecurKind::And,  RecurKind::Or,
+    RecurKind::Xor,  RecurKind::FAdd, RecurKind::FMul, RecurKind::FMin,
+    RecurKind::FMax, RecurKind::SMin, RecurKind::SMax, RecurKind::UMin,
+    RecurKind::UMax};
 
 static bool matchReductionTree(PHINode *PN, Loop *L,
                                SmallVectorImpl<Instruction *> &Ops,
@@ -99,7 +100,12 @@ static bool matchReductionTree(PHINode *PN, Loop *L,
     if (It != Leaves.end()) {
       Leaves.erase(It);
       Kind = K;
-      return true;
+      // FIXME: here is a hacking for loop reduction to prevent it from choosing
+      // induction variable as reduction packs. A more proper way should be
+      // simplify cfg after loop unrolling
+      return (!is_splat(Leaves) ||
+              ((K == RecurKind::Mul || K == RecurKind::FMul) &&
+               !isa<Constant>(Leaves[0])));
     }
   }
   return false;
@@ -148,8 +154,22 @@ Optional<ReductionInfo> matchLoopFreeReduction(Value *Root) {
     Leaves.clear();
     Ops.clear();
     matchReductionTreeWithKind(Root, Ops, Leaves, K);
-    if (Leaves.size() >= 4)
-      return RI;
+
+    // FIXME: here is a hacking for loop reduction to prevent it from choosing
+    // induction variable as reduction packs. A more proper way should be
+    // simplify cfg after loop unrolling
+    if (Leaves.size() >= 4) {
+      for (auto *v : Leaves) {
+        if (isa<PHINode>(v))
+          return None;
+      }
+      if (!is_splat(Leaves))
+        return RI;
+      else if ((RI.Kind == RecurKind::Mul || RI.Kind == RecurKind::FMul) &&
+               !isa<Constant>(Leaves[0]))
+        return RI;
+      return None;
+    }
   }
   return None;
 }

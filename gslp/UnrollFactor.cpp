@@ -37,9 +37,9 @@ using namespace llvm;
 static cl::opt<bool> ForwardSeeds("forward-seeds",
                                   cl::desc("Forward seeds from the unroller"),
                                   cl::init(false));
-static cl::opt<uint32_t> UnrollFactor("gslp-unroll-factor",
-                                      cl::desc("Unroll factor for the unroller"),
-                                      cl::init(8));
+static cl::opt<uint32_t>
+    UnrollFactor("gslp-unroll-factor",
+                 cl::desc("Unroll factor for the unroller"), cl::init(8));
 #else
 // Forward seeds from the unroller
 static OptionItem<bool, false> ForwardSeeds("forward-seeds", false);
@@ -378,14 +378,15 @@ static void refineUnrollFactors(Function *F, DominatorTree &DT, LoopInfo &LI,
     }
   }
 
-  for (auto &Pair : LoopsWithReductions) {
+  // Temporarily commenting this, I don't see any reason behind it
+  /*for (auto &Pair : LoopsWithReductions) {
     auto *L = Pair.first;
     unsigned NumRdxs = Pair.second;
     if (!OrigLoops.count(L))
       continue;
     UFs[L] = PowerOf2Ceil(UFs[L]) * divideCeil(4, NumRdxs);
     errs() << "Adjusted uf = " << UFs[L] << '\n';
-  }
+  }*/
 
   for (auto &Pair : UFs)
     Pair.second = PowerOf2Ceil(Pair.second);

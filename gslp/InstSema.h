@@ -2,6 +2,7 @@
 #define INST_SEMA_H
 
 #include "Compatible.h"
+#include "InstSeq.h"
 #include "IntrinsicBuilder.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
@@ -78,6 +79,14 @@ struct InstSignature {
   std::function<uint32_t(const InstSignature *sig, uint32_t outLanes,
                          uint32_t inputVec)>
       eleNumMap;
+  uint32_t scalarPos;
+  bool hasSclarVersion;
+
+  uint32_t getOptionScalarPos() const {
+    assert(hasSclarVersion);
+    return scalarPos;
+  }
+  bool getScalarVersion() const { return hasSclarVersion; }
   uint32_t numInputs() const { return inputSig.size(); }
   uint32_t numVecInputs() const {
     uint32_t cnt = 0;
@@ -87,12 +96,23 @@ struct InstSignature {
     }
     return cnt;
   }
+  uint32_t getFirstScalarOperands() const {
+    for (uint32_t i = 0, j = inputSig.size(); i < j; ++i) {
+      if (inputSig[i].isScalar())
+        return i;
+    }
+    return -1;
+  }
+  bool hasScalarOperands() const { return numScalarOperands() > 0; }
+  uint32_t numScalarOperands() const { return numInputs() - numVecInputs(); }
   InstSignature(
       std::vector<OperandType> inputsig_, OperandType outputsig_,
       std::function<uint32_t(const InstSignature *sig, uint32_t, uint32_t)>
-          eleNumMap_)
+          eleNumMap_,
+      bool scalarVersion = false, uint32_t scalarPos = -1)
       : inputSig(std::move(inputsig_)), outputSig(outputsig_),
-        eleNumMap(std::move(eleNumMap_)) {}
+        eleNumMap(std::move(eleNumMap_)), hasSclarVersion(scalarVersion),
+        scalarPos(scalarPos) {}
   InstSignature(InstSignature &&) = default;
   InstSignature(const InstSignature &) = default;
   InstSignature(const std::vector<unsigned> &I, const std::vector<unsigned> &O,
@@ -111,18 +131,6 @@ struct InstSignature {
   OperandType::Type getOperandType(uint32_t id) const {
     assert(id < inputSig.size());
     return inputSig[id].type;
-  }
-};
-
-struct InputSlice {
-  unsigned InputId;
-  unsigned Lo, Hi;
-
-  unsigned size() const { return Hi - Lo; }
-
-  bool operator<(const InputSlice &Other) const {
-    return std::tie(InputId, Lo, Hi) <
-           std::tie(Other.InputId, Other.Lo, Other.Hi);
   }
 };
 
@@ -164,31 +172,12 @@ struct Operation {
                      llvm::SmallVectorImpl<Match> &Matches) const = 0;
 };
 
-// An operation explicitly bound to an instruction and its input(s)
-class LegacyBoundOperation {
-  const Operation *Op;
-  std::vector<InputSlice> BoundSlices;
-  friend class BoundOperation;
-
-public:
-  // A bound operation
-  LegacyBoundOperation(const Operation *Op, std::vector<InputSlice> BoundSlices)
-      : Op(Op), BoundSlices(BoundSlices) {}
-  const Operation *getOperation() const { return Op; }
-  llvm::ArrayRef<InputSlice> getBoundSlices() const { return BoundSlices; }
-};
-
 class BoundOperation {
   const Operation *op;
   llvm::SmallVector<InputId, 4> boundSlices;
 
 public:
   BoundOperation() = default;
-  BoundOperation(const LegacyBoundOperation &lbo) {
-    op = lbo.Op;
-    for (auto slice : lbo.BoundSlices)
-      boundSlices.emplace_back(slice.InputId, slice.Lo, slice.Hi);
-  }
   BoundOperation(const Operation *op, llvm::ArrayRef<InputId> boundSlices_)
       : op(op), boundSlices(boundSlices_.begin(), boundSlices_.end()) {}
   const Operation *getOperation() const { return op; }
@@ -199,7 +188,8 @@ public:
 // each of which characterized by a BoundOperation
 class InstBinding {
   InstSignature Sig;
-  std::string Name;
+  bool commutative;
+  std::vector<SingleInst> instSeq;
   std::vector<std::string> TargetFeatures;
   llvm::SmallPtrSet<const Operation *, 4> uniqueOps;
   std::function<BoundOperation(uint32_t outId)> BoundMap;
@@ -215,48 +205,23 @@ public:
               InstSignature Sig_,
               llvm::SmallPtrSet<const Operation *, 4> uniqueOps_,
               std::function<BoundOperation(uint32_t outId)> BoundMap_,
-              llvm::Optional<float> Cost = llvm::None)
-      : Sig(std::move(Sig_)), Name(std::move(Name)),
-        uniqueOps(std::move(uniqueOps_)), TargetFeatures(std::move(featrues)),
-        BoundMap(std::move(BoundMap_)), Cost(Cost) {}
+              llvm::Optional<float> Cost = llvm::None, bool commutative = false)
+      : Sig(std::move(Sig_)), uniqueOps(std::move(uniqueOps_)),
+        TargetFeatures(std::move(featrues)), BoundMap(std::move(BoundMap_)),
+        Cost(Cost), commutative(commutative) {
+    instSeq.emplace_back(Name, (uint16_t)Sig.numInputs());
+  }
+  InstBinding(std::vector<SingleInst> seq, std::vector<std::string> featrues,
+              InstSignature Sig_,
+              llvm::SmallPtrSet<const Operation *, 4> uniqueOps_,
+              std::function<BoundOperation(uint32_t outId)> BoundMap_,
+              llvm::Optional<float> Cost = llvm::None, bool commutative = false)
+      : Sig(std::move(Sig_)), uniqueOps(std::move(uniqueOps_)),
+        instSeq(std::move(seq)), TargetFeatures(std::move(featrues)),
+        BoundMap(std::move(BoundMap_)), Cost(Cost), commutative(commutative) {}
   InstBinding(InstBinding &&) = default;
   InstBinding(const InstBinding &) = default;
 
-  // Compatible with X86 and arm
-  InstBinding(std::string Name, std::vector<std::string> TargetFeatures,
-              InstSignature Sig_, std::vector<LegacyBoundOperation> LaneOps_,
-              llvm::Optional<float> Cost = llvm::None)
-      : Sig(std::move(Sig_)), Name(Name), TargetFeatures(TargetFeatures),
-        Cost(Cost) {
-    std::vector<size_t> sliceLen(Sig.numInputs(), 0);
-    for (const auto &op : LaneOps_) {
-      auto sliceRef = op.getBoundSlices();
-      for (auto slice : sliceRef) {
-        assert(slice.Hi > slice.Lo && "slice high < slice low?");
-        if (sliceLen[slice.InputId] == 0)
-          sliceLen[slice.InputId] = slice.Hi - slice.Lo;
-        else
-          assert(sliceLen[slice.InputId] == slice.Hi - slice.Lo &&
-                 "vector element is not all equal size?");
-      }
-      uniqueOps.insert(op.getOperation());
-    }
-    assert(llvm::none_of(sliceLen, [](size_t l) { return l == 0; }));
-    for (size_t i = 0, j = Sig.inputSig.size(); i < j; ++i) {
-      Sig.inputSig[i].eleWidth = sliceLen[i];
-    }
-    assert(Sig.outputSig.vecWidth.value() % LaneOps_.size() == 0 &&
-           "output vector width is not multiple of lanes?");
-    Sig.outputSig.eleWidth = Sig.outputSig.vecWidth.value() / LaneOps_.size();
-
-    std::vector<BoundOperation> LaneOps;
-    for (const auto &lop : LaneOps_)
-      LaneOps.emplace_back(lop);
-    BoundMap = [LaneOps](uint32_t id) -> BoundOperation {
-      assert(id < LaneOps.size());
-      return LaneOps[id];
-    };
-  }
   virtual ~InstBinding() = default;
   virtual float getCost(llvm::TargetTransformInfo *, llvm::LLVMContext &,
                         uint32_t scale = 1) const {
@@ -280,17 +245,25 @@ public:
   std::optional<uint32_t> getLaneNum() const {
     return Sig.outputSig.getEleNum();
   }
+  bool isCommutative() const { return commutative; }
 
   virtual llvm::Value *emit(llvm::ArrayRef<llvm::Value *> Operands,
                             IntrinsicBuilder &Builder,
                             llvm::Type *retTy = nullptr,
                             uint32_t length = 0) const {
-    return Builder.Create(Name, Operands, retTy, length);
+    return Builder.Create(instSeq, Operands, retTy, length);
   }
-  llvm::StringRef getName() const { return Name; }
+  std::string getName() const {
+    std::string n;
+    for (uint32_t i = 0, l = instSeq.size() - 1; i < l; ++i) {
+      n += instSeq[i].name + ", ";
+    }
+    n += instSeq[instSeq.size() - 1].name;
+    return n;
+  }
 };
 
-inline std::optional<uint32_t> getBitWidth(const llvm::Value *V) {
+inline uint32_t getBitWidth(const llvm::Value *V) {
   auto *Ty = V->getType();
   if (Ty->isIntegerTy())
     return Ty->getIntegerBitWidth();
@@ -298,16 +271,9 @@ inline std::optional<uint32_t> getBitWidth(const llvm::Value *V) {
     return 32;
   else if (Ty->isDoubleTy())
     return 64;
-  return std::nullopt;
+  assert(false);
 }
 
-inline bool hasBitWidth(const llvm::Value *V, unsigned BitWidth) {
-  auto v = getBitWidth(V);
-  return v && v.value() == BitWidth;
-}
-
-extern std::vector<InstBinding> X86Insts;
-extern std::vector<InstBinding> ArmInsts;
 extern std::vector<InstBinding> Riscv64Insts;
 
 #endif // end INST_SEMA_H

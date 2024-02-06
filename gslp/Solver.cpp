@@ -10,10 +10,12 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cassert>
 
 using namespace llvm;
+#define DEBUG_TYPE "solver"
 
 #ifdef OPT_PASS
 static cl::opt<bool>
@@ -23,7 +25,7 @@ static cl::opt<bool>
 static cl::opt<bool>
     AllowReudctionSeeds("reduction-seeds",
                         cl::desc("Allow reduction seeds in the initial plan"),
-                        cl::init(true));
+                        cl::init(false));
 #else
 // Refine the initial vectorization plan
 static OptionItem<bool, false> RefinePlans("refine-plans", false);
@@ -93,6 +95,7 @@ getSeedMemPacks(Packer *Pkr, AccessType *Access, unsigned VL,
           if (AddrComp &&
               !Pkr->canSpeculateAt(
                   AddrComp, Pkr->findSpeculationCond(AddrComp, AccessInsts))) {
+            Pkr->findSpeculationCond(AddrComp, AccessInsts);
             assert(false && "Why can't speculate address computation?");
           }
 
@@ -188,6 +191,7 @@ void runBottomUpFromOperand(
   while (!Worklist.empty()) {
     assert(P.verifyCost());
     auto *OP = Worklist.pop_back_val();
+    LLVM_DEBUG(dbgs() << "Solve OP:\n" << *OP << "\n\n");
 
     if (!Visited.insert(OP).second)
       continue;
@@ -208,10 +212,12 @@ void runBottomUpFromOperand(
     for (auto *VP2 : OldPacks)
       P.remove(VP2);
     for (const VectorPack *VP : NewPacks) {
+      LLVM_DEBUG(dbgs() << "Get VPack:\n" << *VP << "\n\n");
       P.add(VP);
       ArrayRef<const OperandPack *> Operands = VP->getOperandPacks();
-      for(auto *OP : Operands)
-        if(OP->isVector())Worklist.push_back(OP);
+      for (auto *OP : Operands)
+        if (OP->isVector())
+          Worklist.push_back(OP);
       if (GetExtraOperands)
         GetExtraOperands(VP, Worklist);
     }
@@ -346,8 +352,7 @@ void tryPackBackEdgeConds(Packer *Pkr, Plan &P, Heuristic &H) {
     P = P2;
 }
 static void findLoopFreeReductions(SmallVectorImpl<const VectorPack *> &Seeds,
-                                   unsigned MaxVecWidth, Function *F,
-                                   GlobalDependenceAnalysis &DA,
+                                   Function *F, GlobalDependenceAnalysis &DA,
                                    const VectorPackContext *VPCtx,
                                    const DataLayout *DL,
                                    TargetTransformInfo *TTI) {
@@ -372,7 +377,7 @@ static void findLoopFreeReductions(SmallVectorImpl<const VectorPack *> &Seeds,
     if (RI && RI->Elts.size() % 2 == 0) {
       unsigned RdxLen =
           std::min<unsigned>(greatestPowerOfTwoDivisor(RI->Elts.size()),
-                             MaxVecWidth / getBitWidth(Root, DL));
+                             VPCtx->getMaxOperandSize());
       BitVector Depended(VPCtx->getNumValues());
       for (auto *V : RI->Elts)
         if (auto *I2 = dyn_cast<Instruction>(V)) {
@@ -409,8 +414,8 @@ static void improvePlan(Packer *Pkr, Plan &P,
   stable_sort(Seeds, [&](const VectorPack *VP1, const VectorPack *VP2) -> bool {
     auto *SI1 = cast<StoreInst>(VP1->getOrderedValues().front());
     auto *SI2 = cast<StoreInst>(VP2->getOrderedValues().front());
-    unsigned Id1 = LayoutInfo.get(SI1).Id;
-    unsigned Id2 = LayoutInfo.get(SI2).Id;
+    unsigned Id1 = LayoutInfo.get(SI1)->Id;
+    unsigned Id2 = LayoutInfo.get(SI2)->Id;
     int NumElems1 = -int(VP1->numElements());
     int NumElems2 = -int(VP2->numElements());
     return std::tie(Id1, NumElems1) < std::tie(Id2, NumElems2);
@@ -419,10 +424,9 @@ static void improvePlan(Packer *Pkr, Plan &P,
   auto &LI = Pkr->getLoopInfo();
   auto *TTI = Pkr->getTTI();
   auto *VPCtx = Pkr->getContext();
-  unsigned MaxVecWidth = TTI->getLoadStoreVecRegBitWidth(0);
   // Add loop-reduction packs
   // Hacking for loop unroll!
-  if (AllowReudctionSeeds || BlocksToIgnore) {
+  if (AllowReudctionSeeds || !BlocksToIgnore) {
     for (auto &I : instructions(Pkr->getFunction())) {
       auto *PN = dyn_cast<PHINode>(&I);
       if (!PN)
@@ -434,14 +438,14 @@ static void improvePlan(Packer *Pkr, Plan &P,
       if (!Ty->isIntegerTy() && !Ty->isFloatTy() && !Ty->isIntegerTy())
         continue;
       if (RI && RI->Elts.size() % 2 == 0) {
-        unsigned RdxLen = std::min<unsigned>(
-            greatestPowerOfTwoDivisor(RI->Elts.size()),
-            MaxVecWidth / getBitWidth(PN, Pkr->getDataLayout()));
+        unsigned RdxLen =
+            std::min<unsigned>(greatestPowerOfTwoDivisor(RI->Elts.size()),
+                               VPCtx->getMaxOperandSize());
         Seeds.push_back(VPCtx->createLoopReduction(*RI, RdxLen, TTI));
       }
     }
-    findLoopFreeReductions(Seeds, MaxVecWidth, Pkr->getFunction(), Pkr->getDA(),
-                           VPCtx, Pkr->getDataLayout(), TTI);
+    findLoopFreeReductions(Seeds, Pkr->getFunction(), Pkr->getDA(), VPCtx,
+                           Pkr->getDataLayout(), TTI);
   }
   if (Candidates)
     Seeds.append(Candidates->Packs.begin(), Candidates->Packs.end());

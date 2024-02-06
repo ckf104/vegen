@@ -15,9 +15,15 @@
 #include "llvm/Analysis/IVDescriptors.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Constant.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/FMF.h"
+#include "llvm/IR/FPEnv.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
@@ -184,11 +190,13 @@ Value *VectorCodeGen::getLoadStoreMask(ArrayRef<Value *> Vals, VLoop *VL) {
 // If `OP` is not directly produced by another Pack,
 // we need to emit code to either swizzle it together.
 Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
-  if(!OP.isVector())return OP[0];
-  struct GatherEdge {
-    unsigned SrcIndex;
-    unsigned DestIndex;
-  };
+  if (!OP.isVector())
+    return useScalar(OP[0]);
+  else if (is_splat(OP)) {
+    auto *vecTy = VPCtx->getVectorType(OP);
+    return Builder.CreateVectorSplat(vecTy->getElementCount(),
+                                     useScalar(OP[0]));
+  }
 
   DenseMap<const VectorPack *, SmallVector<GatherEdge, 4>> SrcPacks;
   DenseMap<Value *, SmallVector<unsigned, 4>> SrcScalars;
@@ -218,12 +226,20 @@ Value *VectorCodeGen::gatherOperandPack(const OperandPack &OP) {
   if (VPCtx->getTarget() == llvm::Triple::riscv64) {
     assert(SrcPacks.size() <= 1 &&
            "I should have not enabled variable-length match for riscv?");
-    if (!SrcPacks.empty())
-      assert(all_of(SrcPacks.begin()->second,
-                    [](const GatherEdge &E) {
-                      return E.SrcIndex == E.DestIndex;
-                    }) &&
-             "I should have not enabled shuffle match for riscv?");
+    if (SrcPacks.size() == 1) {
+      if (!all_of(SrcPacks.begin()->second, [](const GatherEdge &E) {
+            return E.SrcIndex == E.DestIndex;
+          })) {
+        auto *vpk = SrcPacks.begin()->getFirst();
+        ArrayRef<GatherEdge> edges = SrcPacks.begin()->getSecond();
+        assert(edges.size() == OP.size() &&
+               "current implementation only supports a limited shuffle pattern "
+               "for riscv");
+        auto *mv = MaterializedPacks.lookup(vpk);
+        assert(mv);
+        return Builder.CreateRISCVShuffle(edges, mv);
+      }
+    }
   }
 
   using ShuffleMaskTy = SmallVector<Constant *, 8>;
@@ -545,43 +561,123 @@ schedule(VLoop &VL, ControlReifier &Reifier,
   return ScheduledItems;
 }
 
-static Value *emitReduction(RecurKind Kind, Value *A, Value *B,
-                            IRBuilderBase &Builder) {
+static Value *emitVPReduction(RecurKind Kind, Value *A, Value *B,
+                              uint64_t length, IRBuilderBase &Builder) {
+  Intrinsic::ID id;
+  SmallVector<Value *, 6> args;
+  auto *vecTy = cast<VectorType>(A->getType());
+  auto *mask = Constant::getAllOnesValue(VectorType::get(
+      Type::getInt1Ty(vecTy->getContext()), vecTy->getElementCount()));
+  args.push_back(A);
+  args.push_back(B);
+  args.push_back(mask);
+  args.push_back(
+      ConstantInt::get(Type::getInt32Ty(vecTy->getContext()), length));
   switch (Kind) {
   case RecurKind::Add:
-    return Builder.CreateAdd(A, B);
+    id = Intrinsic::vp_add;
+    break;
   case RecurKind::Mul:
-    return Builder.CreateMul(A, B);
+    id = Intrinsic::vp_mul;
+    break;
   case RecurKind::And:
-    return Builder.CreateAnd(A, B);
+    id = Intrinsic::vp_and;
+    break;
   case RecurKind::Or:
-    return Builder.CreateOr(A, B);
+    id = Intrinsic::vp_or;
+    break;
   case RecurKind::Xor:
-    return Builder.CreateXor(A, B);
+    id = Intrinsic::vp_xor;
+    break;
   case RecurKind::FAdd:
-    return Builder.CreateFAdd(A, B);
+    id = Intrinsic::vp_fadd;
+    break;
   case RecurKind::FMul:
-    return Builder.CreateFMul(A, B);
-
-  case RecurKind::FMax:
-    return Builder.CreateSelect(Builder.CreateFCmpOGT(A, B), A, B);
-  case RecurKind::FMin:
-    return Builder.CreateSelect(Builder.CreateFCmpOLT(A, B), A, B);
-
+    id = Intrinsic::vp_fmul;
+    break;
+    // No vp_fmax, vp_fmin in current LLVM
+    /*
+      case RecurKind::FMax:
+        return Builder.CreateSelect(Builder.CreateFCmpOGT(A, B), A, B);
+      case RecurKind::FMin:
+        return Builder.CreateSelect(Builder.CreateFCmpOLT(A, B), A, B);
+    */
   case RecurKind::SMax:
-    return Builder.CreateSelect(Builder.CreateICmpSGT(A, B), A, B);
+    id = Intrinsic::vp_smax;
+    break;
   case RecurKind::SMin:
-    return Builder.CreateSelect(Builder.CreateICmpSLT(A, B), A, B);
-
+    id = Intrinsic::vp_smin;
+    break;
   case RecurKind::UMax:
-    return Builder.CreateSelect(Builder.CreateICmpUGT(A, B), A, B);
+    id = Intrinsic::vp_umax;
+    break;
   case RecurKind::UMin:
-    return Builder.CreateSelect(Builder.CreateICmpULT(A, B), A, B);
-
+    id = Intrinsic::vp_umin;
+    break;
   default:
     llvm_unreachable("unsupport reduction kind");
   }
+  return Builder.CreateIntrinsic(vecTy, id, args);
   return nullptr;
+}
+
+static Value *CreateVPReduction(RecurKind Kind, Value *initV, Value *A,
+                                uint64_t length, IRBuilderBase &Builder) {
+
+  Intrinsic::ID id;
+  SmallVector<Value *, 6> args;
+  auto *vecTy = cast<VectorType>(A->getType());
+  auto *mask = Constant::getAllOnesValue(VectorType::get(
+      Type::getInt1Ty(vecTy->getContext()), vecTy->getElementCount()));
+  args.push_back(initV);
+  args.push_back(A);
+  args.push_back(mask);
+  args.push_back(
+      ConstantInt::get(Type::getInt32Ty(vecTy->getContext()), length));
+  switch (Kind) {
+  case RecurKind::Add:
+    id = Intrinsic::vp_reduce_add;
+    break;
+  case RecurKind::Mul:
+    id = Intrinsic::vp_reduce_mul;
+    break;
+  case RecurKind::And:
+    id = Intrinsic::vp_reduce_and;
+    break;
+  case RecurKind::Or:
+    id = Intrinsic::vp_reduce_or;
+    break;
+  case RecurKind::Xor:
+    id = Intrinsic::vp_reduce_xor;
+    break;
+  case RecurKind::FAdd:
+    id = Intrinsic::vp_reduce_fadd;
+    break;
+  case RecurKind::FMul:
+    id = Intrinsic::vp_reduce_fmul;
+    break;
+  case RecurKind::FMax:
+    id = Intrinsic::vp_reduce_fmax;
+    break;
+  case RecurKind::FMin:
+    id = Intrinsic::vp_reduce_fmin;
+    break;
+  case RecurKind::SMax:
+    id = Intrinsic::vp_reduce_smax;
+    break;
+  case RecurKind::SMin:
+    id = Intrinsic::vp_reduce_smin;
+    break;
+  case RecurKind::UMax:
+    id = Intrinsic::vp_reduce_umax;
+    break;
+  case RecurKind::UMin:
+    id = Intrinsic::vp_reduce_umin;
+    break;
+  default:
+    llvm_unreachable("unsupport reduction kind");
+  }
+  return Builder.CreateIntrinsic(initV->getType(), id, args);
 }
 
 // Move I to the end of BB
@@ -822,7 +918,8 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
         // FIXME: cast<SelectInst> will abort if MinMax match get a MinMax
         // intrinsic instead of `Icmp + Select`
         for (auto *I : RI.Ops)
-          OldRdxOps.insert(cast<SelectInst>(I)->getCondition());
+          if (isa<SelectInst>(I))
+            OldRdxOps.insert(cast<SelectInst>(I)->getCondition());
       }
     }
   }
@@ -947,9 +1044,17 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       auto CondsAndVals =
           drop_begin(zip(reverse(GateConds), reverse(GateVals)));
       Value *C, *V;
+      auto *leng =
+          ConstantInt::get(Type::getInt32Ty(Sel->getContext()), Gammas.size());
       for (auto CondAndVal : CondsAndVals) {
+        SmallVector<Value *, 8> args;
         std::tie(C, V) = CondAndVal;
-        Sel = Builder.CreateSelect(C, V, Sel);
+        args.push_back(C);
+        args.push_back(V);
+        args.push_back(Sel);
+        args.push_back(leng);
+        Sel =
+            Builder.CreateIntrinsic(Sel->getType(), Intrinsic::vp_select, args);
       }
       VecInst = Sel;
     } else if (VP->isPHI()) {
@@ -1036,10 +1141,14 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       auto *Vec = gatherOperandPack(*OPs.front());
       // Aggregate the partially reduced vectors together
       for (auto *OP : drop_begin(OPs))
-        Vec = emitReduction(RI.Kind, Vec, gatherOperandPack(*OP), Builder);
+        Vec = emitVPReduction(RI.Kind, Vec, gatherOperandPack(*OP),
+                              OPs.front()->size(), Builder);
       // Do the final horizontal reduction
+      RecurrenceDescriptor r;
+      auto *Identity = r.getRecurrenceIdentity(
+          RI.Kind, OPs[0]->operator[](0)->getType(), FastMathFlags());
       auto *HorizontalRdx =
-          createSimpleTargetReduction(Builder, Pkr.getTTI(), Vec, RI.Kind);
+          CreateVPReduction(RI.Kind, Identity, Vec, OPs[0]->size(), Builder);
       ReplacedUses[RI.Ops.front()] = HorizontalRdx;
     } else {
       Builder.SetInsertPoint(GetBlock(getGreatestCommonCondition(Conds)));
@@ -1118,7 +1227,8 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
       // Gather operand in the latch
       Builder.SetInsertPoint(Latch);
       auto *Operand = gatherOperandPack(*OP);
-      RdxOps.push_back(emitReduction(RI.Kind, VecPhi, Operand, Builder));
+      RdxOps.push_back(
+          emitVPReduction(RI.Kind, VecPhi, Operand, OPs[0]->size(), Builder));
     }
 
     // Patch up the vector phi
@@ -1148,14 +1258,13 @@ VectorCodeGen::emitLoop(VLoop &VL, BasicBlock *Preheader) {
     //// Reduce the vector in the exit block
     Builder.SetInsertPoint(Exit);
     Value *RdxOp = RdxOps.front();
-    for (auto *RdxOp2 : drop_begin(RdxOps))
-      RdxOp = emitReduction(RI.Kind, RdxOp, RdxOp2, Builder);
 
-    auto *HorizontalRdx =
-        createSimpleTargetReduction(Builder, TTI, RdxOp, RI.Kind);
-    auto *Reduced = emitReduction(RI.Kind, HorizontalRdx,
-                                  useScalar(RI.StartValue), Builder);
-    RI.Ops.front()->replaceAllUsesWith(Reduced);
+    for (auto *RdxOp2 : drop_begin(RdxOps))
+      RdxOp = emitVPReduction(RI.Kind, RdxOp, RdxOp2, OPs[0]->size(), Builder);
+
+    auto *HorizontalRdx = CreateVPReduction(RI.Kind, useScalar(RI.StartValue),
+                                            RdxOp, OPs[0]->size(), Builder);
+    RI.Ops.front()->replaceAllUsesWith(HorizontalRdx);
   }
 
   BranchInst::Create(Latch, GetBlock(nullptr));
@@ -1228,7 +1337,7 @@ void VectorCodeGen::run() {
       ReturnInst::Create(F->getContext(), Constant::getNullValue(RetTy), &BB);
   }
 #ifdef BUILD_WITH_DEBUG_LLVM
-  //F->dump();
+  // F->dump();
 #endif
   // Restore SSA
   DominatorTree DT(*F);

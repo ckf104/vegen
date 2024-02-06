@@ -1,4 +1,5 @@
 #include "VectorPackContext.h"
+#include "Packer.h"
 #include "ControlDependence.h"
 #include "Reduction.h"
 #include "TargetPlatformInfo.h"
@@ -41,8 +42,8 @@ struct VectorPackCache {
 
 VectorPackContext::~VectorPackContext() = default;
 
-VectorPackContext::VectorPackContext(Function *F, TargetInfo target_)
-    : F(F), PackCache(std::make_unique<VectorPackCache>()), target(target_) {
+VectorPackContext::VectorPackContext(Function *F, TargetInfo target_,Packer* pkr)
+    : F(F), PackCache(std::make_unique<VectorPackCache>()), target(target_),pkr(pkr) {
   for (Instruction &I : instructions(F))
     addInstruction(&I);
   // FIXME: return a tigher bound

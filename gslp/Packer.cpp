@@ -83,7 +83,7 @@ Packer::Packer(ArrayRef<const InstBinding *> Insts, Function &F,
                BlockFrequencyInfo *BFI, TargetInfo target,
                EquivalenceClasses<BasicBlock *> *UnrolledBlocks,
                bool Preplanning)
-    : F(&F), VPCtx(&F, target),
+    : F(&F), VPCtx(&F, target, this),
       DA(*AA, *SE, *LI, *LVI, &F, &VPCtx, Preplanning), CDA(*LI, *DT, *PDT),
 
       TopVL(*LI, *DT, &VPCtx, DA, CDA, VLI),
@@ -185,12 +185,17 @@ AccessLayoutInfo::AccessLayoutInfo(const ConsecutiveAccessDAG &AccessDAG) {
     Instruction *Leader = AccessAndNext.first;
     if (Followers.count(Leader))
       continue;
-    Info[Leader] = {Leader, 0};
+    Info[Leader].Leader.insert(Leader);
+    Info[Leader].Id = 0;
     unsigned Offset = 0;
     auto *Followers = &AccessAndNext.second;
     for (;;) {
       for (auto *Follower : *Followers) {
-        Info[Follower] = {Leader, Offset + 1};
+        Info[Follower].Leader.insert(Leader);
+        if (Info[Follower].Id == -1)
+          Info[Follower].Id = Offset + 1;
+        else
+          assert(Info[Follower].Id == Offset + 1);
       }
       if (Followers->empty())
         break;
@@ -201,7 +206,6 @@ AccessLayoutInfo::AccessLayoutInfo(const ConsecutiveAccessDAG &AccessDAG) {
       Followers = &It->second;
       Offset += 1;
     }
-    MemberCounts[Leader] = Offset;
   }
 }
 
@@ -261,97 +265,37 @@ bool Packer::canSpeculateAt(Value *V, const ControlCondition *C) {
 static void findExtendingLoadPacks(const OperandPack &OP, Packer *Pkr,
                                    SmallVectorImpl<VectorPack *> &Extensions) {
   auto *VPCtx = Pkr->getContext();
-  auto &LoadDAG = Pkr->getLoadDAG();
+  auto &LoadInfo = Pkr->getLoadInfo();
   auto &DA = Pkr->getDA();
+  auto *loadInst = cast<LoadInst>(OP[0]);
+  BitVector Elements(VPCtx->getNumValues());
+  BitVector Depended(VPCtx->getNumValues());
+  std::vector<LoadInst *> Loads{loadInst};
+  std::optional<int32_t> stride;
 
-  // The set of loads producing elements of `OP`
-  SmallPtrSet<Instruction *, 8> LoadSet;
-  SmallVector<Instruction *, 8> LoadInsts;
-  for (auto *V : OP) {
-    if (!V)
-      continue;
-    // may emit extra shuffle when load operand pack is not perfect
-    // consecutive access? Yes, shuffle is emitted in `gatherOperandPack`
-    if (auto *I = dyn_cast<Instruction>(V)) {
-      LoadInsts.push_back(I);
-      LoadSet.insert(I);
-    }
-  }
-
-  // The loads might jumbled.
-  // In other words, any one of the lanes could be the leading load
-  for (auto *V : OP) {
-    if (!V)
-      continue;
-    auto *LeadLI = cast<LoadInst>(V);
-    BitVector Elements(VPCtx->getNumValues());
-    BitVector Depended(VPCtx->getNumValues());
-    Elements.set(VPCtx->getScalarId(LeadLI));
-    Depended |= DA.getDepended(LeadLI);
-    std::vector<LoadInst *> Loads{LeadLI};
-
-    LoadInst *CurLoad = LeadLI;
-    while (Elements.count() < LoadSet.size()) {
-      auto It = LoadDAG.find(CurLoad);
-      // End of the chain
-      if (It == LoadDAG.end())
-        break;
-
-      LoadInst *NextLI = nullptr;
-      // Only use the next load in the load set
-      for (auto *Next : It->second) {
-        if (LoadSet.count(Next)) {
-          NextLI = cast<LoadInst>(Next);
-          break;
-        }
-      }
-      if (!NextLI) {
-        // load a don't care to fill the gap
-        Loads.push_back(nullptr);
-        CurLoad = cast<LoadInst>(*It->second.begin());
-        continue;
-      }
-      if (!checkIndependence(DA, *VPCtx, NextLI, Elements, Depended)) {
-        assert(false && "this check has been done in `getProducerInfo`?");
-        // break;
-      }
-      Loads.push_back(NextLI);
-      Elements.set(VPCtx->getScalarId(NextLI));
-      Depended |= DA.getDepended(NextLI);
-      CurLoad = NextLI;
-    }
-    if (Elements.count() == LoadSet.size()) {
-      // Need to check if we can speculatively compute the address of this load
-      // pack
-      SmallVector<const ControlCondition *, 8> Conds;
-      auto *AddrComp =
-          dyn_cast<Instruction>(Loads.front()->getPointerOperand());
-      if (AddrComp &&
-          !Pkr->canSpeculateAt(AddrComp,
-                               Pkr->findSpeculationCond(AddrComp, LoadInsts))) {
-        assert(false && "Why can't speculate address computation?");
-      }
-
-      // Pad
-      if (VPCtx->getTarget() == Triple::riscv64) {
-        // FIXME: I assume that we don't change operands size when we search
-        // from bottom to up. And riscv can't support variable-length shuffle
-        // effectively(shuffle + set new vl)? This restriction may be relaxed
-        // later
-        if (Loads.size() > OP.size())
-          return;
-        while (Loads.size() < OP.size())
-          Loads.push_back(nullptr);
-      } else {
-        while (Loads.size() < PowerOf2Ceil(OP.size()))
-          Loads.push_back(nullptr);
-      }
-      Extensions.push_back(
-          VPCtx->createLoadPack(Loads, Pkr->getConditionPack(Loads), Elements,
-                                Depended, Pkr->getTTI()));
+  Elements.set(VPCtx->getScalarId(loadInst));
+  Depended |= DA.getDepended(loadInst);
+  for (uint32_t i = 0; i + 1 < OP.size(); ++i) {
+    auto *load0 = cast<LoadInst>(OP[i]);
+    auto *load1 = cast<LoadInst>(OP[i + 1]);
+    Loads.push_back(load1);
+    auto *info = LoadInfo.get(load0);
+    if (!info)
       return;
-    }
+    auto leader0 = *LoadInfo.get(load0)->Leader.begin();
+    if (!LoadInfo.get(load1)->Leader.count(leader0))
+      return;
+    int32_t s = LoadInfo.get(load1)->Id - LoadInfo.get(load0)->Id;
+    if (!stride)
+      stride = s;
+    else if (stride.value() != s)
+      return;
+    Elements.set(VPCtx->getScalarId(load1));
+    Depended |= DA.getDepended(load1);
   }
+  assert(stride);
+  Extensions.push_back(VPCtx->createLoadPack(
+      Loads, Pkr->getConditionPack(Loads), Elements, Depended, Pkr->getTTI()));
 }
 
 static bool matchPackableCmps(ArrayRef<Value *> Values,
@@ -519,17 +463,18 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
 
   if (AllLoads) {
     findExtendingLoadPacks(*OP, this, OPI.LoadProducers);
-
-    // TODO: add a pack to disable gathers?
-    SmallVector<LoadInst *, 8> Loads;
-    // FIXME: make sure the loads have the same type?
-    for (auto *V : *OP)
-      Loads.push_back(cast<LoadInst>(V));
-    OPI.LoadProducers.push_back(
-        VPCtx.createLoadPack(Loads, getConditionPack(Loads), Elements, Depended,
-                             TTI, true /*is gather*/));
-    if (OPI.LoadProducers.empty())
-      OPI.Feasible = false;
+    if (OPI.LoadProducers.empty()) {
+      // TODO: add a pack to disable gathers?
+      SmallVector<LoadInst *, 8> Loads;
+      // FIXME: make sure the loads have the same type?
+      for (auto *V : *OP)
+        Loads.push_back(cast<LoadInst>(V));
+      OPI.LoadProducers.push_back(
+          VPCtx.createLoadPack(Loads, getConditionPack(Loads), Elements,
+                               Depended, TTI, true /*is gather*/));
+      if (OPI.LoadProducers.empty())
+        OPI.Feasible = false;
+    }
     return OPI;
   }
 
@@ -605,12 +550,12 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
     return OPI;
   }
 
-  SmallVector<CmpInst *, 4> Cmps;
+  /*SmallVector<CmpInst *, 4> Cmps;
   if (matchPackableCmps(*OP, Cmps)) {
     OPI.Producers.push_back(
         VPCtx.createCmpPack(Cmps, OPI.Elements, Depended, TTI));
     return OPI;
-  }
+  }*/
 
   if (matchPackableGEPs(*OP)) {
     OPI.Producers.push_back(
@@ -651,25 +596,6 @@ const OperandProducerInfo &Packer::getProducerInfo(const OperandPack *OP) {
       // we don't need while loop when "inst output lane == op lane" is required
       // while (Lanes.size() < LaneOps.size())
       //  Lanes.push_back(nullptr);
-      for (uint32_t i = 0, n = Inst->getSignature().numInputs(); i < n; ++i) {
-        if (Inst->getSignature().getOperandType(i) == OperandType::Scalar) {
-          Value *scalar = nullptr;
-          for (uint32_t j = 0; j < NumLanes; ++j) {
-            const auto &BoundOp = Inst->getLaneOps(j);
-            const auto &slice = BoundOp.getBoundSlices();
-            const auto &matches = Lanes[j];
-            for (uint32_t k = 0, numI = matches->Inputs.size(); k < numI; ++k) {
-              if (slice[k].vecId == i) {
-                if (scalar == nullptr) {
-                  scalar = matches->Inputs[k];
-                } else if (scalar != matches->Inputs[k]) {
-                  goto BAD;
-                }
-              }
-            }
-          }
-        }
-      }
       OPI.Producers.push_back(
           VPCtx.createVectorPack(Lanes, OPI.Elements, Depended, Inst, TTI));
     }

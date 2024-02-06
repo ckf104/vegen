@@ -1,20 +1,27 @@
 #include "IntrinsicBuilder.h"
+#include "InstSeq.h"
 #include "VectorPackContext.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/Use.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/TargetParser/Triple.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <tuple>
 
@@ -29,65 +36,176 @@ IntrinsicBuilder::IntrinsicBuilder(Module *InstWrappers,
     : llvm::IRBuilder<>(VPCtx_->getFunction()->getParent()->getContext()),
       VPCtx(VPCtx_), InstWrappers(InstWrappers) {}
 
+static bool checkSlideUpCirPattern(ArrayRef<GatherEdge> edges) {
+  if (edges.size() % 2 != 0)
+    return false;
+  for (auto edge : edges) {
+    if (edge.DestIndex % 2 == 0) {
+      if (edge.SrcIndex != edge.DestIndex + 1)
+        return false;
+    } else {
+      if (edge.SrcIndex != edge.DestIndex - 1)
+        return false;
+    }
+  }
+  return true;
+}
+Instruction *IntrinsicBuilder::CreateRISCVSlideUpCir(Value *src,
+                                                     uint32_t length,
+                                                     uint32_t stride) {
+  auto &context = src->getContext();
+  auto *int64Ty = Type::getInt64Ty(context);
+  Constant *vl = ConstantInt::get(int64Ty, APInt(64, length));
+  SmallVector<Value *, 6> args;
+  args.push_back(PoisonValue::get(src->getType()));
+  args.push_back(src);
+  args.push_back(ConstantInt::get(int64Ty, APInt(64, stride)));
+  args.push_back(vl);
+  args.push_back(ConstantInt::get(int64Ty, APInt(64, 0))); // policy ?
+  auto intrinsicID = Function::lookupIntrinsicID("llvm.riscv.vslideupcir.vx");
+  assert(intrinsicID != Intrinsic::not_intrinsic);
+  return IRBuiler::CreateIntrinsic(src->getType(), intrinsicID, args);
+}
+
+Instruction *IntrinsicBuilder::CreateRISCVShuffle(ArrayRef<GatherEdge> edges,
+                                                  Value *src) {
+  assert(src->getType()->isVectorTy() && "shuffle source is not a vector?");
+  if (checkSlideUpCirPattern(edges)) {
+    return CreateRISCVSlideUpCir(src, edges.size(), /*stride=*/1);
+  }
+  auto &context = src->getContext();
+  auto *int16Type = Type::getInt16Ty(context);
+  auto *vecType = VectorType::get(
+      int16Type, cast<VectorType>(src->getType())->getElementCount());
+  Constant *mask = PoisonValue::get(vecType);
+  for (auto edge : edges) {
+    mask = ConstantExpr::getInsertElement(
+        mask, ConstantInt::get(int16Type, APInt(16, edge.SrcIndex)),
+        ConstantInt::get(int16Type, APInt(16, edge.DestIndex)));
+  }
+  Constant *vl =
+      ConstantInt::get(Type::getInt64Ty(context), APInt(64, edges.size()));
+  SmallVector<Value *, 6> args;
+  args.push_back(PoisonValue::get(src->getType()));
+  args.push_back(src);
+  args.push_back(mask);
+  args.push_back(vl);
+  auto intrinsicID = Function::lookupIntrinsicID("llvm.riscv.vrgatherei16.vv");
+  assert(intrinsicID != Intrinsic::not_intrinsic);
+  return IRBuiler::CreateIntrinsic(src->getType(), intrinsicID, args);
+}
+
+// FIXME: find a proper way to infer return type of intermediate instruction
+// current implementation requires all instruction's return type are the same
+Value *IntrinsicBuilder::Create(const std::vector<SingleInst> &instSeq,
+                                ArrayRef<Value *> Operands, Type *retTy,
+                                uint32_t length) {
+  SmallVector<Value *> intermVals;
+  for (uint32_t i = 0, j = instSeq.size(); i < j; ++i) {
+    SmallVector<Value *> ops;
+    for (auto p : instSeq[i].getInputsPos()) {
+      if (p.src == Source::Input)
+        ops.push_back(Operands[p.id]);
+      else {
+        assert(p.id < intermVals.size());
+        ops.push_back(intermVals[p.id]);
+      }
+    }
+    auto val = Create(instSeq[i].getInstName(), ops, retTy, length);
+    intermVals.push_back(val);
+  }
+
+  return intermVals.back();
+}
 Value *IntrinsicBuilder::Create(StringRef Name, ArrayRef<Value *> Operands,
-                                Type *retTy, uint32_t length,
-                                unsigned char Imm8) {
-  if (VPCtx->getTarget() == Triple::riscv64) {
-    return CreateRISCVIntrinsic(Name, retTy, length, Operands);
+                                Type *retTy, uint32_t length) {
+  auto *vt = cast<VectorType>(Operands[0]->getType());
+  auto vecRetTy = VectorType::get(retTy, vt->getElementCount());
+  auto *mask = Constant::getAllOnesValue(
+      VectorType::get(Type::getInt1Ty(getContext()), vt->getElementCount()));
+  auto *leng = ConstantInt::get(Type::getInt32Ty(retTy->getContext()), length);
+  if (Name == "vicmpeq" || Name == "vicmpne" || Name == "vicmpugt" ||
+      Name == "vicmpuge" || Name == "vicmpult" || Name == "vicmpule" ||
+      Name == "vicmpsgt" || Name == "vicmpsge" || Name == "vicmpslt" ||
+      Name == "vicmpsle") {
+    Intrinsic::ID id = Intrinsic::vp_icmp;
+    SmallVector<Value *, 6> args;
+    StringRef cnd;
+    if (Name == "vicmpeq" || Name == "vicmpne")
+      cnd = Name.slice(Name.size() - 2, Name.size());
+    else
+      cnd = Name.slice(Name.size() - 3, Name.size());
+    auto *cndMD = MDString::get(retTy->getContext(), cnd);
+    auto *predValue = MetadataAsValue::get(retTy->getContext(), cndMD);
+    args.push_back(Operands[0]);
+    if (!Operands[1]->getType()->isVectorTy())
+      args.push_back(CreateVectorSplat(vt->getElementCount(), Operands[1]));
+    else
+      args.push_back(Operands[1]);
+    args.push_back(predValue);
+    args.push_back(mask);
+    args.push_back(leng);
+    return CreateIntrinsic(vecRetTy, id, args);
   }
-  auto *F = getIntrinsic(Name, retTy, length, Operands);
-  assert(F && "Intrinsic wrapper undefined.");
+  // binary operator except vsext, vzext(unary operator), vmerge(ternary
+  // operator)
+  if (Name == "vadd" || Name == "vmul" || Name == "vsext" || Name == "vsll" ||
+      Name == "vsra" || Name == "vsrl" || Name == "vsmin" || Name == "vsmax" ||
+      Name == "vumin" || Name == "vumax" || Name == "vmerge" ||
+      Name == "vsdiv" || Name == "vudiv" || Name == "vzext") {
+    Intrinsic::ID id;
+    if (Name == "vadd")
+      id = Intrinsic::vp_add;
+    else if (Name == "vmul")
+      id = Intrinsic::vp_mul;
+    else if (Name == "vsext")
+      id = Intrinsic::vp_sext;
+    else if (Name == "vzext")
+      id = Intrinsic::vp_zext;
+    else if (Name == "vsll")
+      id = Intrinsic::vp_shl;
+    else if (Name == "vsra")
+      id = Intrinsic::vp_ashr;
+    else if (Name == "vsrl")
+      id = Intrinsic::vp_lshr;
+    else if (Name == "vsmin")
+      id = Intrinsic::vp_smin;
+    else if (Name == "vsmax")
+      id = Intrinsic::vp_smax;
+    else if (Name == "vumin")
+      id = Intrinsic::vp_umin;
+    else if (Name == "vumax")
+      id = Intrinsic::vp_umax;
+    else if (Name == "vmerge")
+      id = Intrinsic::vp_select;
+    else if (Name == "vsdiv")
+      id = Intrinsic::vp_sdiv;
+    else if (Name == "vudiv")
+      id = Intrinsic::vp_udiv;
+    else
+      llvm_unreachable("IntrinsicBuilder: unkown RSICV name");
 
-  assert(std::distance(F->begin(), F->end()) == 1 &&
-         "Intrinsic Wrapper should have a single basic block");
-  auto &BB = *F->begin();
-
-  unsigned NumArgs = std::distance(F->arg_begin(), F->arg_end());
-  assert(Operands.size() == NumArgs);
-
-  // map wrapper arg to operands
-  ValueToValueMapTy VMap;
-  for (unsigned i = 0, j = Operands.size(); i < j; i++) {
-    Value *Arg = F->getArg(i);
-    assert(CastInst::castIsValid(Instruction::CastOps::BitCast, Operands[i],
-                                 Arg->getType()) &&
-           "Invalid input type");
-    assert((VPCtx->getTarget() != Triple::riscv64 ||
-            Operands[i]->getType() == Arg->getType()) &&
-           "Argument type mismatch?");
-    Value *Operand = CreateBitCast(Operands[i], Arg->getType());
-    VMap[Arg] = Operand;
-  }
-
-  Value *RetVal = nullptr;
-  for (auto &I : BB) {
-    if (auto *Ret = dyn_cast<ReturnInst>(&I)) {
-      RetVal = Ret->getReturnValue();
-      break;
+    SmallVector<Value *, 6> args;
+    args.push_back(Operands[0]);
+    if (Name != "vsext" && Name != "vzext" &&
+        !Operands[1]->getType()->isVectorTy()) {
+      auto v = CreateVectorSplat(vt->getElementCount(), Operands[1]);
+      args.push_back(v);
+    } else if (Name != "vsext" && Name != "vzext")
+      args.push_back(Operands[1]);
+    if (Name == "vmerge") {
+      assert(Operands.size() == 3);
+      if (Operands[2]->getType()->isVectorTy())
+        args.push_back(Operands[2]);
+      else
+        args.push_back(CreateVectorSplat(vt->getElementCount(), Operands[2]));
+    } else { // no mask in vmerge
+      args.push_back(mask);
     }
-    auto *NewI = I.clone();
-    Insert(NewI);
-    VMap[&I] = NewI;
-    RemapInstruction(NewI, VMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
-    if (auto *CI = dyn_cast<CallInst>(NewI)) {
-      auto *Callee = CI->getCalledFunction();
-      assert(Callee->isIntrinsic());
-      // If the intrinsic wrapper calls an llvm intrinsic,
-      // that intrinsic is declared inside `IntrinsicWrappers`.
-      // We need to redeclare that intrinsic.
-      Module *M = CI->getParent()->getModule();
-      FunctionCallee IntrinsicDecl =
-          M->getOrInsertFunction(Callee->getName(), Callee->getFunctionType(),
-                                 Callee->getAttributes());
-      CI->setCalledFunction(cast<Function>(IntrinsicDecl.getCallee()));
-    }
+    args.push_back(leng);
+    return CreateIntrinsic(vecRetTy, id, args);
   }
-  assert(RetVal && "Wrapper not returning explicitly");
-  Value *Output = VMap.lookup(RetVal);
-  assert(Output);
-
-  return Output;
+  return CreateRISCVIntrinsic(Name, retTy, length, Operands);
 }
 
 Value *IntrinsicBuilder::CreateRISCVIntrinsic(StringRef Name, Type *retTy,

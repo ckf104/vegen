@@ -268,4 +268,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &, const OperandPack &);
 void getOperandPacksFromCondition(
     const ConditionPack *CP, llvm::SmallVectorImpl<const OperandPack *> &OPs);
 
+std::vector<OperandPack>
+getScalarOperand(const InstBinding *producer,
+                      llvm::ArrayRef<const Operation::Match *> matches,
+                      uint32_t scalarPos);
+
 #endif // VECTOR_PACK_H

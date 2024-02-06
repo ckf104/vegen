@@ -3,6 +3,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -77,11 +78,27 @@ const ControlCondition *getGreatestCommonCondition(const ControlCondition *C1,
                                                    const ControlCondition *C2) {
   if (C1 == C2)
     return C1;
+  auto *c1_copy = C1;
+  auto *c2_copy = C2;
 
   C1 = getCommonCondForOr(C1);
   C2 = getCommonCondForOr(C2);
-  if (!C1 || !C2)
+  if (!C1 || !C2) {
+    // FIXME: a temporary hacking for computing greatest common, we
+    // need a better method to do this.
+    // now gcd( (a v b) ^ c , a v b ) may get wrong result
+    if (isa_and_nonnull<ConditionAnd>(c1_copy)) {
+      auto andc1 = cast<ConditionAnd>(c1_copy);
+      if (andc1->Parent == c2_copy)
+        return c2_copy;
+    }
+    if (isa_and_nonnull<ConditionAnd>(c2_copy)) {
+      auto andc2 = cast<ConditionAnd>(c2_copy);
+      if (andc2->Parent == c1_copy)
+        return c1_copy;
+    }
     return nullptr;
+  }
 
   while (C1 != C2) {
     if (C1->depth() < C2->depth())

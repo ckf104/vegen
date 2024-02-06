@@ -2,7 +2,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # The main "lib packing"
 set(LIB_PACKING_SRC
-  target-sema/x86.cpp target-sema/arm.cpp
   target-sema/riscv64.cpp
 )
 
@@ -31,7 +30,7 @@ set(LIB_GSLP_SRC  Plan.cpp
   Heuristic.cpp
   Packer.cpp
   Solver.cpp
-  IRVec.cpp
+  #IRVec.cpp
   MatchManager.cpp)
 
 
@@ -68,14 +67,7 @@ target_link_libraries(GSLP_opt Packing)
 target_link_libraries(GSLP LLVMSupport)
 
 
-# THANKS AJAY!
-set(X86_WRAPPERS "${CMAKE_BINARY_DIR}/x86.bc")
-set(X86_FLAGS -mssse3 -msse -mavx512bw -msse3 -msse4.1 -msse4.2 -mfma -msse2 -mavx2 -mavx512vnni -mavx512vl -mavx512dq -mgfni -mavx512vbmi2 -mavx512vbmi -mavx512cd -mavx -mavx512f -mbmi2)
-add_custom_command(OUTPUT ${X86_WRAPPERS}
-  COMMAND ${CMAKE_C_COMPILER} -D__MM_MALLOC_H -target x86_64-unknown-none-gnu -O3 -emit-llvm ${X86_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/x86.c -c -Wno-argument-outside-range -o ${X86_WRAPPERS}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/x86.c
-  VERBATIM
-)
+
 # some problem occurs if building x86.c with clang-12 
 
 # zfh1p0 -> zfh extension with version 1.0, zvfh0p1 -> zvfh extension with version 0.1
@@ -89,15 +81,7 @@ add_custom_command(OUTPUT ${RISCV64_WRAPPERS} COMMAND ${CMAKE_C_COMPILER}
   VERBATIM)
 ]]
 
-#[[
-set(ARM_WRAPPERS "${CMAKE_BINARY_DIR}/arm.bc")
-set(ARM_FLAGS -Xclang -target-feature -Xclang +neon -Xclang -target-feature -Xclang +dotprod) 
-add_custom_command(OUTPUT ${ARM_WRAPPERS}
-  COMMAND clang -D__MM_MALLOC_H -target aarch64-unknown-linux-gnu -O3 -emit-llvm ${ARM_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/arm.c -c -Wno-argument-outside-range -o ${ARM_WRAPPERS}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/target-wrappers/arm.c
-  VERBATIM
-)
-]]
+
 
 if(LLVM_PACKAGE_VERSION VERSION_GREATER_EQUAL 17.0.0)
   add_custom_target(intrinsic_defs ALL DEPENDS ${X86_WRAPPERS} ${RISCV64_WRAPPERS})

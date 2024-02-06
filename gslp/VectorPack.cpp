@@ -4,17 +4,81 @@
 #include "ControlDependence.h"
 #include "InstSema.h"
 #include "MatchManager.h"
+#include "Packer.h"
+#include "VectorPackContext.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/TargetParser/Triple.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 
 using namespace llvm;
+
+// FIXME: current implementation is a very limited version with only scalar
+// support ,no consideration for don't care lanes, one input from scalar and one
+// input from vector in each match
+std::vector<OperandPack>
+getScalarOperand(const InstBinding *producer,
+                 ArrayRef<const Operation::Match *> matches,
+                 uint32_t scalarPos) {
+  const auto &Sig = producer->getSignature();
+  std::vector<OperandPack> opk(Sig.numInputs());
+
+  Value *scalarV = nullptr;
+  auto isCommunicative = producer->isCommutative();
+  if (isCommunicative) {
+    bool check = true;
+    for (auto *m : matches)
+      check = check && m->Inputs.size() == 2;
+    // check = check && Sig.numScalarOperands() == 1;
+    check = check && Sig.numInputs() == 2;
+    assert(check);
+
+    for (auto *v : matches[0]->Inputs) {
+      for (auto *m : matches) {
+        if (!is_contained(m->Inputs, v))
+          goto BAD;
+      }
+      scalarV = v;
+      break;
+    BAD:
+      continue;
+    }
+    if (!scalarV)
+      return {};
+    opk[scalarPos].Ty = scalarV->getType();
+    opk[scalarPos].push_back(scalarV);
+    for (auto matche : matches) {
+      opk[1 - scalarPos].push_back(
+          matche->Inputs[0] == scalarV ? matche->Inputs[1] : matche->Inputs[0]);
+    }
+
+  } else {
+    for (auto *m : matches) {
+      if (m->Inputs[scalarPos] != matches[0]->Inputs[scalarPos])
+        return {};
+    }
+    scalarV = matches[0]->Inputs[scalarPos];
+    opk[scalarPos].Ty = scalarV->getType();
+    opk[scalarPos].push_back(scalarV);
+    for (auto matche : matches) {
+      for (uint32_t i = 0; i < Sig.numInputs(); ++i) {
+        if (i == scalarPos)
+          continue;
+        opk[i].push_back(matche->Inputs[i]);
+      }
+    }
+  }
+  return opk;
+}
 
 // FIXME: we need to generalize the definition of an operand pack
 // because some of the input lanes are "DONT CARES" (e.g. _mm_div_pd)
@@ -34,7 +98,11 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
       return Slice < Other.Slice;
     }
   };
-
+  if (Sig.getScalarVersion()) {
+    auto ret = getScalarOperand(Producer, Matches, Sig.getOptionScalarPos());
+    if (!ret.empty())
+      return ret;
+  }
   // Figure out which input packs we need
   for (unsigned i = 0; i < NumInputs; i++) {
 
@@ -68,6 +136,8 @@ std::vector<OperandPack> VectorPack::computeOperandPacksForGeneral() {
 
     uint32_t CurId = 0;
     auto &OP = OperandPacks[i];
+
+    // FIXME: remove this if statement?
     if (Sig.inputSig[i].isScalar()) {
       for (uint32_t y = 1, t = InputValues.size(); y < t; ++y)
         assert(InputValues[y].V == InputValues[0].V &&
@@ -124,12 +194,21 @@ void getOperandPacksFromCondition(const ConditionPack *CP,
 }
 
 std::vector<OperandPack> VectorPack::computeOperandPacksForLoad() {
-  if (!IsGatherScatter) {
-    // Only need the single *scalar* pointer, doesn't need packed operand
-    return {};
-  }
-
   OperandPack OP;
+  if (!IsGatherScatter) {
+    auto &loadInfo = VPCtx->getPkr()->getLoadInfo();
+    int s = VPCtx->getPkr()
+                ->getDataLayout()
+                ->getTypeStoreSize(Loads[0]->getType())
+                .getFixedValue();
+    int stride = loadInfo.get(Loads[1])->Id - loadInfo.get(Loads[0])->Id;
+    if (stride != 1) {
+      OP.push_back(
+          ConstantInt::get(Loads[0]->getContext(), APInt(64, stride * s)));
+      return {OP};
+    } else
+      return {};
+  }
   for (auto *L : Loads)
     OP.push_back(L->getPointerOperand());
   return {OP};
@@ -199,6 +278,7 @@ template <typename LoadStores> Align getCommonAlignment(LoadStores Insts) {
 }
 } // namespace
 
+// stride/unit load, masked/unmasked load, gather load
 Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
                                   std::function<Value *(Value *)> GetScalar,
                                   IntrinsicBuilder &Builder) const {
@@ -213,16 +293,29 @@ Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
 
   // Emit the load
   Instruction *VecLoad;
-  if (IsGatherScatter) {
+  if (IsGatherScatter) { // gather load
     VecLoad = Builder.CreateMaskedGather(
         VecTy, Operands.front(), getCommonAlignment(Loads), Mask, Loads.size());
   } else {
-    if (Mask)
+    ScalarPtr = GetScalar(ScalarPtr);
+    // mask/unmasked stride load
+    if (!Operands.empty() && !Operands[0]->getType()->isVectorTy()) {
+      SmallVector<Value *, 6> args;
+      args.push_back(ScalarPtr);
+      args.push_back(GetScalar(Operands[0]));
+      if (!Mask)
+        Mask = Constant::getAllOnesValue(
+            VectorType::get(Type::getInt1Ty(FirstLoad->getContext()),
+                            VecTy->getElementCount()));
+      args.push_back(Mask);
+      args.push_back(
+          ConstantInt::get(FirstLoad->getContext(), APInt(32, Loads.size())));
+      VecLoad = Builder.CreateIntrinsic(
+          VecTy, Intrinsic::experimental_vp_strided_load, args);
+    } else { // mask/unmasked unit load
       VecLoad = Builder.CreateMaskedLoad(
           VecTy, ScalarPtr, FirstLoad->getAlign(), Mask, Loads.size());
-    else
-      VecLoad = Builder.CreateAlignedLoad(VecTy, ScalarPtr,
-                                          FirstLoad->getAlign(), Loads.size());
+    }
   }
 
   std::vector<Value *> Values;
@@ -232,6 +325,7 @@ Value *VectorPack::emitVectorLoad(ArrayRef<Value *> Operands, Value *Mask,
   return propagateMetadata(VecLoad, Values);
 }
 
+// masked/unmasked store, scatter store
 Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
                                    std::function<Value *(Value *)> GetScalar,
                                    IntrinsicBuilder &Builder) const {
@@ -248,7 +342,6 @@ Value *VectorPack::emitVectorStore(ArrayRef<Value *> Operands, Value *Mask,
 
     // Figure out the store alignment
     unsigned Alignment = FirstStore->getAlign().value();
-    unsigned AS = FirstStore->getPointerAddressSpace();
     auto &DL = FirstStore->getParent()->getModule()->getDataLayout();
     if (!Alignment)
       Alignment =
@@ -577,7 +670,7 @@ void VectorPack::setOperandGatherPoint(unsigned OperandId,
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const VectorPack &VP) {
-  StringRef ProducerName = "";
+  std::string ProducerName = "";
   if (auto *Producer = VP.getProducer())
     ProducerName = Producer->getName();
   else if (VP.isGamma())

@@ -8,6 +8,7 @@
 #include "VLoop.h"
 #include "VectorPackContext.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
@@ -15,6 +16,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
@@ -37,30 +39,30 @@ using ConsecutiveAccessDAG =
 class AccessLayoutInfo {
 public:
   struct AddressInfo {
-    llvm::Instruction *Leader;
-    unsigned Id; // Leader's id should be 0.
+    llvm::SmallDenseSet<llvm::Instruction *> Leader;
+    unsigned Id = -1; // Leader's id should be 0.
   };
 
 private:
   llvm::DenseMap<llvm::Instruction *, AddressInfo> Info;
-  llvm::DenseMap<llvm::Instruction *, unsigned> MemberCounts;
+  // llvm::DenseMap<llvm::Instruction *, unsigned> MemberCounts;
 
 public:
   AccessLayoutInfo() = default;
   AccessLayoutInfo(const ConsecutiveAccessDAG &AccessDAG);
   // Get num followers + 1
-  unsigned getNumMembers(llvm::Instruction *I) const {
+  /*unsigned getNumMembers(llvm::Instruction *I) const {
     return MemberCounts.lookup(I);
-  }
+  }*/
 
-  AddressInfo get(llvm::Instruction *I) const {
+  const AddressInfo *get(llvm::Instruction *I) const {
     auto It = Info.find(I);
     if (It != Info.end())
-      return It->second;
-    return AddressInfo{I, 0};
+      return &It->second;
+    return nullptr;
   }
 
-  bool isAdjacent(llvm::Instruction *I1, llvm::Instruction *I2) const {
+  /*bool isAdjacent(llvm::Instruction *I1, llvm::Instruction *I2) const {
     auto It1 = Info.find(I1);
     auto It2 = Info.find(I2);
     if (It1 == Info.end() || It2 == Info.end())
@@ -68,8 +70,8 @@ public:
     const AddressInfo &Info1 = It1->second;
     const AddressInfo &Info2 = It2->second;
     return Info1.Leader == Info2.Leader &&
-           (Info1.Id + 1 == Info2.Id /*|| Info1.Id == Info2.Id + 1*/);
-  }
+           (Info1.Id + 1 == Info2.Id);
+  }*/
 };
 
 // Util class to remember the RPO of the basic blocks within a function

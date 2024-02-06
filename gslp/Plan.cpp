@@ -9,6 +9,7 @@
 #include "VectorPackContext.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -233,6 +234,19 @@ bool Plan::verifyCost() const {
   return Ok;
 }
 
+// FIXME: Great hacking for cost model, which may count excess extract cost for
+// bool variable
+static bool checkBoolInstOnlyCFG(Instruction *inst) {
+  if (inst->getType() != Type::getInt1Ty(inst->getContext()))
+    return false;
+  for (Use& u : inst->uses()) {
+    auto* v = u.getUser();
+    if (!isa<BranchInst>(v))
+      return false;
+  }
+  return true;
+}
+
 void Plan::addImpl(const VectorPack *VP) {
   Packs.insert(VP);
   Cost += VP->getProducingCost();
@@ -265,8 +279,13 @@ void Plan::addImpl(const VectorPack *VP) {
       if (!VP->isReduction() && NumScalarUses.lookup(I)) {
         float ExtractCost = getVectorInstrCostFromTTI(
             TTI, Instruction::ExtractElement, VecTy, i);
-        Cost += ExtractCost;
-        ExtractCosts[I] = ExtractCost;
+        if (checkBoolInstOnlyCFG(I)) {
+          Cost += ExtractCost / 2;
+          ExtractCosts[I] = ExtractCost / 2;
+        } else {
+          Cost += ExtractCost;
+          ExtractCosts[I] = ExtractCost;
+        }
       }
       if (isAlive(I)) {
         Cost -= Pkr->getScalarCost(I);

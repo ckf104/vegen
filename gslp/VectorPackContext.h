@@ -17,6 +17,7 @@
 
 class ReductionInfo;
 class GammaNode;
+class Packer;
 
 class VectorPack;
 struct OperandProducerInfo {
@@ -71,6 +72,7 @@ struct ConditionPack {
 struct VectorPackCache;
 struct OperandPackCache;
 class VectorPackContext {
+  Packer* pkr;
   llvm::Function *F;
   std::vector<llvm::Value *> Scalars;
   llvm::DenseMap<llvm::Value *, unsigned> ScalarToIdMap;
@@ -93,8 +95,12 @@ class VectorPackContext {
   static constexpr uint64_t RVVBitsPerBlock = 64;
 
 public:
-  VectorPackContext(llvm::Function *F, TargetInfo target_);
+  VectorPackContext(llvm::Function *F, TargetInfo target_, Packer* pkr);
   ~VectorPackContext();
+
+  Packer* getPkr()const{
+    return pkr;
+  }
 
   void registerEquivalentValues(llvm::EquivalenceClasses<llvm::Value *> &&EC) {
     EquivalentValues = EC;
